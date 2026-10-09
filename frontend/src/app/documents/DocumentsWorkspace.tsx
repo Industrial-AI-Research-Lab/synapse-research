@@ -155,7 +155,7 @@ const DocumentsWorkspace = () => {
   const [searchError, setSearchError] = useState<string>();
   const [researchError, setResearchError] = useState<string>();
   const [sourceError, setSourceError] = useState<string>();
-  const [documentActionSuccess, setDocumentActionSuccess] = useState<string>();
+  const [deletionNotification, setDeletionNotification] = useState<string>();
   const [documentToDelete, setDocumentToDelete] =
     useState<DocumentMetadata>();
   const [isDocumentsLoading, setIsDocumentsLoading] = useState(true);
@@ -316,6 +316,16 @@ const DocumentsWorkspace = () => {
     return () => window.cancelAnimationFrame(animationFrame);
   }, [questionEditorState]);
 
+  useEffect(() => {
+    if (!deletionNotification) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setDeletionNotification(undefined);
+    }, 5_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [deletionNotification]);
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(Array.from(event.target.files ?? []));
     setUploadError(undefined);
@@ -428,7 +438,7 @@ const DocumentsWorkspace = () => {
   };
 
   const handleDocumentDeleteRequest = (document: DocumentMetadata) => {
-    setDocumentActionSuccess(undefined);
+    setDeletionNotification(undefined);
     setDocumentDeleteError(undefined);
     setDocumentToDelete(document);
   };
@@ -459,7 +469,7 @@ const DocumentsWorkspace = () => {
       );
       setSearchResult(undefined);
       setQuestionEditorState("top");
-      setDocumentActionSuccess(
+      setDeletionNotification(
         `Документ «${documentToDelete.filename}» удалён.`,
       );
       setDocumentToDelete(undefined);
@@ -776,6 +786,25 @@ const DocumentsWorkspace = () => {
         </p>
       </header>
 
+      {deletionNotification && (
+        <section
+          className={scss.deletionToast}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <p>{deletionNotification}</p>
+          <button
+            className={scss.deletionToastCloseButton}
+            type="button"
+            onClick={() => setDeletionNotification(undefined)}
+            aria-label="Закрыть уведомление об удалении документа"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </section>
+      )}
+
       <nav
         className={scss.viewSwitcher}
         aria-label="Разделы работы с документами"
@@ -945,11 +974,6 @@ const DocumentsWorkspace = () => {
                     {selectionError && (
                       <p className={scss.selectionError} role="alert">
                         {selectionError}
-                      </p>
-                    )}
-                    {documentActionSuccess && (
-                      <p className={scss.successMessage} role="status">
-                        {documentActionSuccess}
                       </p>
                     )}
                     <ul className={scss.documentList}>
