@@ -8,13 +8,16 @@ import {
   getDocumentAccessCode,
   getDocumentAccessCodeAvailability,
   getDocumentFile,
+  getDocumentResearchProject,
   getDocuments,
   searchDocuments,
+  startDocumentResearch,
   uploadDocument,
 } from "../../api/documents";
 import type {
   DocumentCitation,
   DocumentMetadata,
+  DocumentResearchProject,
   DocumentSearchResponse,
 } from "../../assets/types/documents";
 import Button from "../../components/ui/Button/Button";
@@ -27,9 +30,34 @@ import Textarea from "../../components/ui/Textarea/Textarea";
 const SEARCH_LIMIT = 10;
 const MAX_SELECTED_DOCUMENTS = 50;
 const MAX_VISIBLE_SELECTED_FILES = 4;
+const RESEARCH_POLLING_INTERVAL = 5_000;
 
 type WorkspaceView = "documents" | "search";
 type QuestionEditorState = "top" | "collapsed";
+
+const isFinalResearchStatus = (status: string) =>
+  ["completed", "failed", "cancelled", "canceled"].includes(
+    status.toLowerCase(),
+  );
+
+const formatResearchStatus = (project: DocumentResearchProject) => {
+  if (project.awaitingApproval) return "Ожидает решения в Synapse";
+
+  switch (project.status.toLowerCase()) {
+    case "completed":
+      return "Исследование завершено";
+    case "failed":
+      return "Исследование завершилось с ошибкой";
+    case "cancelled":
+    case "canceled":
+      return "Исследование отменено";
+    case "queued":
+    case "pending":
+      return "Исследование ожидает запуска";
+    default:
+      return "Synapse обрабатывает исследование";
+  }
+};
 
 const formatFileSize = (sizeBytes: number) => {
   if (sizeBytes < 1024 * 1024) {
@@ -115,6 +143,8 @@ const DocumentsWorkspace = () => {
   const [accessCodeCopyStatus, setAccessCodeCopyStatus] = useState("");
   const [question, setQuestion] = useState("");
   const [searchResult, setSearchResult] = useState<DocumentSearchResponse>();
+  const [synapseProject, setSynapseProject] =
+    useState<DocumentResearchProject>();
   const [questionEditorState, setQuestionEditorState] =
     useState<QuestionEditorState>("top");
   const [documentsError, setDocumentsError] = useState<string>();
@@ -123,6 +153,7 @@ const DocumentsWorkspace = () => {
   const [questionError, setQuestionError] = useState<string>();
   const [selectionError, setSelectionError] = useState<string>();
   const [searchError, setSearchError] = useState<string>();
+  const [researchError, setResearchError] = useState<string>();
   const [sourceError, setSourceError] = useState<string>();
   const [documentActionSuccess, setDocumentActionSuccess] = useState<string>();
   const [documentToDelete, setDocumentToDelete] =
@@ -130,10 +161,16 @@ const DocumentsWorkspace = () => {
   const [isDocumentsLoading, setIsDocumentsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isResearchStarting, setIsResearchStarting] = useState(false);
+  const [isResearchRefreshing, setIsResearchRefreshing] = useState(false);
   const [isOpeningSource, setIsOpeningSource] = useState(false);
   const [isDeletingDocument, setIsDeletingDocument] = useState(false);
   const [documentDeleteError, setDocumentDeleteError] = useState<string>();
-  const hasSearchOutput = isSearching || Boolean(searchResult);
+  const hasSearchOutput =
+    isSearching ||
+    isResearchStarting ||
+    Boolean(searchResult) ||
+    Boolean(synapseProject);
   const contentClassNames = [
     scss.content,
     activeView === "search" && !hasSearchOutput && scss.searchContent,
@@ -188,6 +225,27 @@ const DocumentsWorkspace = () => {
     }
   }, []);
 
+  const refreshDocumentResearch = useCallback(
+    async (projectId: string, showLoadingState: boolean) => {
+      if (showLoadingState) setIsResearchRefreshing(true);
+      setResearchError(undefined);
+
+      try {
+        const project = await getDocumentResearchProject(projectId, accessToken);
+        setSynapseProject(project);
+      } catch (error) {
+        setResearchError(
+          error instanceof Error
+            ? error.message
+            : "Не удалось обновить состояние исследования в Synapse.",
+        );
+      } finally {
+        if (showLoadingState) setIsResearchRefreshing(false);
+      }
+    },
+    [accessToken],
+  );
+
   useEffect(() => {
     void loadDocuments();
   }, [loadDocuments]);
@@ -228,6 +286,18 @@ const DocumentsWorkspace = () => {
 
     return () => window.cancelAnimationFrame(animationFrame);
   }, [isSearching, searchResult]);
+
+  useEffect(() => {
+    if (!synapseProject || isFinalResearchStatus(synapseProject.status)) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshDocumentResearch(synapseProject.projectId, false);
+    }, RESEARCH_POLLING_INTERVAL);
+
+    return () => window.clearInterval(intervalId);
+  }, [refreshDocumentResearch, synapseProject]);
 
   useEffect(() => {
     if (!shouldFocusQuestionEditorRef.current) return;
@@ -402,8 +472,7 @@ const DocumentsWorkspace = () => {
     }
   };
 
-  const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleLocalSearch = async () => {
     const normalizedQuestion = question.trim();
     setQuestionError(undefined);
     setSearchError(undefined);
@@ -448,6 +517,52 @@ const DocumentsWorkspace = () => {
     }
   };
 
+  const handleSynapseResearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedQuestion = question.trim();
+    setQuestionError(undefined);
+    setResearchError(undefined);
+
+    if (normalizedQuestion.length < 3) {
+      setQuestionError("Сформулируйте вопрос минимум из трёх символов.");
+      return;
+    }
+
+    if (!documents?.length) {
+      setResearchError("Сначала загрузите хотя бы один PDF-файл.");
+      return;
+    }
+
+    if (!selectedDocumentIds.length) {
+      setResearchError("Выберите хотя бы один документ для исследования.");
+      return;
+    }
+
+    setIsResearchStarting(true);
+
+    try {
+      const project = await startDocumentResearch(
+        {
+          query: normalizedQuestion,
+          documentIds: selectedDocumentIds,
+        },
+        accessToken,
+      );
+      setSynapseProject(project);
+      setSearchResult(undefined);
+      setQuestion(normalizedQuestion);
+      setQuestionEditorState("collapsed");
+    } catch (error) {
+      setResearchError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось запустить исследование в Synapse.",
+      );
+    } finally {
+      setIsResearchStarting(false);
+    }
+  };
+
   const handleAccessSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAccessCodeCopyStatus("");
@@ -486,6 +601,7 @@ const DocumentsWorkspace = () => {
   const handleQuestionEditorOpen = () => {
     setQuestionError(undefined);
     setSearchError(undefined);
+    setResearchError(undefined);
     shouldFocusQuestionEditorRef.current = true;
     setQuestionEditorState("top");
   };
@@ -529,12 +645,12 @@ const DocumentsWorkspace = () => {
       ref={questionEditorRef}
       id="document-question-editor"
       className={scss.questionForm}
-      onSubmit={handleSearch}
+      onSubmit={handleSynapseResearch}
     >
       <Field
-        label="Что вы хотите найти?"
+        label="Какой исследовательский вопрос нужно разобрать?"
         htmlFor="document-question"
-        hint="Например: «Какие ПАВ показали устойчивость эмульсии при pH 5–7?»"
+        hint="Вопрос и выбранные PDF будут переданы в Synapse для исследовательского workflow."
         error={questionError}
         required
       >
@@ -543,9 +659,9 @@ const DocumentsWorkspace = () => {
           id="document-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Сформулируйте вопрос, на который нужно найти подтверждение в документах"
+          placeholder="Сформулируйте вопрос для исследования по выбранным документам"
           rows={4}
-          disabled={isSearching}
+          disabled={isSearching || isResearchStarting}
         />
       </Field>
       {searchError && (
@@ -553,17 +669,31 @@ const DocumentsWorkspace = () => {
           {searchError}
         </p>
       )}
+      {researchError && (
+        <p className={scss.selectionError} role="alert">
+          {researchError}
+        </p>
+      )}
       <div className={scss.questionActions}>
         <Button
           type="submit"
-          disabled={isSearching || !selectedDocumentIds.length}
+          disabled={isSearching || isResearchStarting || !selectedDocumentIds.length}
         >
-          {isSearching
-            ? "Ищем фрагменты…"
-            : "Найти подтверждающие фрагменты"}
+          {isResearchStarting
+            ? "Передаём исследование в Synapse…"
+            : "Запустить исследование в Synapse"}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => void handleLocalSearch()}
+          disabled={isSearching || isResearchStarting || !selectedDocumentIds.length}
+        >
+          {isSearching ? "Ищем фрагменты…" : "Найти фрагменты локально"}
         </Button>
         <span>
-          Будет показано до {SEARCH_LIMIT} наиболее релевантных фрагментов.
+          В Synapse уйдут {selectedDocumentIds.length} выбранных PDF. Локальный
+          поиск покажет до {SEARCH_LIMIT} фрагментов.
         </span>
       </div>
     </form>
@@ -893,7 +1023,8 @@ const DocumentsWorkspace = () => {
                   </fieldset>
                 </article>
 
-                {(!searchResult || questionEditorState === "top") && (
+                {((!searchResult && !synapseProject) ||
+                  questionEditorState === "top") && (
                   <section
                     className={scss.panel}
                     aria-labelledby="search-question"
@@ -931,6 +1062,100 @@ const DocumentsWorkspace = () => {
               variant="inline"
               label="Ищем фрагменты в выбранных документах…"
             />
+          </section>
+        )}
+
+        {activeView === "search" && synapseProject && (
+          <section
+            className={scss.researchProject}
+            aria-live="polite"
+            aria-labelledby="synapse-research-title"
+          >
+            <div className={scss.resultsHeading}>
+              <div>
+                <p className={scss.eyebrow}>Исследование в Synapse</p>
+                <h2 id="synapse-research-title">{synapseProject.title}</h2>
+                <p className={scss.muted}>«{question}»</p>
+              </div>
+              <p
+                className={scss.researchStatus}
+                data-final={isFinalResearchStatus(synapseProject.status)}
+              >
+                {formatResearchStatus(synapseProject)}
+              </p>
+            </div>
+
+            <dl className={scss.researchMeta}>
+              <div>
+                <dt>Этап</dt>
+                <dd>{synapseProject.phase || "Подготавливается"}</dd>
+              </div>
+              <div>
+                <dt>Документов передано</dt>
+                <dd>{selectedDocumentIds.length}</dd>
+              </div>
+            </dl>
+
+            {synapseProject.resultPreview && (
+              <article className={scss.researchPreview}>
+                <h3>Ответ из Synapse</h3>
+                <p>{synapseProject.resultPreview}</p>
+              </article>
+            )}
+
+            {researchError && (
+              <p className={scss.selectionError} role="alert">
+                {researchError}
+              </p>
+            )}
+
+            <div className={scss.researchActions}>
+              {synapseProject.resultUrl && (
+                <a
+                  className={scss.researchLink}
+                  href={synapseProject.resultUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Открыть готовый ответ
+                  <span aria-hidden="true">
+                    <IconRenderer icon="externalLink" />
+                  </span>
+                </a>
+              )}
+              {synapseProject.synapseUrl && (
+                <a
+                  className={scss.researchLink}
+                  href={synapseProject.synapseUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Открыть мониторинг Synapse
+                  <span aria-hidden="true">
+                    <IconRenderer icon="externalLink" />
+                  </span>
+                </a>
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  void refreshDocumentResearch(synapseProject.projectId, true)
+                }
+                disabled={isResearchRefreshing}
+              >
+                {isResearchRefreshing ? "Обновляем…" : "Обновить статус"}
+              </Button>
+              {questionEditorState === "collapsed" && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleQuestionEditorOpen}
+                >
+                  Новый вопрос
+                </Button>
+              )}
+            </div>
           </section>
         )}
 

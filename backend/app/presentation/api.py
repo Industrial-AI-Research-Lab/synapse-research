@@ -161,6 +161,11 @@ class DocumentSearchBody(BaseModel):
     limit: int = Field(default=10, ge=1, le=20)
 
 
+class DocumentResearchBody(BaseModel):
+    query: str = Field(min_length=2, max_length=1200)
+    document_ids: list[str] = Field(min_length=1, max_length=50)
+
+
 @router.get("/documents/access-code/availability")
 def document_access_code_availability(response: Response) -> dict[str, bool]:
     """Expose whether the temporary stand-only copy action is available."""
@@ -183,7 +188,7 @@ def document_access_code(response: Response) -> dict[str, str]:
 
 
 def synapse_service() -> SynapseService:
-    return SynapseService(SynapseClient(settings()), evidence_service)
+    return SynapseService(SynapseClient(settings()), evidence_service, document_service)
 
 
 @router.get("/health")
@@ -265,6 +270,27 @@ def search_documents(body: DocumentSearchBody) -> dict[str, Any]:
         )
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/documents/research", dependencies=[Depends(require_document_access_token)])
+def start_document_research(body: DocumentResearchBody) -> dict[str, Any]:
+    try:
+        return synapse_service().start_document_research(body.query, body.document_ids)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except SynapseError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.get(
+    "/documents/research/{project_id}",
+    dependencies=[Depends(require_document_access_token)],
+)
+def document_research_project(project_id: str) -> dict[str, Any]:
+    try:
+        return synapse_service().get_project(project_id)
+    except SynapseError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @router.delete("/documents/{document_id}", dependencies=[Depends(require_document_access_token)])

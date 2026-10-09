@@ -39,3 +39,19 @@ export interface DocumentSearchResponse {
   items: DocumentSearchItem[];
   total: number;
 }
+
+export interface DocumentResearchParams {
+  query: string;
+  documentIds: string[];
+}
+
+export interface DocumentResearchProject {
+  projectId: string;
+  status: string;
+  phase: string;
+  title: string;
+  awaitingApproval: boolean;
+  resultPreview: string;
+  resultUrl: string;
+  synapseUrl: string;
+}

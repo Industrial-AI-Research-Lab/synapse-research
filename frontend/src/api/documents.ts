@@ -1,5 +1,7 @@
 import type {
   DocumentMetadata,
+  DocumentResearchParams,
+  DocumentResearchProject,
   DocumentSearchItem,
   DocumentSearchParams,
   DocumentSearchResponse,
@@ -46,6 +48,17 @@ interface IApiDocumentAccessCodeAvailability {
 
 interface IApiDocumentAccessCode {
   access_code: string;
+}
+
+interface IApiDocumentResearchProject {
+  project_id: string;
+  status: string;
+  phase: string;
+  title: string;
+  awaiting_approval: boolean;
+  result_preview: string;
+  result_url: string;
+  synapse_url: string;
 }
 
 const getRequestHeaders = (
@@ -146,6 +159,19 @@ const mapSearchItem = (
   citation: item.citation,
 });
 
+const mapResearchProject = (
+  project: IApiDocumentResearchProject,
+): DocumentResearchProject => ({
+  projectId: project.project_id,
+  status: project.status,
+  phase: project.phase,
+  title: project.title,
+  awaitingApproval: project.awaiting_approval,
+  resultPreview: project.result_preview,
+  resultUrl: project.result_url,
+  synapseUrl: project.synapse_url,
+});
+
 export const getDocuments = async (
   accessToken?: string,
 ): Promise<DocumentMetadata[]> => {
@@ -221,6 +247,37 @@ export const searchDocuments = async (
     items: response.items.map(mapSearchItem),
     total: response.total,
   };
+};
+
+export const startDocumentResearch = async (
+  params: DocumentResearchParams,
+  accessToken?: string,
+): Promise<DocumentResearchProject> => {
+  const response = await request<IApiDocumentResearchProject>(
+    "/api/documents/research",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: params.query,
+        document_ids: params.documentIds,
+      }),
+    },
+    accessToken,
+  );
+  return mapResearchProject(response);
+};
+
+export const getDocumentResearchProject = async (
+  projectId: string,
+  accessToken?: string,
+): Promise<DocumentResearchProject> => {
+  const response = await request<IApiDocumentResearchProject>(
+    `/api/documents/research/${encodeURIComponent(projectId)}`,
+    undefined,
+    accessToken,
+  );
+  return mapResearchProject(response);
 };
 
 export const getDocumentFile = async (path: string, accessToken?: string) => {

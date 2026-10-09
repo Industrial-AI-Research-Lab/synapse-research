@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     synapse_password: str = Field(default="", alias="SYNAPSE_PASSWORD")
     synapse_ui_url: str = Field(default="", alias="SYNAPSE_UI_URL")
     synapse_workflow_id: str = Field(default="", alias="SYNAPSE_WORKFLOW_ID")
+    synapse_document_workflow_id: str = Field(
+        default="", alias="SYNAPSE_DOCUMENT_WORKFLOW_ID"
+    )
+    synapse_document_run_config_id: str = Field(
+        default="", alias="SYNAPSE_DOCUMENT_RUN_CONFIG_ID"
+    )
     synapse_approval_mode: str = Field(default="human", alias="SYNAPSE_APPROVAL_MODE")
     synapse_timeout: float = Field(default=30.0, alias="SYNAPSE_TIMEOUT")
     document_store_dir: Path = Field(

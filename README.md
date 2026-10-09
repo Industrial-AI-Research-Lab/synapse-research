@@ -28,6 +28,24 @@ frontend/  React 18 + TypeScript + Vite + SCSS Modules
 
 Backend сохраняет REST-контракт на `/api`: `health`, `evidence`, `analysis` и интеграцию с Synapse. Frontend обращается к нему через Vite proxy в разработке либо через `VITE_API_BASE_URL` в другом окружении.
 
+### Исследование в Synapse по выбранным документам
+
+На странице `/documents` основное действие «Запустить исследование в Synapse» передаёт вопрос и отмеченные PDF в существующий workflow Synapse. PAV не хранит учётные данные в браузере: backend создаёт проект через `POST /api/projects`, прикладывает файлы multipart-полем `files` и затем читает состояние проекта. Интерфейс PAV показывает этап, краткий результат и ссылки на мониторинг и опубликованный результат, если workflow создал его deployment.
+
+Для DevStand нужны отдельные API-учётные данные Synapse (вход в Edge сам по себе их не передаёт backend'у PAV):
+
+```dotenv
+SYNAPSE_URL=https://dev.synapse.bonpp.com
+SYNAPSE_UI_URL=https://dev.synapse.bonpp.com
+SYNAPSE_USER=<email сервисного пользователя DevStand>
+SYNAPSE_PASSWORD=<пароль или пароль приложения>
+SYNAPSE_WORKFLOW_ID=<обычный workflow для существующей интеграции>
+SYNAPSE_DOCUMENT_WORKFLOW_ID=<UUID workflow из DevStand>
+SYNAPSE_DOCUMENT_RUN_CONFIG_ID=agent-owned-models
+```
+
+`SYNAPSE_DOCUMENT_WORKFLOW_ID` позволяет не менять текущий обычный workflow: именно он должен указывать на workflow, который собирает исследовательский ответ. `SYNAPSE_DOCUMENT_RUN_CONFIG_ID=agent-owned-models` сохраняет модели, заданные агентами workflow, вместо дефолтной модели тенанта. После изменения `.env` перезапустите backend. Файлы выбранного корпуса будут отправлены в DevStand при каждом запуске исследования.
+
 ## Открытые источники
 
 Страница «Каталог источников» (`/sources`) при каждом открытии вызывает `GET /api/public-sources`: сервис проверяет ссылки из курируемого каталога и ищет свежие русско- и англоязычные библиографические записи в открытом каталоге Crossref. Поиск строится вокруг ПАВ и химических методов увеличения нефтеотдачи: керновых опытов, ПАВ-полимерного и щёлочь‑ПАВ‑полимерного заводнения, адсорбции, межфазного натяжения и реологии. Источники открываются по ссылке в отдельной вкладке.
