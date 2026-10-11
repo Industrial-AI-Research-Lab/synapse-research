@@ -31,6 +31,8 @@ const SEARCH_LIMIT = 10;
 const MAX_SELECTED_DOCUMENTS = 50;
 const MAX_VISIBLE_SELECTED_FILES = 4;
 const RESEARCH_POLLING_INTERVAL = 5_000;
+const SUPPORTED_DOCUMENT_ACCEPT =
+  ".pdf,.json,.jsonl,.ndjson,.csv,.tsv,.xml,.tei,.jats,.nxml,.html,.htm,.txt,.md,.ris,.bib";
 
 type WorkspaceView = "documents" | "search";
 type QuestionEditorState = "top" | "collapsed";
@@ -101,6 +103,31 @@ const formatDocumentCount = (count: number) => {
   }
 
   return `${count} документов`;
+};
+
+const getDocumentExtension = (filename: string) => {
+  const dotIndex = filename.lastIndexOf(".");
+
+  return dotIndex >= 0 ? filename.slice(dotIndex).toLowerCase() : "";
+};
+
+const isPdfFilename = (filename: string) =>
+  getDocumentExtension(filename) === ".pdf";
+
+const formatDocumentUnits = (document: DocumentMetadata) => {
+  const extension = getDocumentExtension(document.filename);
+
+  if (extension === ".pdf") return `${document.pageCount} стр.`;
+
+  if ([".json", ".jsonl", ".ndjson", ".ris", ".bib"].includes(extension)) {
+    return `${document.pageCount} записей`;
+  }
+
+  if ([".csv", ".tsv"].includes(extension)) {
+    return `${document.pageCount} строк`;
+  }
+
+  return `${document.pageCount} фрагмент${document.pageCount === 1 ? "" : "ов"}`;
 };
 
 const copyText = async (value: string) => {
@@ -350,7 +377,7 @@ const DocumentsWorkspace = () => {
     setUploadSuccess(undefined);
 
     if (!selectedFiles.length) {
-      setUploadError("Выберите хотя бы один PDF-файл для загрузки.");
+      setUploadError("Выберите хотя бы один файл для загрузки.");
       return;
     }
 
@@ -368,7 +395,7 @@ const DocumentsWorkspace = () => {
           message:
             error instanceof Error
               ? error.message
-              : "Не удалось загрузить PDF-файл.",
+              : "Не удалось загрузить файл.",
         });
       }
     }
@@ -493,7 +520,7 @@ const DocumentsWorkspace = () => {
     }
 
     if (!documents?.length) {
-      setSearchError("Сначала загрузите хотя бы один PDF-файл.");
+      setSearchError("Сначала загрузите хотя бы один документ.");
       return;
     }
 
@@ -539,7 +566,7 @@ const DocumentsWorkspace = () => {
     }
 
     if (!documents?.length) {
-      setResearchError("Сначала загрузите хотя бы один PDF-файл.");
+      setResearchError("Сначала загрузите хотя бы один документ.");
       return;
     }
 
@@ -618,7 +645,8 @@ const DocumentsWorkspace = () => {
 
   const handleOpenSource = async (citation: DocumentCitation) => {
     setSourceError(undefined);
-    const sourceWindow = window.open("", "_blank");
+    const isPdf = isPdfFilename(citation.document);
+    const sourceWindow = isPdf ? window.open("", "_blank") : undefined;
 
     setIsOpeningSource(true);
     try {
@@ -643,7 +671,7 @@ const DocumentsWorkspace = () => {
       setSourceError(
         error instanceof Error
           ? error.message
-          : "Не удалось открыть исходный PDF-файл.",
+          : "Не удалось открыть или скачать исходный файл.",
       );
     } finally {
       setIsOpeningSource(false);
@@ -660,7 +688,7 @@ const DocumentsWorkspace = () => {
       <Field
         label="Какой исследовательский вопрос нужно разобрать?"
         htmlFor="document-question"
-        hint="Вопрос и выбранные PDF будут переданы в Synapse для исследовательского workflow."
+        hint="Вопрос и выбранные файлы будут переданы в Synapse для исследовательского workflow."
         error={questionError}
         required
       >
@@ -702,7 +730,7 @@ const DocumentsWorkspace = () => {
           {isSearching ? "Ищем фрагменты…" : "Найти фрагменты локально"}
         </Button>
         <span>
-          В Synapse уйдут {selectedDocumentIds.length} выбранных PDF. Локальный
+          В Synapse уйдут {selectedDocumentIds.length} выбранных файлов. Локальный
           поиск покажет до {SEARCH_LIMIT} фрагментов.
         </span>
       </div>
@@ -781,7 +809,7 @@ const DocumentsWorkspace = () => {
       <header className={scss.header}>
         <h1>Поиск по документам</h1>
         <p className={scss.lead}>
-          Загрузите PDF-документы, выберите, где искать, и задайте вопрос.
+          Загрузите документы, выберите, где искать, и задайте вопрос.
           Сервис найдёт подходящие фрагменты из первоисточников.
         </p>
       </header>
@@ -852,9 +880,9 @@ const DocumentsWorkspace = () => {
               </div>
               <form className={scss.uploadForm} onSubmit={handleUpload}>
                 <Field
-                  label="Выберите PDF-файлы"
+                  label="Выберите файлы"
                   htmlFor="document-upload"
-                  hint="Поддерживаются PDF. Можно выбрать несколько файлов. После загрузки их текст будет доступен для поиска."
+                  hint="Поддерживаются PDF, JSON/JSONL, CSV/TSV, XML (JATS/TEI), HTML, TXT/MD, RIS и BibTeX. Можно выбрать несколько файлов. После загрузки текст будет доступен для поиска."
                   error={uploadError}
                   required
                 >
@@ -863,7 +891,7 @@ const DocumentsWorkspace = () => {
                     id="document-upload"
                     className={scss.fileInput}
                     type="file"
-                    accept="application/pdf,.pdf"
+                    accept={SUPPORTED_DOCUMENT_ACCEPT}
                     multiple
                     onChange={handleFileChange}
                     disabled={isUploading || isDocumentsLoading}
@@ -872,7 +900,7 @@ const DocumentsWorkspace = () => {
                 {selectedFiles.length > 0 && (
                   <section
                     className={scss.selectedFiles}
-                    aria-label="Выбранные PDF-файлы"
+                    aria-label="Выбранные файлы"
                     aria-live="polite"
                   >
                     <div className={scss.selectedFilesHeading}>
@@ -914,7 +942,7 @@ const DocumentsWorkspace = () => {
                   >
                     {isUploading
                       ? "Добавляем файлы…"
-                      : `Загрузить PDF${selectedFiles.length > 1 ? ` (${selectedFiles.length})` : ""}`}
+                      : `Загрузить файлы${selectedFiles.length > 1 ? ` (${selectedFiles.length})` : ""}`}
                   </Button>
                 </div>
                 {uploadSuccess && (
@@ -1009,7 +1037,7 @@ const DocumentsWorkspace = () => {
                                   <span>
                                     {formatFileSize(document.sizeBytes)}
                                   </span>
-                                  <span>{document.pageCount} стр.</span>
+                                  <span>{formatDocumentUnits(document)}</span>
                                   <span>
                                     {document.textPageCount} с текстом
                                   </span>
@@ -1069,8 +1097,8 @@ const DocumentsWorkspace = () => {
               >
                 <h2 id="search-empty">Сначала загрузите документы</h2>
                 <p>
-                  Добавьте PDF со статьёй, отчётом или технической
-                  документацией, чтобы начать поиск.
+                  Добавьте статью, выгрузку библиографической базы или техническую
+                  документацию в поддерживаемом формате, чтобы начать поиск.
                 </p>
                 <Button type="button" onClick={handleDocumentsViewOpen}>
                   Загрузить документы

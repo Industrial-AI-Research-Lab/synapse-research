@@ -10,7 +10,6 @@ from backend.app.application.document_service import (
     DocumentCapacityError,
     DocumentTooLargeError,
     StagedDocument,
-    UnsupportedDocumentError,
 )
 
 
@@ -18,7 +17,6 @@ class JsonDocumentRepository:
     """Single-process local adapter for a small, persistent document corpus."""
 
     _COPY_CHUNK_BYTES = 64 * 1024
-    _PDF_HEADER_SCAN_BYTES = 1024
 
     def __init__(self, store_dir: Path) -> None:
         self._store_dir = store_dir
@@ -52,7 +50,6 @@ class JsonDocumentRepository:
         temporary_path = self._temporary_dir / f"{document_id}.uploading"
         digest = hashlib.sha256()
         size_bytes = 0
-        header = bytearray()
 
         try:
             with temporary_path.open("xb") as destination:
@@ -63,17 +60,11 @@ class JsonDocumentRepository:
                     size_bytes += len(part)
                     if size_bytes > max_upload_bytes:
                         raise DocumentTooLargeError(
-                            f"Размер PDF превышает лимит {max_upload_bytes // (1024 * 1024)} МБ."
+                            f"Размер файла превышает лимит {max_upload_bytes // (1024 * 1024)} МБ."
                         )
-                    if len(header) < self._PDF_HEADER_SCAN_BYTES:
-                        header.extend(part[: self._PDF_HEADER_SCAN_BYTES - len(header)])
-                        if len(header) >= 5 and b"%PDF-" not in header:
-                            raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
                     digest.update(part)
                     destination.write(part)
 
-            if not header or b"%PDF-" not in header:
-                raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
             return StagedDocument(
                 document_id=document_id,
                 path=temporary_path,

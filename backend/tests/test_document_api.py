@@ -10,8 +10,10 @@ from backend.app.application.document_service import (
     DocumentLimits,
     DocumentService,
     ExtractedPdf,
+    UnsupportedDocumentError,
 )
 from backend.app.infrastructure.document_repository import JsonDocumentRepository
+from backend.app.infrastructure.multiformat_text_extractor import MultiFormatTextExtractor
 from backend.app.main import app
 from backend.app.presentation import api
 
@@ -20,8 +22,27 @@ class FakeExtractor:
     def __init__(self, pages: list[tuple[int, str]]) -> None:
         self._pages = pages
 
-    def extract(self, path, *, max_pages, max_extracted_chars, max_page_content_bytes):
-        del path, max_pages, max_extracted_chars, max_page_content_bytes
+    def validate_filename(self, filename: str) -> None:
+        if not filename.endswith(".pdf"):
+            raise UnsupportedDocumentError("Можно загрузить только PDF-файл.")
+
+    def media_type(self, filename: str) -> str:
+        del filename
+        return "application/pdf"
+
+    def extract(
+        self,
+        path,
+        *,
+        filename,
+        max_pages,
+        max_records,
+        max_extracted_chars,
+        max_page_content_bytes,
+    ):
+        del filename, max_pages, max_records, max_extracted_chars, max_page_content_bytes
+        if not path.read_bytes().startswith(b"%PDF-"):
+            raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
         return ExtractedPdf(page_count=len(self._pages), pages=self._pages)
 
 
@@ -36,6 +57,22 @@ def make_service(tmp_path, *, max_upload_bytes: int = 1024) -> DocumentService:
         ),
         DocumentLimits(
             max_upload_bytes=max_upload_bytes,
+            max_documents=3,
+            max_pages=10,
+            max_extracted_chars=10_000,
+            chunk_chars=120,
+            chunk_overlap_chars=20,
+            max_page_content_bytes=1024,
+        ),
+    )
+
+
+def make_multiformat_service(tmp_path) -> DocumentService:
+    return DocumentService(
+        JsonDocumentRepository(tmp_path / "documents"),
+        MultiFormatTextExtractor(),
+        DocumentLimits(
+            max_upload_bytes=1024,
             max_documents=3,
             max_pages=10,
             max_extracted_chars=10_000,
@@ -130,6 +167,33 @@ def test_document_routes_map_invalid_size_and_unknown_documents(client_with_docu
     )
     assert unknown_search.status_code == 404
     assert client_with_document_store.get("/api/documents/DOC-UNKNOWN/file").status_code == 404
+
+
+def test_document_routes_upload_and_download_jsonl_as_an_attachment(monkeypatch, tmp_path):
+    monkeypatch.setattr(api, "document_service", make_multiformat_service(tmp_path))
+    client = TestClient(app)
+    content = b'{"title":"Surfactant study","abstract":"IFT result"}\n'
+
+    response = client.post(
+        "/api/documents",
+        files={
+            "file": (
+                "02-schrammllsurfactantsfunda.jsonl",
+                content,
+                "application/x-ndjson",
+            )
+        },
+    )
+
+    assert response.status_code == 201
+    uploaded = response.json()
+    assert uploaded["page_count"] == 1
+
+    file_response = client.get(f"/api/documents/{uploaded['id']}/file")
+    assert file_response.status_code == 200
+    assert file_response.headers["content-type"].startswith("application/json")
+    assert file_response.headers["content-disposition"].startswith("attachment;")
+    assert file_response.content == content
 
 
 @pytest.mark.parametrize(

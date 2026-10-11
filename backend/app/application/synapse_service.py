@@ -15,6 +15,7 @@ class SynapseAttachment:
 
     filename: str
     path: Path
+    media_type: str
 
 
 class SynapseGateway(Protocol):
@@ -55,6 +56,7 @@ class SynapseService:
                 SynapseAttachment(
                     filename=str(document["filename"]),
                     path=Path(document["path"]),
+                    media_type=str(document["media_type"]),
                 )
             )
 
@@ -89,8 +91,8 @@ def _document_research_brief(
     filenames = ", ".join(attachment.filename for attachment in attachments)
     return (
         "Подготовь исследовательский ответ на вопрос пользователя. "
-        "Используй вложенные PDF-файлы как первоисточники; отдели подтверждённые "
-        "выводы от ограничений и приводи ссылки на файл и страницу.\n\n"
+        "Используй вложенные документы как первоисточники; отдели подтверждённые "
+        "выводы от ограничений и приводи ссылки на файл и доступную позицию в нём.\n\n"
         f"Вопрос пользователя: {question}\n"
         f"Вложенные документы: {filenames}"
     )

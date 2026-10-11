@@ -56,6 +56,11 @@ class Settings(BaseSettings):
         gt=0,
         alias="DOCUMENT_MAX_PAGES",
     )
+    document_max_records: int = Field(
+        default=100_000,
+        gt=0,
+        alias="DOCUMENT_MAX_RECORDS",
+    )
     document_max_extracted_chars: int = Field(
         default=2_000_000,
         gt=0,

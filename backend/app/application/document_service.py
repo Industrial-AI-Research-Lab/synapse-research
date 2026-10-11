@@ -14,7 +14,7 @@ class DocumentError(Exception):
 
 
 class UnsupportedDocumentError(DocumentError):
-    """Raised when an upload is not a PDF document."""
+    """Raised when an upload uses a format the corpus cannot index."""
 
 
 class DocumentTooLargeError(DocumentError):
@@ -30,11 +30,11 @@ class DocumentCapacityError(DocumentError):
 
 
 class DocumentExtractionError(DocumentError):
-    """Raised when a PDF cannot be read safely."""
+    """Raised when an uploaded document cannot be read safely."""
 
 
 class DocumentTextUnavailableError(DocumentError):
-    """Raised for scans or documents without extractable embedded text."""
+    """Raised for documents without extractable text."""
 
 
 class DocumentNotFoundError(DocumentError):
@@ -50,6 +50,7 @@ class DocumentLimits:
     chunk_chars: int
     chunk_overlap_chars: int
     max_page_content_bytes: int
+    max_records: int = 100_000
 
 
 @dataclass(frozen=True)
@@ -61,9 +62,14 @@ class StagedDocument:
 
 
 @dataclass(frozen=True)
-class ExtractedPdf:
+class ExtractedDocument:
     page_count: int
     pages: list[tuple[int, str]]
+    location_label: str = "стр."
+
+
+# Compatibility alias for integrations built before non-PDF formats were added.
+ExtractedPdf = ExtractedDocument
 
 
 class DocumentRepository(Protocol):
@@ -99,15 +105,21 @@ class DocumentRepository(Protocol):
     def file_path(self, document_id: str) -> Path | None: ...
 
 
-class PdfTextExtractor(Protocol):
+class DocumentTextExtractor(Protocol):
+    def validate_filename(self, filename: str) -> None: ...
+
+    def media_type(self, filename: str) -> str: ...
+
     def extract(
         self,
         path: Path,
         *,
+        filename: str,
         max_pages: int,
+        max_records: int,
         max_extracted_chars: int,
         max_page_content_bytes: int,
-    ) -> ExtractedPdf: ...
+    ) -> ExtractedDocument: ...
 
 
 class DocumentService:
@@ -116,7 +128,7 @@ class DocumentService:
     def __init__(
         self,
         repository: DocumentRepository,
-        extractor: PdfTextExtractor,
+        extractor: DocumentTextExtractor,
         limits: DocumentLimits,
     ) -> None:
         if limits.chunk_overlap_chars >= limits.chunk_chars:
@@ -132,8 +144,9 @@ class DocumentService:
         content_type: str | None,
         source: BinaryIO,
     ) -> dict[str, Any]:
-        del content_type  # MIME is advisory; the repository checks PDF bytes.
-        display_name = self._safe_pdf_filename(filename)
+        del content_type  # MIME is advisory; parsers validate the file contents.
+        display_name = self._safe_filename(filename)
+        self._extractor.validate_filename(display_name)
         document_id = f"DOC-{uuid4().hex[:12].upper()}"
         staged: StagedDocument | None = None
         committed = False
@@ -149,7 +162,9 @@ class DocumentService:
             )
             extracted = self._extractor.extract(
                 staged.path,
+                filename=display_name,
                 max_pages=self._limits.max_pages,
+                max_records=self._limits.max_records,
                 max_extracted_chars=self._limits.max_extracted_chars,
                 max_page_content_bytes=self._limits.max_page_content_bytes,
             )
@@ -166,14 +181,17 @@ class DocumentService:
             ]
             if not chunks:
                 raise DocumentTextUnavailableError(
-                    "В PDF не найден извлекаемый текст. Для сканированных документов потребуется OCR."
+                    "В документе не найден извлекаемый текст. Для сканированных PDF потребуется OCR."
                 )
 
             now = datetime.now(timezone.utc).isoformat()
+            suffix = Path(display_name).suffix.lower()
             document = {
                 "id": document_id,
                 "filename": display_name,
-                "stored_filename": f"{document_id}.pdf",
+                "stored_filename": f"{document_id}{suffix}",
+                "media_type": self._extractor.media_type(display_name),
+                "location_label": extracted.location_label,
                 "uploaded_at": now,
                 "sha256": staged.sha256,
                 "size_bytes": staged.size_bytes,
@@ -232,7 +250,10 @@ class DocumentService:
                 "score": item["score"],
                 "citation": {
                     "document": item["document_name"],
-                    "location": f"стр. {item['page']}",
+                    "location": (
+                        f"{documents[item['document_id']].get('location_label', 'стр.')} "
+                        f"{item['page']}"
+                    ),
                     "url": f"/api/documents/{item['document_id']}/file#page={item['page']}",
                 },
             }
@@ -245,14 +266,20 @@ class DocumentService:
         file_path = self._repository.file_path(document_id)
         if document is None or file_path is None:
             raise DocumentNotFoundError("Документ не найден.")
-        return {"path": file_path, "filename": str(document["filename"])}
+        return {
+            "path": file_path,
+            "filename": str(document["filename"]),
+            "media_type": str(document.get("media_type") or "application/pdf"),
+            "is_inline_safe": str(document.get("media_type") or "application/pdf")
+            == "application/pdf",
+        }
 
     @staticmethod
-    def _safe_pdf_filename(filename: str | None) -> str:
+    def _safe_filename(filename: str | None) -> str:
         value = (filename or "").replace("\\", "/").split("/")[-1].strip()
         value = "".join(char for char in value if char.isprintable())[:240]
-        if not value or not value.casefold().endswith(".pdf"):
-            raise UnsupportedDocumentError("Можно загрузить только PDF-файл.")
+        if not value or not Path(value).suffix:
+            raise UnsupportedDocumentError("Укажите файл с поддерживаемым расширением.")
         return value
 
     @staticmethod

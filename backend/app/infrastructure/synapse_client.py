@@ -99,7 +99,7 @@ class SynapseClient:
                         (
                             attachment.filename,
                             stack.enter_context(attachment.path.open("rb")),
-                            "application/pdf",
+                            attachment.media_type,
                         ),
                     )
                     for attachment in attachments
@@ -108,7 +108,7 @@ class SynapseClient:
                     "POST", "/api/projects", data=payload, files=files
                 )
         except OSError as exc:
-            raise SynapseError("Не удалось подготовить PDF для отправки в Synapse.") from exc
+            raise SynapseError("Не удалось подготовить документы для отправки в Synapse.") from exc
         return response.json()
 
     def get_project(self, project_id: str) -> dict[str, Any]:

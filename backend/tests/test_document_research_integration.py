@@ -21,7 +21,11 @@ class _DocumentStore:
     def open_file(self, document_id: str) -> dict[str, object]:
         self.opened.append(document_id)
         path = self._files[document_id]
-        return {"path": path, "filename": path.name}
+        return {
+            "path": path,
+            "filename": path.name,
+            "media_type": "application/pdf",
+        }
 
 
 class _RecordingSynapseGateway:
@@ -158,7 +162,14 @@ def test_synapse_client_uploads_document_research_as_multipart(
     )
 
     result = SynapseClient(config).create_document_research(
-        "Подготовь ответ", [SynapseAttachment(filename="source.pdf", path=source)]
+        "Подготовь ответ",
+        [
+            SynapseAttachment(
+                filename="source.pdf",
+                path=source,
+                media_type="application/pdf",
+            )
+        ],
     )
 
     assert result == {"id": "project-42"}

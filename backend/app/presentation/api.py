@@ -39,7 +39,7 @@ from backend.app.infrastructure.evidence_repository import JsonEvidenceRepositor
 from backend.app.infrastructure.evidence_review_repository import JsonEvidenceReviewRepository
 from backend.app.infrastructure.public_source_gateway import HttpPublicSourceGateway
 from backend.app.infrastructure.public_source_repository import JsonPublicSourceRepository
-from backend.app.infrastructure.pdf_text_extractor import PypdfTextExtractor
+from backend.app.infrastructure.multiformat_text_extractor import MultiFormatTextExtractor
 from backend.app.infrastructure.synapse_client import SynapseClient, SynapseError
 
 router = APIRouter(prefix="/api")
@@ -58,11 +58,12 @@ public_source_service = PublicSourceService(
 document_config = settings()
 document_service = DocumentService(
     JsonDocumentRepository(document_config.document_store_dir),
-    PypdfTextExtractor(),
+    MultiFormatTextExtractor(),
     DocumentLimits(
         max_upload_bytes=document_config.document_max_upload_bytes,
         max_documents=document_config.document_max_documents,
         max_pages=document_config.document_max_pages,
+        max_records=document_config.document_max_records,
         max_extracted_chars=document_config.document_max_extracted_chars,
         chunk_chars=document_config.document_chunk_chars,
         chunk_overlap_chars=document_config.document_chunk_overlap_chars,
@@ -312,9 +313,9 @@ def document_file(document_id: str) -> FileResponse:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return FileResponse(
         item["path"],
-        media_type="application/pdf",
+        media_type=item["media_type"],
         filename=item["filename"],
-        content_disposition_type="inline",
+        content_disposition_type="inline" if item["is_inline_safe"] else "attachment",
         headers={
             "Cache-Control": "private, no-store",
             "X-Content-Type-Options": "nosniff",

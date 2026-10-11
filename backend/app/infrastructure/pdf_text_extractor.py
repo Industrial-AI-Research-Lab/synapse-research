@@ -6,7 +6,8 @@ from backend.app.application.document_service import (
     DocumentExtractionError,
     DocumentLimitError,
     DocumentTextUnavailableError,
-    ExtractedPdf,
+    ExtractedDocument,
+    UnsupportedDocumentError,
 )
 from backend.app.domain.document_search import normalise_text
 
@@ -18,10 +19,21 @@ class PypdfTextExtractor:
         self,
         path: Path,
         *,
+        filename: str = "",
         max_pages: int,
+        max_records: int = 0,
         max_extracted_chars: int,
         max_page_content_bytes: int,
-    ) -> ExtractedPdf:
+    ) -> ExtractedDocument:
+        del filename, max_records
+        try:
+            with path.open("rb") as source:
+                header = source.read(1024)
+        except OSError as exc:
+            raise DocumentExtractionError("Не удалось прочитать PDF.") from exc
+        if b"%PDF-" not in header:
+            raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
+
         try:
             from pypdf import PdfReader
 
@@ -67,4 +79,8 @@ class PypdfTextExtractor:
             raise DocumentTextUnavailableError(
                 "В PDF не найден извлекаемый текст. Для сканированных документов потребуется OCR."
             )
-        return ExtractedPdf(page_count=page_count, pages=extracted_pages)
+        return ExtractedDocument(
+            page_count=page_count,
+            pages=extracted_pages,
+            location_label="стр.",
+        )

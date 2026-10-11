@@ -16,6 +16,7 @@ from backend.app.application.document_service import (
     UnsupportedDocumentError,
 )
 from backend.app.infrastructure.document_repository import JsonDocumentRepository
+from backend.app.infrastructure.multiformat_text_extractor import MultiFormatTextExtractor
 
 
 class FakeExtractor:
@@ -24,8 +25,27 @@ class FakeExtractor:
         self._page_count = page_count if page_count is not None else len(pages)
         self.calls = 0
 
-    def extract(self, path, *, max_pages, max_extracted_chars, max_page_content_bytes):
-        del path, max_pages, max_extracted_chars, max_page_content_bytes
+    def validate_filename(self, filename: str) -> None:
+        if not filename.endswith(".pdf"):
+            raise UnsupportedDocumentError("Можно загрузить только PDF-файл.")
+
+    def media_type(self, filename: str) -> str:
+        del filename
+        return "application/pdf"
+
+    def extract(
+        self,
+        path,
+        *,
+        filename,
+        max_pages,
+        max_records,
+        max_extracted_chars,
+        max_page_content_bytes,
+    ):
+        del filename, max_pages, max_records, max_extracted_chars, max_page_content_bytes
+        if not path.read_bytes().startswith(b"%PDF-"):
+            raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
         self.calls += 1
         return ExtractedPdf(page_count=self._page_count, pages=self._pages)
 
@@ -150,6 +170,49 @@ def test_pdf_without_embedded_text_is_discarded(tmp_path):
 
     assert service.list_documents()["total"] == 0
     assert list((tmp_path / "documents" / "files").glob("*.pdf")) == []
+
+
+def test_jsonl_upload_indexes_each_record_with_a_record_citation(tmp_path):
+    service = DocumentService(
+        JsonDocumentRepository(tmp_path / "documents"),
+        MultiFormatTextExtractor(),
+        DocumentLimits(
+            max_upload_bytes=1024,
+            max_documents=3,
+            max_pages=1,
+            max_records=3,
+            max_extracted_chars=10_000,
+            chunk_chars=120,
+            chunk_overlap_chars=20,
+            max_page_content_bytes=1024,
+        ),
+    )
+
+    uploaded = service.upload(
+        filename="02-schrammllsurfactantsfunda.jsonl",
+        content_type="application/x-ndjson",
+        source=BytesIO(
+            b'{"title":"Surfactants fundamentals","abstract":"Background"}\n'
+            b'{"title":"EOR result","abstract":"Surfactant lowered IFT at 75 C"}\n'
+        ),
+    )
+
+    assert uploaded["filename"] == "02-schrammllsurfactantsfunda.jsonl"
+    assert uploaded["page_count"] == 2
+    assert uploaded["text_page_count"] == 2
+    assert service.open_file(uploaded["id"])["media_type"] == "application/json"
+
+    result = service.search(
+        query="surfactant IFT",
+        document_ids=[uploaded["id"]],
+        limit=10,
+    )
+
+    assert result["total"] == 2
+    assert {item["citation"]["location"] for item in result["items"]} == {
+        "запись 1",
+        "запись 2",
+    }
 
 
 def test_full_corpus_rejects_upload_before_staging_or_extraction(tmp_path):
