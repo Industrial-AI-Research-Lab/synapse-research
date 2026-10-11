@@ -440,6 +440,7 @@
 }
 
 .documentList {
+  align-content: start;
   grid-template-columns: minmax(0, 1fr);
   min-height: var(--document-list-min-height);
   max-height: var(--document-list-min-height);
