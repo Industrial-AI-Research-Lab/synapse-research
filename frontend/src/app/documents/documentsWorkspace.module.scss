@@ -375,6 +375,57 @@
   background: rgb(0 12 20 / 72%);
 }
 
+@supports (transition-behavior: allow-discrete) and (overlay: auto) {
+  .uploadDialog {
+    --dialog-duration: 180ms;
+
+    @include mixin.transition((opacity, transform, display, overlay));
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+    transition-duration: var(--dialog-duration);
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    transition-behavior: allow-discrete;
+  }
+
+  .uploadDialog[open] {
+    --dialog-duration: 240ms;
+
+    opacity: 1;
+    transform: none;
+  }
+
+  .uploadDialog::backdrop {
+    @include mixin.transition((opacity, display, overlay));
+    opacity: 0;
+    transition-duration: var(--dialog-duration);
+    transition-behavior: allow-discrete;
+  }
+
+  .uploadDialog[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .uploadDialog[open] {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.98);
+    }
+
+    .uploadDialog[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .uploadDialog,
+    .uploadDialog[open] {
+      --dialog-duration: 100ms;
+
+      transform: none;
+    }
+  }
+}
+
 .uploadDialogBody {
   max-height: calc(100dvh - 2rem);
   padding: 1.5rem;
