@@ -30,7 +30,7 @@ import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 
 const SEARCH_LIMIT = 10;
 const MAX_SELECTED_DOCUMENTS = 50;
-const MIN_VISIBLE_SELECTED_FILES = 3;
+const MIN_VISIBLE_LIST_ITEMS = 3;
 const RESEARCH_POLLING_INTERVAL = 5_000;
 const SUPPORTED_DOCUMENT_ACCEPT =
   ".pdf,.json,.jsonl,.ndjson,.csv,.tsv,.xml,.tei,.jats,.nxml,.html,.htm,.txt,.md,.ris,.bib";
@@ -157,6 +157,9 @@ const DocumentsWorkspace = () => {
   const workspaceRef = useRef<HTMLElement>(null);
   const uploadPanelRef = useRef<HTMLElement>(null);
   const selectedFilesListRef = useRef<HTMLUListElement>(null);
+  const documentSelectionPanelRef = useRef<HTMLElement>(null);
+  const documentListRef = useRef<HTMLUListElement>(null);
+  const questionPanelRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLElement>(null);
   const questionEditorRef = useRef<HTMLFormElement>(null);
@@ -287,16 +290,24 @@ const DocumentsWorkspace = () => {
 
   useLayoutEffect(() => {
     const workspace = workspaceRef.current;
-    const panel = uploadPanelRef.current;
-    const list = selectedFilesListRef.current;
+    const panel =
+      activeView === "documents"
+        ? uploadPanelRef.current
+        : documentSelectionPanelRef.current;
+    const list =
+      activeView === "documents"
+        ? selectedFilesListRef.current
+        : documentListRef.current;
+    const questionPanel =
+      activeView === "search" ? questionPanelRef.current : null;
 
     if (!workspace || !panel || !list || !list.children.length) return;
 
-    const updateSelectedFilesHeight = () => {
+    const updateListHeight = () => {
       const firstItem = list.children[0];
       const lastVisibleItem =
         list.children[
-          Math.min(MIN_VISIBLE_SELECTED_FILES, list.children.length) - 1
+          Math.min(MIN_VISIBLE_LIST_ITEMS, list.children.length) - 1
         ];
       const minimumHeight =
         lastVisibleItem.getBoundingClientRect().bottom -
@@ -307,27 +318,42 @@ const DocumentsWorkspace = () => {
       const workspacePadding = parseFloat(
         getComputedStyle(workspace).paddingBottom,
       );
+      const questionPanelHeight = questionPanel
+        ? questionPanel.getBoundingClientRect().height +
+          parseFloat(getComputedStyle(questionPanel.parentElement!).rowGap)
+        : 0;
       const availableHeight =
         workspace.getBoundingClientRect().bottom -
         workspacePadding -
         listBounds.top -
-        controlsHeight;
+        controlsHeight -
+        questionPanelHeight;
 
       list.style.setProperty(
-        "--selected-files-max-height",
+        "--list-max-height",
         `${Math.max(minimumHeight, availableHeight)}px`,
       );
-      setHasSelectedFilesOverflow(list.scrollHeight > list.clientHeight);
+      if (activeView === "documents") {
+        setHasSelectedFilesOverflow(list.scrollHeight > list.clientHeight);
+      }
     };
 
-    const observer = new ResizeObserver(updateSelectedFilesHeight);
+    const observer = new ResizeObserver(updateListHeight);
     observer.observe(workspace);
     observer.observe(panel);
     observer.observe(list);
-    updateSelectedFilesHeight();
+    if (questionPanel) observer.observe(questionPanel);
+    updateListHeight();
 
     return () => observer.disconnect();
-  }, [activeView, documentsError, selectedFiles]);
+  }, [
+    activeView,
+    documents,
+    documentsError,
+    hasSearchOutput,
+    questionEditorState,
+    selectedFiles,
+  ]);
 
   useEffect(() => {
     if (!documentsError || documents) return;
@@ -1039,7 +1065,7 @@ const DocumentsWorkspace = () => {
           <section className={scss.searchWorkspace} aria-label="Поиск">
             {documents?.length ? (
               <>
-                <article className={`${scss.panel} ${scss.selectionPanel}`}>
+                <article ref={documentSelectionPanelRef} className={scss.panel}>
                   <div className={scss.sectionHeading}>
                     <div>
                       <h2>Выберите документы для поиска</h2>
@@ -1071,7 +1097,7 @@ const DocumentsWorkspace = () => {
                         {selectionError}
                       </p>
                     )}
-                    <ul className={scss.documentList}>
+                    <ul ref={documentListRef} className={scss.documentList}>
                       {documents.map((document) => {
                         const checkboxId = `document-${document.id}`;
                         const isSelected = selectedDocumentIds.includes(
@@ -1145,6 +1171,7 @@ const DocumentsWorkspace = () => {
                 {((!searchResult && !synapseProject) ||
                   questionEditorState === "top") && (
                   <section
+                    ref={questionPanelRef}
                     className={scss.panel}
                     aria-labelledby="search-question"
                   >
