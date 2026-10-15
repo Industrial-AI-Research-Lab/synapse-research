@@ -167,9 +167,6 @@ const copyText = async (value: string) => {
 };
 
 const DocumentsWorkspace = () => {
-  const isButtonComparison =
-    import.meta.env.DEV &&
-    new URLSearchParams(window.location.search).get("button-preview") === "compare";
   const workspaceRef = useRef<HTMLElement>(null);
   const uploadDialogRef = useRef<HTMLDialogElement>(null);
   const isUploadInFlightRef = useRef(false);
@@ -841,39 +838,6 @@ const DocumentsWorkspace = () => {
     }
   };
 
-  const renderQuestionActions = () => (
-    <div className={scss.questionActions}>
-      <Button
-        className={scss.synapseButton}
-        type="submit"
-        disabled={
-          isSearching || isResearchStarting || !selectedDocumentIds.length
-        }
-      >
-        {isResearchStarting
-          ? "Передаём исследование в Synapse…"
-          : "Запустить исследование в Synapse"}
-        <span className={scss.synapseButtonIcon} aria-hidden="true">
-          <IconRenderer icon="synapseResearch" />
-        </span>
-      </Button>
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => void handleLocalSearch()}
-        disabled={
-          isSearching || isResearchStarting || !selectedDocumentIds.length
-        }
-      >
-        {isSearching ? "Ищем фрагменты…" : "Найти фрагменты локально"}
-      </Button>
-      <span>
-        В Synapse уйдут {selectedDocumentIds.length} выбранных файлов.
-        Локальный поиск покажет до {SEARCH_LIMIT} фрагментов.
-      </span>
-    </div>
-  );
-
   const renderQuestionForm = () => (
     <form
       ref={questionEditorRef}
@@ -908,37 +872,36 @@ const DocumentsWorkspace = () => {
           {researchError}
         </p>
       )}
-      {isButtonComparison ? (
-        <section
-          id="button-colour-comparison"
-          className={scss.buttonComparison}
-          aria-label="Сравнение цветов кнопок"
+      <div className={scss.questionActions}>
+        <Button
+          className={scss.synapseButton}
+          type="submit"
+          disabled={
+            isSearching || isResearchStarting || !selectedDocumentIds.length
+          }
         >
-          <section
-            className={scss.amberActions}
-            aria-labelledby="amber-buttons-title"
-          >
-            <h3 id="amber-buttons-title">Янтарный из логотипа</h3>
-            {renderQuestionActions()}
-          </section>
-          <section
-            className={scss.deepOrangeActions}
-            aria-labelledby="orange-buttons-title"
-          >
-            <h3 id="orange-buttons-title">Глубокий оранжевый</h3>
-            {renderQuestionActions()}
-          </section>
-          <section
-            className={scss.blueActions}
-            aria-labelledby="blue-buttons-title"
-          >
-            <h3 id="blue-buttons-title">Холодный синий</h3>
-            {renderQuestionActions()}
-          </section>
-        </section>
-      ) : (
-        renderQuestionActions()
-      )}
+          {isResearchStarting
+            ? "Передаём исследование в Synapse…"
+            : "Запустить исследование в Synapse"}
+          <span className={scss.synapseButtonIcon} aria-hidden="true">
+            <IconRenderer icon="synapseResearch" />
+          </span>
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => void handleLocalSearch()}
+          disabled={
+            isSearching || isResearchStarting || !selectedDocumentIds.length
+          }
+        >
+          {isSearching ? "Ищем фрагменты…" : "Найти фрагменты локально"}
+        </Button>
+        <span>
+          В Synapse уйдут {selectedDocumentIds.length} выбранных файлов.
+          Локальный поиск покажет до {SEARCH_LIMIT} фрагментов.
+        </span>
+      </div>
     </form>
   );
 

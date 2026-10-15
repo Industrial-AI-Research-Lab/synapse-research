@@ -337,63 +337,6 @@
   color: inherit;
 }
 
-.buttonComparison {
-  --color-control: #edf3f5;
-  --color-control-hover: #ffffff;
-  --color-control-pressed: #d1e0e6;
-  --color-control-border: #edf3f5;
-  --color-text: #17333e;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 2rem;
-  color: #f5f9f7;
-}
-
-.buttonComparison > section {
-  min-width: 0;
-}
-
-.buttonComparison h3 {
-  margin: 0 0 1rem;
-  font-size: 1rem;
-  font-weight: 400;
-}
-
-.buttonComparison .questionActions > span {
-  flex-basis: 100%;
-}
-
-.amberActions {
-  --color-action: #f0ba58;
-  --color-action-hover: #f7ca7a;
-  --color-action-pressed: #d9a344;
-  --color-action-text: #30220b;
-  --color-control: transparent;
-  --color-control-hover: #294451;
-  --color-control-pressed: #1c3542;
-  --color-control-border: #b4c4c6;
-  --color-text: #f5f9f7;
-}
-
-.deepOrangeActions {
-  --color-action: #bc4e10;
-  --color-action-hover: #ca5716;
-  --color-action-pressed: #a3420b;
-  --color-action-text: #ffffff;
-}
-
-.blueActions {
-  --color-action: #2563eb;
-  --color-action-hover: #326cf0;
-  --color-action-pressed: #1d4ed8;
-  --color-action-text: #ffffff;
-  --color-control: transparent;
-  --color-control-hover: #294451;
-  --color-control-pressed: #1c3542;
-  --color-control-border: #b4c4c6;
-  --color-text: #f5f9f7;
-}
-
 .uploadActions span,
 .questionActions span {
   color: var(--color-text-muted);
