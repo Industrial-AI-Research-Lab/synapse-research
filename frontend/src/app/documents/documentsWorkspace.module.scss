@@ -299,6 +299,10 @@
   align-items: center;
 }
 
+.uploadActions {
+  justify-content: flex-end;
+}
+
 .uploadStatus {
   display: flex;
   gap: 1rem;
