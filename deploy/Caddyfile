@@ -1,16 +1,6 @@
 {$CADDY_SITE_ADDRESS} {
     encode zstd gzip
 
-    # Caddy 2.10+ rejects oversized document uploads before proxying them.
-    @document_upload {
-        method POST
-        path /api/documents
-    }
-    request_body @document_upload {
-        # 20 MiB file limit plus room for the multipart envelope.
-        max_size 21MiB
-    }
-
     @api path /api/*
     reverse_proxy @api backend:8091
 

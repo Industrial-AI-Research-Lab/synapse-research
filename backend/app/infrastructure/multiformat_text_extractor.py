@@ -12,7 +12,6 @@ from xml.etree import ElementTree
 
 from backend.app.application.document_service import (
     DocumentExtractionError,
-    DocumentLimitError,
     DocumentTextExtractor,
     DocumentTextUnavailableError,
     ExtractedDocument,
@@ -114,10 +113,6 @@ class MultiFormatTextExtractor(DocumentTextExtractor):
         path: Path,
         *,
         filename: str,
-        max_pages: int,
-        max_records: int,
-        max_extracted_chars: int,
-        max_page_content_bytes: int,
     ) -> ExtractedDocument:
         document_format = self._format_for(filename)
         if document_format is None:
@@ -128,10 +123,6 @@ class MultiFormatTextExtractor(DocumentTextExtractor):
             return self._pdf_extractor.extract(
                 path,
                 filename=filename,
-                max_pages=max_pages,
-                max_records=max_records,
-                max_extracted_chars=max_extracted_chars,
-                max_page_content_bytes=max_page_content_bytes,
             )
 
         text = self._read_text(path)
@@ -146,12 +137,9 @@ class MultiFormatTextExtractor(DocumentTextExtractor):
         else:
             pages = [(1, text)]
 
-        return self._bounded_document(
+        return self._normalised_document(
             pages,
             location_label=document_format.location_label,
-            max_records=max_records,
-            max_extracted_chars=max_extracted_chars,
-            max_page_content_bytes=max_page_content_bytes,
         )
 
     @staticmethod
@@ -263,33 +251,14 @@ class MultiFormatTextExtractor(DocumentTextExtractor):
         return [(1, " ".join(root.itertext()))]
 
     @staticmethod
-    def _bounded_document(
+    def _normalised_document(
         pages: list[tuple[int, str]],
         *,
         location_label: str,
-        max_records: int,
-        max_extracted_chars: int,
-        max_page_content_bytes: int,
     ) -> ExtractedDocument:
-        if len(pages) > max_records:
-            raise DocumentLimitError(
-                f"В документе больше {max_records} записей или фрагментов — "
-                "загрузите меньший файл."
-            )
-
         extracted_pages: list[tuple[int, str]] = []
-        extracted_chars = 0
         for number, page in pages:
-            if len(page.encode("utf-8")) > max_page_content_bytes:
-                raise DocumentLimitError(
-                    "Одна из записей документа слишком велика для безопасного извлечения текста."
-                )
             normalised = normalise_text(page)
-            extracted_chars += len(normalised)
-            if extracted_chars > max_extracted_chars:
-                raise DocumentLimitError(
-                    "В документе слишком много извлекаемого текста — загрузите меньший файл."
-                )
             if normalised:
                 extracted_pages.append((number, normalised))
 

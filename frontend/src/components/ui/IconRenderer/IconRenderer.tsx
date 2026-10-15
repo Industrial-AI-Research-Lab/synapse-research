@@ -8,8 +8,11 @@ import {
 import ArrowLeftIcon from "./icons/ArrowLeft";
 import ArrowRightIcon from "./icons/ArrowRight";
 import AnalyticsReportIcon from "./icons/AnalyticsReport";
+import CheckIcon from "./icons/Check";
+import CloseIcon from "./icons/Close";
 import CopyIcon from "./icons/Copy";
 import DownloadIcon from "./icons/Download";
+import ErrorIcon from "./icons/Error";
 import ExternalLinkIcon from "./icons/ExternalLink";
 import PavLogoIcon from "./icons/PavLogo";
 import QuestionIcon from "./icons/Question";
@@ -21,8 +24,11 @@ export type IIconRendererTypes =
   | "analyticsReport"
   | "arrowLeft"
   | "arrowRight"
+  | "check"
+  | "close"
   | "copy"
   | "download"
+  | "error"
   | "externalLink"
   | "pavLogo"
   | "question"
@@ -37,8 +43,11 @@ export const ICONS_ENUM: Record<
   analyticsReport: AnalyticsReportIcon,
   arrowLeft: ArrowLeftIcon,
   arrowRight: ArrowRightIcon,
+  check: CheckIcon,
+  close: CloseIcon,
   copy: CopyIcon,
   download: DownloadIcon,
+  error: ErrorIcon,
   externalLink: ExternalLinkIcon,
   pavLogo: PavLogoIcon,
   question: QuestionIcon,

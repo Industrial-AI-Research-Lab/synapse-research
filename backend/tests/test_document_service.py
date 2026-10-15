@@ -1,18 +1,17 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
-from typing import BinaryIO
 
 import pytest
 
 from backend.app.application.document_service import (
-    DocumentCapacityError,
-    DocumentLimits,
+    DocumentConflictError,
+    DocumentChunking,
     DocumentNotFoundError,
     DocumentService,
     DocumentTextUnavailableError,
     ExtractedPdf,
-    StagedDocument,
     UnsupportedDocumentError,
 )
 from backend.app.infrastructure.document_repository import JsonDocumentRepository
@@ -38,50 +37,21 @@ class FakeExtractor:
         path,
         *,
         filename,
-        max_pages,
-        max_records,
-        max_extracted_chars,
-        max_page_content_bytes,
     ):
-        del filename, max_pages, max_records, max_extracted_chars, max_page_content_bytes
+        del filename
         if not path.read_bytes().startswith(b"%PDF-"):
             raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
         self.calls += 1
         return ExtractedPdf(page_count=self._page_count, pages=self._pages)
 
 
-class TrackingDocumentRepository(JsonDocumentRepository):
-    def __init__(self, store_dir) -> None:
-        super().__init__(store_dir)
-        self.stage_upload_calls = 0
-
-    def stage_upload(
-        self,
-        *,
-        document_id: str,
-        source: BinaryIO,
-        max_upload_bytes: int,
-    ) -> StagedDocument:
-        self.stage_upload_calls += 1
-        return super().stage_upload(
-            document_id=document_id,
-            source=source,
-            max_upload_bytes=max_upload_bytes,
-        )
-
-
-def make_service(tmp_path, pages, *, max_documents: int = 3) -> DocumentService:
+def make_service(tmp_path, pages) -> DocumentService:
     return DocumentService(
         JsonDocumentRepository(tmp_path / "documents"),
         FakeExtractor(pages),
-        DocumentLimits(
-            max_upload_bytes=1024,
-            max_documents=max_documents,
-            max_pages=10,
-            max_extracted_chars=10_000,
+        DocumentChunking(
             chunk_chars=120,
             chunk_overlap_chars=20,
-            max_page_content_bytes=1024,
         ),
     )
 
@@ -159,7 +129,7 @@ def test_delete_document_removes_its_file_and_search_fragments(tmp_path):
 
 
 def test_pdf_without_embedded_text_is_discarded(tmp_path):
-    service = make_service(tmp_path, [], max_documents=1)
+    service = make_service(tmp_path, [])
 
     with pytest.raises(DocumentTextUnavailableError):
         service.upload(
@@ -176,15 +146,9 @@ def test_jsonl_upload_indexes_each_record_with_a_record_citation(tmp_path):
     service = DocumentService(
         JsonDocumentRepository(tmp_path / "documents"),
         MultiFormatTextExtractor(),
-        DocumentLimits(
-            max_upload_bytes=1024,
-            max_documents=3,
-            max_pages=1,
-            max_records=3,
-            max_extracted_chars=10_000,
+        DocumentChunking(
             chunk_chars=120,
             chunk_overlap_chars=20,
-            max_page_content_bytes=1024,
         ),
     )
 
@@ -215,73 +179,81 @@ def test_jsonl_upload_indexes_each_record_with_a_record_citation(tmp_path):
     }
 
 
-def test_full_corpus_rejects_upload_before_staging_or_extraction(tmp_path):
-    repository = TrackingDocumentRepository(tmp_path / "documents")
-    extractor = FakeExtractor([(1, "ПАВ и температура")])
-    service = DocumentService(
-        repository,
-        extractor,
-        DocumentLimits(
-            max_upload_bytes=1024,
-            max_documents=1,
-            max_pages=10,
-            max_extracted_chars=10_000,
-            chunk_chars=120,
-            chunk_overlap_chars=20,
-            max_page_content_bytes=1024,
-        ),
-    )
-    service.upload(
-        filename="first.pdf",
-        content_type="application/pdf",
-        source=BytesIO(valid_pdf_bytes()),
-    )
+def test_upload_accepts_more_than_one_hundred_documents(tmp_path):
+    service = make_service(tmp_path, [(1, "Surfactant result")])
 
-    with pytest.raises(DocumentCapacityError):
+    for number in range(101):
         service.upload(
-            filename="second.pdf",
+            filename=f"study-{number}.pdf",
             content_type="application/pdf",
             source=BytesIO(valid_pdf_bytes()),
         )
 
-    assert service.list_documents()["total"] == 1
-    assert len(list((tmp_path / "documents" / "files").glob("*.pdf"))) == 1
+    assert service.list_documents()["total"] == 101
+    assert len(list((tmp_path / "documents" / "files").iterdir())) == 101
     assert list((tmp_path / "documents" / "temporary").iterdir()) == []
-    assert repository.stage_upload_calls == 1
-    assert extractor.calls == 1
 
 
-def test_commit_rechecks_capacity_after_parallel_preflight_checks(tmp_path):
+def test_commit_collision_preserves_existing_file_and_index(tmp_path):
     repository = JsonDocumentRepository(tmp_path / "documents")
-    repository.ensure_capacity(max_documents=1)
-    first = repository.stage_upload(
-        document_id="DOC-FIRST",
-        source=BytesIO(valid_pdf_bytes()),
-        max_upload_bytes=1024,
-    )
-    repository.ensure_capacity(max_documents=1)
-    second = repository.stage_upload(
-        document_id="DOC-SECOND",
-        source=BytesIO(valid_pdf_bytes()),
-        max_upload_bytes=1024,
-    )
-
+    first = repository.stage_upload(document_id="DOC-FIRST", source=BytesIO(b"original"))
     repository.commit(
         staged=first,
         document={"id": "DOC-FIRST", "stored_filename": "DOC-FIRST.pdf"},
         chunks=[],
-        max_documents=1,
     )
-    try:
-        with pytest.raises(DocumentCapacityError):
-            repository.commit(
-                staged=second,
-                document={"id": "DOC-SECOND", "stored_filename": "DOC-SECOND.pdf"},
-                chunks=[],
-                max_documents=1,
-            )
-    finally:
-        repository.discard_staged(second)
+    second = repository.stage_upload(document_id="DOC-SECOND", source=BytesIO(b"replacement"))
 
-    assert len(list((tmp_path / "documents" / "files").glob("*.pdf"))) == 1
+    with pytest.raises(DocumentConflictError):
+        repository.commit(
+            staged=second,
+            document={"id": "DOC-SECOND", "stored_filename": "DOC-FIRST.pdf"},
+            chunks=[],
+        )
+    repository.discard_staged(second)
+
+    assert repository.file_path("DOC-FIRST").read_bytes() == b"original"
+    assert repository.get_document("DOC-SECOND") is None
+    assert len(repository.list_documents()) == 1
     assert list((tmp_path / "documents" / "temporary").iterdir()) == []
+
+
+def test_parallel_uploads_keep_all_documents_and_search_chunks(tmp_path):
+    service = make_service(tmp_path, [(1, "surfactant result")])
+
+    def upload(number):
+        return service.upload(
+            filename=f"study-{number}.pdf",
+            content_type="application/pdf",
+            source=BytesIO(valid_pdf_bytes()),
+        )
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        uploaded = list(executor.map(upload, range(16)))
+
+    assert {item["id"] for item in service.list_documents()["items"]} == {
+        item["id"] for item in uploaded
+    }
+    assert service.search(query="surfactant", document_ids=[], limit=20)["total"] == 16
+    assert list((tmp_path / "documents" / "temporary").iterdir()) == []
+
+
+def test_jsonl_extraction_accepts_more_than_one_hundred_thousand_records(tmp_path):
+    path = tmp_path / "records.jsonl"
+    path.write_text('{"text":"result"}\n' * 100_001, encoding="utf-8")
+
+    extracted = MultiFormatTextExtractor().extract(path, filename=path.name)
+
+    assert extracted.page_count == 100_001
+    assert len(extracted.pages) == 100_001
+    assert extracted.pages[-1] == (100_001, "text: result")
+
+
+def test_jsonl_extraction_accepts_single_record_larger_than_sixteen_mib(tmp_path):
+    path = tmp_path / "large-record.jsonl"
+    text = "x" * (16 * 1024 * 1024 + 1)
+    path.write_text('{"text":"' + text + '"}\n', encoding="utf-8")
+
+    extracted = MultiFormatTextExtractor().extract(path, filename=path.name)
+
+    assert extracted.pages == [(1, "text: " + text)]

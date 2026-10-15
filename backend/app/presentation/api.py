@@ -11,14 +11,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 
 from backend.app.application.document_service import (
-    DocumentCapacityError,
+    DocumentConflictError,
     DocumentExtractionError,
-    DocumentLimitError,
-    DocumentLimits,
+    DocumentChunking,
     DocumentNotFoundError,
     DocumentService,
     DocumentTextUnavailableError,
-    DocumentTooLargeError,
     UnsupportedDocumentError,
 )
 from backend.app.application.evidence_service import (
@@ -65,19 +63,11 @@ research_repository = SqliteResearchRepository(document_config.document_store_di
 document_service = DocumentService(
     JsonDocumentRepository(document_config.document_store_dir),
     MultiFormatTextExtractor(),
-    DocumentLimits(
-        max_upload_bytes=document_config.document_max_upload_bytes,
-        max_documents=document_config.document_max_documents,
-        max_pages=document_config.document_max_pages,
-        max_records=document_config.document_max_records,
-        max_extracted_chars=document_config.document_max_extracted_chars,
+    DocumentChunking(
         chunk_chars=document_config.document_chunk_chars,
         chunk_overlap_chars=document_config.document_chunk_overlap_chars,
-        max_page_content_bytes=document_config.document_max_page_content_bytes,
     ),
 )
-
-_DOCUMENT_MULTIPART_ENVELOPE_BYTES = 1024 * 1024
 
 
 def require_document_access_token(authorization: str | None = Header(default=None)) -> None:
@@ -105,17 +95,6 @@ def document_access_code_copy_is_available() -> bool:
         document_config.document_access_code_copy_enabled
         and document_config.document_access_token
     )
-
-
-def document_upload_content_length_exceeds_limit(content_length: str | None) -> bool:
-    """Quickly reject known oversized uploads before FastAPI parses multipart data."""
-    if content_length is None:
-        return False
-    try:
-        declared_bytes = int(content_length)
-    except ValueError:
-        return False
-    return declared_bytes > document_config.document_max_upload_bytes + _DOCUMENT_MULTIPART_ENVELOPE_BYTES
 
 
 class AnalysisBody(BaseModel):
@@ -269,13 +248,11 @@ def upload_document(file: UploadFile = File(...)) -> dict[str, Any]:
             content_type=file.content_type,
             source=file.file,
         )
-    except DocumentTooLargeError as exc:
-        raise HTTPException(status_code=413, detail=str(exc)) from exc
     except UnsupportedDocumentError as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc
-    except DocumentCapacityError as exc:
+    except DocumentConflictError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except (DocumentLimitError, DocumentExtractionError, DocumentTextUnavailableError) as exc:
+    except (DocumentExtractionError, DocumentTextUnavailableError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 

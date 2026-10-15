@@ -42,31 +42,6 @@ class Settings(BaseSettings):
         default=False,
         alias="DOCUMENT_ACCESS_CODE_COPY_ENABLED",
     )
-    document_max_upload_bytes: int = Field(
-        default=20 * 1024 * 1024,
-        gt=0,
-        alias="DOCUMENT_MAX_UPLOAD_BYTES",
-    )
-    document_max_documents: int = Field(
-        default=100,
-        gt=0,
-        alias="DOCUMENT_MAX_DOCUMENTS",
-    )
-    document_max_pages: int = Field(
-        default=200,
-        gt=0,
-        alias="DOCUMENT_MAX_PAGES",
-    )
-    document_max_records: int = Field(
-        default=100_000,
-        gt=0,
-        alias="DOCUMENT_MAX_RECORDS",
-    )
-    document_max_extracted_chars: int = Field(
-        default=2_000_000,
-        gt=0,
-        alias="DOCUMENT_MAX_EXTRACTED_CHARS",
-    )
     document_chunk_chars: int = Field(
         default=1200,
         ge=100,
@@ -76,11 +51,6 @@ class Settings(BaseSettings):
         default=150,
         ge=0,
         alias="DOCUMENT_CHUNK_OVERLAP_CHARS",
-    )
-    document_max_page_content_bytes: int = Field(
-        default=16 * 1024 * 1024,
-        gt=0,
-        alias="DOCUMENT_MAX_PAGE_CONTENT_BYTES",
     )
 
     @property

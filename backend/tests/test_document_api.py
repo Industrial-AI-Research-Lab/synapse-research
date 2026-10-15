@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.config import Settings
 from backend.app.application.document_service import (
-    DocumentLimits,
+    DocumentChunking,
     DocumentService,
     ExtractedPdf,
     UnsupportedDocumentError,
@@ -35,18 +35,14 @@ class FakeExtractor:
         path,
         *,
         filename,
-        max_pages,
-        max_records,
-        max_extracted_chars,
-        max_page_content_bytes,
     ):
-        del filename, max_pages, max_records, max_extracted_chars, max_page_content_bytes
+        del filename
         if not path.read_bytes().startswith(b"%PDF-"):
             raise UnsupportedDocumentError("Файл не похож на корректный PDF.")
         return ExtractedPdf(page_count=len(self._pages), pages=self._pages)
 
 
-def make_service(tmp_path, *, max_upload_bytes: int = 1024) -> DocumentService:
+def make_service(tmp_path) -> DocumentService:
     return DocumentService(
         JsonDocumentRepository(tmp_path / "documents"),
         FakeExtractor(
@@ -55,14 +51,9 @@ def make_service(tmp_path, *, max_upload_bytes: int = 1024) -> DocumentService:
                 (2, "ПАВ уменьшил натяжение при температуре 75 C."),
             ]
         ),
-        DocumentLimits(
-            max_upload_bytes=max_upload_bytes,
-            max_documents=3,
-            max_pages=10,
-            max_extracted_chars=10_000,
+        DocumentChunking(
             chunk_chars=120,
             chunk_overlap_chars=20,
-            max_page_content_bytes=1024,
         ),
     )
 
@@ -71,14 +62,9 @@ def make_multiformat_service(tmp_path) -> DocumentService:
     return DocumentService(
         JsonDocumentRepository(tmp_path / "documents"),
         MultiFormatTextExtractor(),
-        DocumentLimits(
-            max_upload_bytes=1024,
-            max_documents=3,
-            max_pages=10,
-            max_extracted_chars=10_000,
+        DocumentChunking(
             chunk_chars=120,
             chunk_overlap_chars=20,
-            max_page_content_bytes=1024,
         ),
     )
 
@@ -147,19 +133,12 @@ def test_document_routes_upload_list_search_and_open_source(client_with_document
     assert client_with_document_store.get(f"/api/documents/{uploaded['id']}/file").status_code == 404
 
 
-def test_document_routes_map_invalid_size_and_unknown_documents(client_with_document_store, monkeypatch, tmp_path):
+def test_document_routes_map_invalid_and_unknown_documents(client_with_document_store):
     invalid = client_with_document_store.post(
         "/api/documents",
         files={"file": ("wrong.pdf", b"plain text", "application/pdf")},
     )
     assert invalid.status_code == 415
-
-    monkeypatch.setattr(api, "document_service", make_service(tmp_path, max_upload_bytes=8))
-    oversized = client_with_document_store.post(
-        "/api/documents",
-        files={"file": ("large.pdf", b"%PDF-1.7\nmore than eight bytes", "application/pdf")},
-    )
-    assert oversized.status_code == 413
 
     unknown_search = client_with_document_store.post(
         "/api/documents/search",
@@ -167,6 +146,50 @@ def test_document_routes_map_invalid_size_and_unknown_documents(client_with_docu
     )
     assert unknown_search.status_code == 404
     assert client_with_document_store.get("/api/documents/DOC-UNKNOWN/file").status_code == 404
+
+
+@pytest.mark.parametrize("trace_enabled", [False, True])
+def test_upload_accepts_file_larger_than_twenty_mib(
+    client_with_document_store, monkeypatch, trace_enabled,
+):
+    from backend.app import main
+
+    monkeypatch.setattr(main, "settings", lambda: Settings(PAV_HTTP_TRACE_ENABLED=trace_enabled))
+    content = b"%PDF-1.7\n" + b"x" * (21 * 1024 * 1024)
+
+    response = client_with_document_store.post(
+        "/api/documents",
+        files={"file": ("large.pdf", content, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    document = response.json()
+    assert document["size_bytes"] == len(content)
+    assert client_with_document_store.get(f"/api/documents/{document['id']}/file").content == content
+    assert ("X-Request-ID" in response.headers) is trace_enabled
+
+
+def test_jsonl_upload_indexes_text_beyond_two_million_characters(monkeypatch, tmp_path):
+    monkeypatch.setattr(api, "document_service", make_multiformat_service(tmp_path))
+    client = TestClient(app)
+    text = "surfactant " * 190_000 + "finalmarker"
+    content = ('{"text":"' + text + '"}\n').encode()
+
+    response = client.post(
+        "/api/documents",
+        files={"file": ("handbook.jsonl", content, "application/x-ndjson")},
+    )
+
+    assert response.status_code == 201
+    document = response.json()
+    result = client.post(
+        "/api/documents/search",
+        json={"query": "finalmarker", "document_ids": [document["id"]]},
+    )
+    assert result.status_code == 200
+    assert result.json()["total"] >= 1
+    assert "finalmarker" in result.json()["items"][0]["excerpt"]
+    assert result.json()["items"][0]["citation"]["location"] == "запись 1"
 
 
 def test_document_routes_upload_and_download_jsonl_as_an_attachment(monkeypatch, tmp_path):
@@ -280,21 +303,6 @@ def test_document_access_code_copy_is_available_when_enabled(
     assert code.headers["cache-control"] == "no-store"
 
 
-def test_document_upload_rejects_oversized_declared_content_length_before_multipart_parsing(
-    client_with_document_store,
-):
-    response = client_with_document_store.post(
-        "/api/documents",
-        content=b"",
-        headers={
-            "content-length": str(api.document_config.document_max_upload_bytes + 1024 * 1024 + 1),
-            "content-type": "application/octet-stream",
-        },
-    )
-
-    assert response.status_code == 413
-
-
 def _minimal_text_pdf(text: str) -> bytes:
     objects = [
         "<< /Type /Catalog /Pages 2 0 R >>",
@@ -328,10 +336,25 @@ def test_pypdf_adapter_extracts_text_from_a_real_embedded_text_pdf(tmp_path):
 
     extracted = PypdfTextExtractor().extract(
         path,
-        max_pages=10,
-        max_extracted_chars=10_000,
-        max_page_content_bytes=10_000,
     )
 
     assert extracted.page_count == 1
     assert extracted.pages == [(1, "surfactant result")]
+
+
+def test_pypdf_adapter_extracts_more_than_two_hundred_pages(tmp_path):
+    pypdf = pytest.importorskip("pypdf")
+    from backend.app.infrastructure.pdf_text_extractor import PypdfTextExtractor
+
+    reader = pypdf.PdfReader(BytesIO(_minimal_text_pdf("surfactant result")))
+    writer = pypdf.PdfWriter()
+    for _ in range(201):
+        writer.add_page(reader.pages[0])
+    path = tmp_path / "handbook.pdf"
+    writer.write(path)
+
+    extracted = PypdfTextExtractor().extract(path)
+
+    assert extracted.page_count == 201
+    assert len(extracted.pages) == 201
+    assert extracted.pages[-1] == (201, "surfactant result")

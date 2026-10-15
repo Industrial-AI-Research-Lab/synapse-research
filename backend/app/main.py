@@ -7,11 +7,10 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from backend.app.config import settings
 from backend.app.observability import reset_request_id, set_request_id
-from backend.app.presentation.api import document_upload_content_length_exceeds_limit, router
+from backend.app.presentation.api import router
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +20,9 @@ app.include_router(router)
 
 
 @app.middleware("http")
-async def trace_requests_and_reject_oversized_documents(request: Request, call_next):
+async def trace_requests(request: Request, call_next):
     trace_enabled = settings().http_trace_enabled and request.url.path.startswith("/api/")
     if not trace_enabled:
-        if (
-            request.method == "POST"
-            and request.url.path == "/api/documents"
-            and document_upload_content_length_exceeds_limit(request.headers.get("content-length"))
-        ):
-            return JSONResponse(
-                status_code=413,
-                content={"detail": "Размер запроса превышает допустимый лимит загрузки документа."},
-            )
         return await call_next(request)
 
     request_id = uuid4().hex
@@ -49,17 +39,7 @@ async def trace_requests_and_reject_oversized_documents(request: Request, call_n
         )
 
     try:
-        if (
-            request.method == "POST"
-            and request.url.path == "/api/documents"
-            and document_upload_content_length_exceeds_limit(request.headers.get("content-length"))
-        ):
-            response = JSONResponse(
-                status_code=413,
-                content={"detail": "Размер запроса превышает допустимый лимит загрузки документа."},
-            )
-        else:
-            response = await call_next(request)
+        response = await call_next(request)
     except Exception:
         if trace_enabled:
             logger.exception(

@@ -17,16 +17,8 @@ class UnsupportedDocumentError(DocumentError):
     """Raised when an upload uses a format the corpus cannot index."""
 
 
-class DocumentTooLargeError(DocumentError):
-    """Raised when an upload exceeds the configured byte limit."""
-
-
-class DocumentLimitError(DocumentError):
-    """Raised when document extraction crosses a configured safety limit."""
-
-
-class DocumentCapacityError(DocumentError):
-    """Raised when the local MVP corpus is already full."""
+class DocumentConflictError(DocumentError):
+    pass
 
 
 class DocumentExtractionError(DocumentError):
@@ -42,15 +34,9 @@ class DocumentNotFoundError(DocumentError):
 
 
 @dataclass(frozen=True)
-class DocumentLimits:
-    max_upload_bytes: int
-    max_documents: int
-    max_pages: int
-    max_extracted_chars: int
+class DocumentChunking:
     chunk_chars: int
     chunk_overlap_chars: int
-    max_page_content_bytes: int
-    max_records: int = 100_000
 
 
 @dataclass(frozen=True)
@@ -73,14 +59,11 @@ ExtractedPdf = ExtractedDocument
 
 
 class DocumentRepository(Protocol):
-    def ensure_capacity(self, *, max_documents: int) -> None: ...
-
     def stage_upload(
         self,
         *,
         document_id: str,
         source: BinaryIO,
-        max_upload_bytes: int,
     ) -> StagedDocument: ...
 
     def discard_staged(self, staged: StagedDocument) -> None: ...
@@ -91,7 +74,6 @@ class DocumentRepository(Protocol):
         staged: StagedDocument,
         document: dict[str, Any],
         chunks: list[dict[str, Any]],
-        max_documents: int,
     ) -> None: ...
 
     def list_documents(self) -> list[dict[str, Any]]: ...
@@ -115,10 +97,6 @@ class DocumentTextExtractor(Protocol):
         path: Path,
         *,
         filename: str,
-        max_pages: int,
-        max_records: int,
-        max_extracted_chars: int,
-        max_page_content_bytes: int,
     ) -> ExtractedDocument: ...
 
 
@@ -129,13 +107,13 @@ class DocumentService:
         self,
         repository: DocumentRepository,
         extractor: DocumentTextExtractor,
-        limits: DocumentLimits,
+        chunking: DocumentChunking,
     ) -> None:
-        if limits.chunk_overlap_chars >= limits.chunk_chars:
+        if chunking.chunk_overlap_chars >= chunking.chunk_chars:
             raise ValueError("Перекрытие фрагментов должно быть меньше размера фрагмента.")
         self._repository = repository
         self._extractor = extractor
-        self._limits = limits
+        self._chunking = chunking
 
     def upload(
         self,
@@ -152,21 +130,13 @@ class DocumentService:
         committed = False
 
         try:
-            self._repository.ensure_capacity(
-                max_documents=self._limits.max_documents,
-            )
             staged = self._repository.stage_upload(
                 document_id=document_id,
                 source=source,
-                max_upload_bytes=self._limits.max_upload_bytes,
             )
             extracted = self._extractor.extract(
                 staged.path,
                 filename=display_name,
-                max_pages=self._limits.max_pages,
-                max_records=self._limits.max_records,
-                max_extracted_chars=self._limits.max_extracted_chars,
-                max_page_content_bytes=self._limits.max_page_content_bytes,
             )
             chunks = [
                 chunk
@@ -175,8 +145,8 @@ class DocumentService:
                     document_id=document_id,
                     page=page,
                     text=text,
-                    chunk_chars=self._limits.chunk_chars,
-                    overlap_chars=self._limits.chunk_overlap_chars,
+                    chunk_chars=self._chunking.chunk_chars,
+                    overlap_chars=self._chunking.chunk_overlap_chars,
                 )
             ]
             if not chunks:
@@ -204,7 +174,6 @@ class DocumentService:
                 staged=staged,
                 document=document,
                 chunks=chunks,
-                max_documents=self._limits.max_documents,
             )
             committed = True
             return self._public_document(document)

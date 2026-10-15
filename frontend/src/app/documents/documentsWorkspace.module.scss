@@ -345,53 +345,16 @@
   font-size: 0.875rem;
 }
 
-.deletionToast {
+.toastStack {
   position: fixed;
   right: max(1.5rem, env(safe-area-inset-right));
   top: max(1.5rem, env(safe-area-inset-top));
   z-index: var(--z-status);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
-  align-items: start;
   width: min(28rem, calc(100vw - 2rem));
-  padding: 0.875rem 0.875rem 0.875rem 1rem;
-  color: var(--color-success);
-  border: 1px solid color-mix(in srgb, var(--color-success) 55%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
-  box-shadow: var(--shadow-panel);
-}
-
-.deletionToast p {
-  overflow-wrap: anywhere;
-}
-
-.deletionToastCloseButton {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  margin: -0.25rem -0.25rem 0 0;
-  padding: 0;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-sm);
-  font: inherit;
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.deletionToastCloseButton:hover {
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
-}
-
-.deletionToastCloseButton:focus-visible {
-  outline: 0.125rem solid var(--color-accent);
-  outline-offset: 0.125rem;
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
 }
 
 .documentSelection {
@@ -908,7 +871,7 @@
     margin-left: auto;
   }
 
-  .deletionToast {
+  .toastStack {
     right: 1rem;
     top: 1rem;
   }

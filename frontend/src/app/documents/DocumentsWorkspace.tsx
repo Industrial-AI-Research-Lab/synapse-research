@@ -26,6 +26,7 @@ import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Input from "../../components/ui/Input/Input";
 import Loader from "../../components/ui/Loader/Loader";
 import Textarea from "../../components/ui/Textarea/Textarea";
+import Toast from "../../components/ui/Toast/Toast";
 import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 
 const SEARCH_LIMIT = 10;
@@ -184,7 +185,10 @@ const DocumentsWorkspace = () => {
   const [questionEditorState, setQuestionEditorState] =
     useState<QuestionEditorState>("top");
   const [documentsError, setDocumentsError] = useState<string>();
-  const [uploadError, setUploadError] = useState<string>();
+  const [uploadError, setUploadError] = useState<{
+    title: string;
+    description: string;
+  }>();
   const [uploadSuccess, setUploadSuccess] = useState<string>();
   const [questionError, setQuestionError] = useState<string>();
   const [selectionError, setSelectionError] = useState<string>();
@@ -421,16 +425,6 @@ const DocumentsWorkspace = () => {
     return () => window.cancelAnimationFrame(animationFrame);
   }, [questionEditorState]);
 
-  useEffect(() => {
-    if (!deletionNotification) return undefined;
-
-    const timeoutId = window.setTimeout(() => {
-      setDeletionNotification(undefined);
-    }, 5_000);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [deletionNotification]);
-
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(Array.from(event.target.files ?? []));
     setUploadError(undefined);
@@ -455,7 +449,10 @@ const DocumentsWorkspace = () => {
     setUploadSuccess(undefined);
 
     if (!selectedFiles.length) {
-      setUploadError("Выберите хотя бы один файл для загрузки.");
+      setUploadError({
+        title: "Файл не выбран",
+        description: "Выберите хотя бы один файл для загрузки.",
+      });
       return;
     }
 
@@ -509,8 +506,16 @@ const DocumentsWorkspace = () => {
     if (failedFiles.length) {
       setUploadError(
         failedFiles.length === 1
-          ? `Не удалось добавить «${failedFiles[0].file.name}»: ${failedFiles[0].message}`
-          : `Не удалось добавить ${failedFiles.length} из ${selectedFiles.length} файлов.`,
+          ? {
+              title: "Не удалось добавить файл",
+              description: `«${failedFiles[0].file.name}»\n${failedFiles[0].message}`,
+            }
+          : {
+              title: `Не удалось добавить ${failedFiles.length} из ${selectedFiles.length} файлов`,
+              description: failedFiles
+                .map(({ file, message }) => `«${file.name}»: ${message}`)
+                .join("\n"),
+            },
       );
     }
 
@@ -574,9 +579,7 @@ const DocumentsWorkspace = () => {
       );
       setSearchResult(undefined);
       setQuestionEditorState("top");
-      setDeletionNotification(
-        `Документ «${documentToDelete.filename}» удалён.`,
-      );
+      setDeletionNotification(`«${documentToDelete.filename}»`);
       setDocumentToDelete(undefined);
     } catch (error) {
       setDocumentDeleteError(
@@ -904,24 +907,23 @@ const DocumentsWorkspace = () => {
         </p>
       </header>
 
-      {deletionNotification && (
-        <section
-          className={scss.deletionToast}
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <p>{deletionNotification}</p>
-          <button
-            className={scss.deletionToastCloseButton}
-            type="button"
-            onClick={() => setDeletionNotification(undefined)}
-            aria-label="Закрыть уведомление об удалении документа"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
-        </section>
-      )}
+      <div className={scss.toastStack}>
+        {uploadError && (
+          <Toast
+            title={uploadError.title}
+            description={uploadError.description}
+            variant="error"
+            onClose={() => setUploadError(undefined)}
+          />
+        )}
+        {deletionNotification && (
+          <Toast
+            title="Документ удалён"
+            description={deletionNotification}
+            onClose={() => setDeletionNotification(undefined)}
+          />
+        )}
+      </div>
 
       <nav
         className={scss.viewSwitcher}
@@ -973,7 +975,6 @@ const DocumentsWorkspace = () => {
                   label="Выберите файлы"
                   htmlFor="document-upload"
                   hint="Поддерживаются PDF, JSON/JSONL, CSV/TSV, XML (JATS/TEI), HTML, TXT/MD, RIS и BibTeX. Можно выбрать несколько файлов. После загрузки текст будет доступен для поиска."
-                  error={uploadError}
                   required
                 >
                   <input

@@ -38,9 +38,10 @@ class _HttpClient:
         return _Response({"id": "project-42"})
 
 
-def test_http_trace_setting_is_disabled_by_default_and_can_be_enabled() -> None:
-    assert Settings().http_trace_enabled is False
-    assert Settings(PAV_HTTP_TRACE_ENABLED=True).http_trace_enabled is True
+def test_http_trace_setting_is_disabled_by_default_and_can_be_enabled(monkeypatch) -> None:
+    monkeypatch.delenv("PAV_HTTP_TRACE_ENABLED", raising=False)
+    assert Settings(_env_file=None).http_trace_enabled is False
+    assert Settings(_env_file=None, PAV_HTTP_TRACE_ENABLED=True).http_trace_enabled is True
 
 
 def test_http_trace_records_request_lifecycle_without_the_body(monkeypatch, caplog) -> None:
@@ -74,7 +75,7 @@ def test_http_trace_is_off_by_default(monkeypatch) -> None:
     assert "X-Request-ID" not in response.headers
 
 
-def test_http_trace_captures_rejected_oversized_upload(monkeypatch, caplog) -> None:
+def test_http_trace_preserves_validation_after_large_declared_upload(monkeypatch, caplog) -> None:
     monkeypatch.setattr(
         main,
         "settings",
@@ -91,9 +92,9 @@ def test_http_trace_captures_rejected_oversized_upload(monkeypatch, caplog) -> N
             },
         )
 
-    assert response.status_code == 413
+    assert response.status_code == 422
     assert len(response.headers["X-Request-ID"]) == 32
-    assert "status_code=413" in caplog.text
+    assert "status_code=422" in caplog.text
 
 
 def test_synapse_trace_records_destination_without_credentials_or_prompt(

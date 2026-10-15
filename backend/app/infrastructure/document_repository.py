@@ -7,8 +7,7 @@ from threading import RLock
 from typing import Any, BinaryIO
 
 from backend.app.application.document_service import (
-    DocumentCapacityError,
-    DocumentTooLargeError,
+    DocumentConflictError,
     StagedDocument,
 )
 
@@ -25,26 +24,11 @@ class JsonDocumentRepository:
         self._index_file = store_dir / "index.json"
         self._lock = RLock()
 
-    def ensure_capacity(self, *, max_documents: int) -> None:
-        """Fail before upload work when the local corpus has no free slot.
-
-        The check intentionally does not reserve a slot: extraction can be
-        expensive, and commit performs the same check again for concurrent
-        uploads that passed this preflight check together.
-        """
-        with self._lock:
-            index = self._read_index()
-            if len(index["documents"]) >= max_documents:
-                raise DocumentCapacityError(
-                    "Достигнут лимит документов локального корпуса."
-                )
-
     def stage_upload(
         self,
         *,
         document_id: str,
         source: BinaryIO,
-        max_upload_bytes: int,
     ) -> StagedDocument:
         self._ensure_directories()
         temporary_path = self._temporary_dir / f"{document_id}.uploading"
@@ -58,10 +42,6 @@ class JsonDocumentRepository:
                     if not part:
                         break
                     size_bytes += len(part)
-                    if size_bytes > max_upload_bytes:
-                        raise DocumentTooLargeError(
-                            f"Размер файла превышает лимит {max_upload_bytes // (1024 * 1024)} МБ."
-                        )
                     digest.update(part)
                     destination.write(part)
 
@@ -84,18 +64,12 @@ class JsonDocumentRepository:
         staged: StagedDocument,
         document: dict[str, Any],
         chunks: list[dict[str, Any]],
-        max_documents: int,
     ) -> None:
         with self._lock:
             index = self._read_index()
-            if len(index["documents"]) >= max_documents:
-                raise DocumentCapacityError(
-                    "Достигнут лимит документов локального корпуса."
-                )
-
             final_path = self._files_dir / str(document["stored_filename"])
             if final_path.exists():
-                raise DocumentCapacityError("Идентификатор документа уже занят.")
+                raise DocumentConflictError("Идентификатор документа уже занят.")
 
             staged.path.replace(final_path)
             index["documents"].append(document)

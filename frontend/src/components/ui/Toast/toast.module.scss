@@ -1,0 +1,117 @@
+@use "../../../styles/mixin";
+
+.root {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) 2.75rem;
+  align-items: start;
+  gap: 0.75rem;
+  overflow: hidden;
+  padding: 1rem 0.5rem 1rem 1rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.success {
+  --toast-color: var(--color-success);
+}
+
+.error {
+  --toast-color: var(--color-danger);
+}
+
+.statusIcon {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--toast-color);
+}
+
+.content {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+  padding-bottom: 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.closeButton {
+  @include mixin.transition((color, background-color));
+
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: -0.5rem;
+  padding: 0.875rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.closeButton:hover {
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+}
+
+.closeButton:active {
+  background: var(--color-border);
+}
+
+.closeButton:focus-visible {
+  outline: 0.125rem solid var(--color-accent);
+  outline-offset: -0.125rem;
+}
+
+.progressTrack {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0.1875rem;
+  background: color-mix(in srgb, var(--toast-color) 16%, transparent);
+}
+
+.progress {
+  height: 100%;
+  background: var(--toast-color);
+  transform-origin: left;
+  animation: countdown linear forwards;
+}
+
+@keyframes countdown {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closeButton {
+    transition: none;
+  }
+}
