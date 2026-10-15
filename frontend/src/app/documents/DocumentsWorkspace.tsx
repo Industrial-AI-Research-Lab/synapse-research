@@ -1,6 +1,12 @@
 import scss from "./documentsWorkspace.module.scss";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import {
@@ -36,8 +42,14 @@ const RESEARCH_POLLING_INTERVAL = 5_000;
 const SUPPORTED_DOCUMENT_ACCEPT =
   ".pdf,.json,.jsonl,.ndjson,.csv,.tsv,.xml,.tei,.jats,.nxml,.html,.htm,.txt,.md,.ris,.bib";
 
-type WorkspaceView = "documents" | "search";
 type QuestionEditorState = "top" | "collapsed";
+
+interface UploadNotification {
+  title: string;
+  description: string;
+  variant: "success" | "error" | "info";
+  documentIds?: string[];
+}
 
 const isFinalResearchStatus = (status: string) =>
   ["completed", "failed", "cancelled", "canceled"].includes(
@@ -156,8 +168,8 @@ const copyText = async (value: string) => {
 
 const DocumentsWorkspace = () => {
   const workspaceRef = useRef<HTMLElement>(null);
-  const uploadPanelRef = useRef<HTMLElement>(null);
-  const selectedFilesListRef = useRef<HTMLUListElement>(null);
+  const uploadDialogRef = useRef<HTMLDialogElement>(null);
+  const isUploadInFlightRef = useRef(false);
   const documentSelectionPanelRef = useRef<HTMLElement>(null);
   const documentListRef = useRef<HTMLUListElement>(null);
   const questionPanelRef = useRef<HTMLElement>(null);
@@ -167,13 +179,16 @@ const DocumentsWorkspace = () => {
   const questionInputRef = useRef<HTMLTextAreaElement>(null);
   const shouldFocusQuestionEditorRef = useRef(false);
   const documentsRef = useRef<DocumentMetadata[]>([]);
-  const hasResolvedInitialDocuments = useRef(false);
   const [documents, setDocuments] = useState<DocumentMetadata[]>();
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [hasSelectedFilesOverflow, setHasSelectedFilesOverflow] =
-    useState(false);
-  const [activeView, setActiveView] = useState<WorkspaceView>("search");
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadNotification, setUploadNotification] =
+    useState<UploadNotification>();
+  const [uploadProgress, setUploadProgress] = useState({
+    completed: 0,
+    total: 0,
+  });
   const [accessToken, setAccessToken] = useState(getTeamAccessToken);
   const [canCopyAccessCode, setCanCopyAccessCode] = useState(false);
   const [isAccessCodeCopying, setIsAccessCodeCopying] = useState(false);
@@ -212,7 +227,7 @@ const DocumentsWorkspace = () => {
     Boolean(synapseProject);
   const contentClassNames = [
     scss.content,
-    activeView === "search" && !hasSearchOutput && scss.searchContent,
+    !hasSearchOutput && scss.searchContent,
     documentsError && scss.contentWithError,
   ]
     .filter(Boolean)
@@ -238,10 +253,6 @@ const DocumentsWorkspace = () => {
 
       documentsRef.current = nextDocuments;
       setDocuments(nextDocuments);
-      if (!hasResolvedInitialDocuments.current) {
-        setActiveView(nextDocuments.length ? "search" : "documents");
-        hasResolvedInitialDocuments.current = true;
-      }
       setSelectedDocumentIds((current) => {
         if (current.length) {
           return current.filter((documentId) =>
@@ -294,16 +305,9 @@ const DocumentsWorkspace = () => {
 
   useLayoutEffect(() => {
     const workspace = workspaceRef.current;
-    const panel =
-      activeView === "documents"
-        ? uploadPanelRef.current
-        : documentSelectionPanelRef.current;
-    const list =
-      activeView === "documents"
-        ? selectedFilesListRef.current
-        : documentListRef.current;
-    const questionPanel =
-      activeView === "search" ? questionPanelRef.current : null;
+    const panel = documentSelectionPanelRef.current;
+    const list = documentListRef.current;
+    const questionPanel = questionPanelRef.current;
 
     if (!workspace || !panel || !list || !list.children.length) return;
 
@@ -337,9 +341,6 @@ const DocumentsWorkspace = () => {
         "--list-max-height",
         `${Math.max(minimumHeight, availableHeight)}px`,
       );
-      if (activeView === "documents") {
-        setHasSelectedFilesOverflow(list.scrollHeight > list.clientHeight);
-      }
     };
 
     const observer = new ResizeObserver(updateListHeight);
@@ -351,13 +352,31 @@ const DocumentsWorkspace = () => {
 
     return () => observer.disconnect();
   }, [
-    activeView,
     documents,
     documentsError,
     hasSearchOutput,
     questionEditorState,
-    selectedFiles,
+    isUploading,
   ]);
+
+  useLayoutEffect(() => {
+    const dialog = uploadDialogRef.current;
+
+    if (!isUploadDialogOpen || !dialog) return;
+
+    const trigger = document.activeElement;
+    dialog.showModal();
+    fileInputRef.current?.focus({ preventScroll: true });
+
+    return () => {
+      dialog.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected) {
+        trigger.focus();
+      } else {
+        document.getElementById("add-documents")?.focus();
+      }
+    };
+  }, [isUploadDialogOpen]);
 
   useEffect(() => {
     if (!documentsError || documents) return;
@@ -429,6 +448,7 @@ const DocumentsWorkspace = () => {
     setSelectedFiles(Array.from(event.target.files ?? []));
     setUploadError(undefined);
     setUploadSuccess(undefined);
+    setUploadNotification(undefined);
   };
 
   const handleSelectedFileRemove = (index: number) => {
@@ -437,6 +457,7 @@ const DocumentsWorkspace = () => {
     );
     setUploadError(undefined);
     setUploadSuccess(undefined);
+    setUploadNotification(undefined);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -445,6 +466,7 @@ const DocumentsWorkspace = () => {
 
   const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isUploadInFlightRef.current) return;
     setUploadError(undefined);
     setUploadSuccess(undefined);
 
@@ -453,10 +475,22 @@ const DocumentsWorkspace = () => {
         title: "Файл не выбран",
         description: "Выберите хотя бы один файл для загрузки.",
       });
+      setUploadNotification({
+        title: "Файл не выбран",
+        description: "Выберите хотя бы один файл для загрузки.",
+        variant: "error",
+      });
       return;
     }
 
+    isUploadInFlightRef.current = true;
     setIsUploading(true);
+    setUploadProgress({ completed: 0, total: selectedFiles.length });
+    setUploadNotification({
+      title: "Загрузка началась",
+      description: `Файлов в очереди: ${selectedFiles.length}. Можно закрыть диалог и продолжить работу на этом экране.`,
+      variant: "info",
+    });
 
     const uploadedDocuments: DocumentMetadata[] = [];
     const failedFiles: Array<{ file: File; message: string }> = [];
@@ -473,12 +507,23 @@ const DocumentsWorkspace = () => {
               : "Не удалось загрузить файл.",
         });
       }
+      setUploadProgress({
+        completed: uploadedDocuments.length + failedFiles.length,
+        total: selectedFiles.length,
+      });
     }
 
+    const successMessage = uploadedDocuments.length
+      ? uploadedDocuments.length === 1
+        ? `Файл «${uploadedDocuments[0].filename}» добавлен.`
+        : `Добавлено файлов: ${uploadedDocuments.length}.`
+      : "";
+    const uploadedById = new Map(
+      uploadedDocuments.map((document) => [document.id, document]),
+    );
+    const uploadedDocumentIds = Array.from(uploadedById.keys());
+
     if (uploadedDocuments.length) {
-      const uploadedById = new Map(
-        uploadedDocuments.map((document) => [document.id, document]),
-      );
       const nextDocuments = [
         ...uploadedById.values(),
         ...documentsRef.current.filter(
@@ -489,22 +534,16 @@ const DocumentsWorkspace = () => {
       documentsRef.current = nextDocuments;
       setDocuments(nextDocuments);
       setSelectedDocumentIds((current) =>
-        [
-          ...new Set([
-            ...current,
-            ...uploadedDocuments.map((document) => document.id),
-          ]),
-        ].slice(0, MAX_SELECTED_DOCUMENTS),
+        [...new Set([...current, ...uploadedDocumentIds])].slice(
+          0,
+          MAX_SELECTED_DOCUMENTS,
+        ),
       );
-      setUploadSuccess(
-        uploadedDocuments.length === 1
-          ? `Файл «${uploadedDocuments[0].filename}» добавлен.`
-          : `Добавлено файлов: ${uploadedDocuments.length}.`,
-      );
+      setUploadSuccess(successMessage);
     }
 
     if (failedFiles.length) {
-      setUploadError(
+      const errorMessage =
         failedFiles.length === 1
           ? {
               title: "Не удалось добавить файл",
@@ -515,12 +554,29 @@ const DocumentsWorkspace = () => {
               description: failedFiles
                 .map(({ file, message }) => `«${file.name}»: ${message}`)
                 .join("\n"),
-            },
-      );
+            };
+      setUploadError(errorMessage);
+      setUploadNotification({
+        title: uploadedDocuments.length
+          ? `Добавлено файлов: ${uploadedDocuments.length} из ${selectedFiles.length}`
+          : errorMessage.title,
+        description: `${errorMessage.description}\nНеудачные файлы сохранены в очереди. Повторите загрузку.`,
+        variant: "error",
+        documentIds: uploadedDocumentIds,
+      });
+    } else {
+      setIsUploadDialogOpen(false);
+      setUploadNotification({
+        title: "Документы загружены",
+        description: successMessage,
+        variant: "success",
+        documentIds: uploadedDocumentIds,
+      });
     }
 
     setSelectedFiles(failedFiles.map(({ file }) => file));
     if (fileInputRef.current) fileInputRef.current.value = "";
+    isUploadInFlightRef.current = false;
     setIsUploading(false);
   };
 
@@ -716,12 +772,27 @@ const DocumentsWorkspace = () => {
     }
   };
 
-  const handleDocumentsViewOpen = () => {
-    setActiveView("documents");
+  const handleUploadDialogOpen = () => {
+    setIsUploadDialogOpen(true);
   };
 
-  const handleSearchViewOpen = () => {
-    setActiveView("search");
+  const handleUploadDialogClose = () => {
+    setIsUploadDialogOpen(false);
+    if (isUploading) {
+      setUploadNotification({
+        title: "Загрузка продолжается",
+        description:
+          "Файлы продолжают загружаться. Результат появится на этом экране. Очередь можно открыть кнопкой «Добавить документы».",
+        variant: "info",
+      });
+    } else if (selectedFiles.length && !uploadError) {
+      setUploadNotification({
+        title: "Файлы сохранены в очереди",
+        description:
+          "Откройте «Добавить документы», чтобы продолжить загрузку.",
+        variant: "info",
+      });
+    }
   };
 
   const handleQuestionEditorOpen = () => {
@@ -803,6 +874,7 @@ const DocumentsWorkspace = () => {
       )}
       <div className={scss.questionActions}>
         <Button
+          className={scss.synapseButton}
           type="submit"
           disabled={
             isSearching || isResearchStarting || !selectedDocumentIds.length
@@ -811,6 +883,9 @@ const DocumentsWorkspace = () => {
           {isResearchStarting
             ? "Передаём исследование в Synapse…"
             : "Запустить исследование в Synapse"}
+          <span className={scss.synapseButtonIcon} aria-hidden="true">
+            <IconRenderer icon="synapseResearch" />
+          </span>
         </Button>
         <Button
           type="button"
@@ -828,6 +903,36 @@ const DocumentsWorkspace = () => {
         </span>
       </div>
     </form>
+  );
+
+  const uploadProgressLabel = `Обработано файлов: ${uploadProgress.completed} из ${uploadProgress.total}.`;
+  const unselectedUploadedCount =
+    uploadNotification?.documentIds?.filter(
+      (documentId) => !selectedDocumentIds.includes(documentId),
+    ).length ?? 0;
+  const uploadToast = uploadNotification && (
+    <Toast
+      title={uploadNotification.title}
+      description={`${uploadNotification.description}${unselectedUploadedCount ? `\nНе выбрано для поиска: ${unselectedUploadedCount}. Можно выбрать до ${MAX_SELECTED_DOCUMENTS} документов.` : ""}`}
+      variant={uploadNotification.variant}
+      autoClose={
+        isUploading || uploadNotification.variant === "error" ? false : 5_000
+      }
+      onClose={() => setUploadNotification(undefined)}
+      action={
+        !isUploadDialogOpen &&
+        uploadNotification.variant === "error" &&
+        selectedFiles.length ? (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleUploadDialogOpen}
+          >
+            Открыть загрузку
+          </Button>
+        ) : undefined
+      }
+    />
   );
 
   if (isDocumentsLoading && !documents) {
@@ -908,14 +1013,7 @@ const DocumentsWorkspace = () => {
       </header>
 
       <div className={scss.toastStack}>
-        {uploadError && (
-          <Toast
-            title={uploadError.title}
-            description={uploadError.description}
-            variant="error"
-            onClose={() => setUploadError(undefined)}
-          />
-        )}
+        {!isUploadDialogOpen && uploadToast}
         {deletionNotification && (
           <Toast
             title="Документ удалён"
@@ -932,17 +1030,12 @@ const DocumentsWorkspace = () => {
         <button
           className={scss.viewButton}
           type="button"
-          aria-pressed={activeView === "documents"}
-          onClick={handleDocumentsViewOpen}
+          aria-pressed={false}
+          disabled
         >
           Документы
         </button>
-        <button
-          className={scss.viewButton}
-          type="button"
-          aria-pressed={activeView === "search"}
-          onClick={handleSearchViewOpen}
-        >
+        <button className={scss.viewButton} type="button" aria-pressed={true}>
           Поиск
         </button>
       </nav>
@@ -962,249 +1055,158 @@ const DocumentsWorkspace = () => {
           </section>
         )}
 
-        {activeView === "documents" ? (
-          <section className={scss.documentsWorkspace} aria-label="Документы">
-            <article ref={uploadPanelRef} className={scss.panel}>
-              <div className={scss.sectionHeading}>
-                <div>
-                  <h2>Загрузить документы</h2>
-                </div>
-              </div>
-              <form className={scss.uploadForm} onSubmit={handleUpload}>
-                <Field
-                  label="Выберите файлы"
-                  htmlFor="document-upload"
-                  hint="Поддерживаются PDF, JSON/JSONL, CSV/TSV, XML (JATS/TEI), HTML, TXT/MD, RIS и BibTeX. Можно выбрать несколько файлов. После загрузки текст будет доступен для поиска."
-                  required
-                >
-                  <input
-                    ref={fileInputRef}
-                    id="document-upload"
-                    className={scss.fileInput}
-                    type="file"
-                    accept={SUPPORTED_DOCUMENT_ACCEPT}
-                    multiple
-                    onChange={handleFileChange}
-                    disabled={isUploading || isDocumentsLoading}
-                  />
-                </Field>
-                {selectedFiles.length > 0 && (
-                  <section
-                    className={scss.selectedFiles}
-                    aria-label="Выбранные файлы"
-                    aria-live="polite"
-                  >
-                    <div className={scss.selectedFilesHeading}>
-                      <strong>Выбрано файлов: {selectedFiles.length}</strong>
-                      {hasSelectedFilesOverflow && (
-                        <span>Прокрутите, чтобы увидеть все</span>
-                      )}
-                    </div>
-                    <ul
-                      ref={selectedFilesListRef}
-                      className={scss.selectedFilesList}
+        <section className={scss.searchWorkspace} aria-label="Поиск">
+          {isUploading && (
+            <div className={scss.uploadStatus}>
+              <p role="status">Загружаем документы. {uploadProgressLabel}</p>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleUploadDialogOpen}
+              >
+                Открыть загрузку
+              </Button>
+            </div>
+          )}
+          {documents?.length ? (
+            <>
+              <article ref={documentSelectionPanelRef} className={scss.panel}>
+                <div className={scss.sectionHeading}>
+                  <div>
+                    <h2>Выберите документы для поиска</h2>
+                  </div>
+                  <div className={scss.selectionActions}>
+                    <span className={scss.count}>
+                      {formatDocumentCount(documents.length)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      id="add-documents"
+                      onClick={handleUploadDialogOpen}
                     >
-                      {selectedFiles.map((file, index) => (
-                        <li
-                          key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
-                          className={scss.selectedFile}
-                        >
-                          <span className={scss.selectedFileName}>
-                            {file.name}
-                          </span>
-                          <span className={scss.selectedFileSize}>
-                            {formatFileSize(file.size)}
-                          </span>
-                          <button
-                            className={scss.removeSelectedFileButton}
-                            type="button"
-                            onClick={() => handleSelectedFileRemove(index)}
-                            disabled={isUploading}
-                            aria-label={`Убрать файл «${file.name}» из очереди загрузки`}
-                          >
-                            Убрать
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                )}
-                <div className={scss.uploadActions}>
-                  <Button
-                    type="submit"
-                    disabled={isUploading || isDocumentsLoading}
-                  >
-                    {isUploading
-                      ? "Добавляем файлы…"
-                      : `Загрузить файлы${selectedFiles.length > 1 ? ` (${selectedFiles.length})` : ""}`}
-                  </Button>
+                      Добавить документы
+                    </Button>
+                  </div>
                 </div>
-                {uploadSuccess && (
-                  <p className={scss.successMessage} role="status">
-                    {uploadSuccess}
-                  </p>
-                )}
-              </form>
-            </article>
 
-            {documents?.length ? (
-              <aside className={scss.documentsSummary}>
-                <div>
-                  <h2>Документы готовы к поиску</h2>
-                  <p>
-                    Загружено {formatDocumentCount(documents.length)}. В поиске
-                    можно выбрать нужные файлы и задать вопрос.
+                <fieldset className={scss.documentSelection}>
+                  <legend>
+                    Выбрано {selectedDocumentIds.length} из {documents.length}
+                  </legend>
+                  <p className={scss.muted}>
+                    В поиск попадут отмеченные документы. За один запрос можно
+                    выбрать до {MAX_SELECTED_DOCUMENTS} файлов.
                   </p>
-                </div>
-                <Button type="button" onClick={handleSearchViewOpen}>
-                  Перейти к поиску
-                </Button>
-              </aside>
-            ) : null}
-          </section>
-        ) : (
-          <section className={scss.searchWorkspace} aria-label="Поиск">
-            {documents?.length ? (
-              <>
-                <article ref={documentSelectionPanelRef} className={scss.panel}>
+                  {selectionError && (
+                    <p className={scss.selectionError} role="alert">
+                      {selectionError}
+                    </p>
+                  )}
+                  <ul ref={documentListRef} className={scss.documentList}>
+                    {documents.map((document) => {
+                      const checkboxId = `document-${document.id}`;
+                      const isSelected = selectedDocumentIds.includes(
+                        document.id,
+                      );
+
+                      return (
+                        <li key={document.id} className={scss.documentItem}>
+                          <input
+                            id={checkboxId}
+                            className={scss.documentCheckbox}
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(event) =>
+                              handleDocumentSelectionChange(
+                                document.id,
+                                event.target.checked,
+                              )
+                            }
+                          />
+                          <div className={scss.documentContent}>
+                            <label
+                              className={scss.documentLabel}
+                              htmlFor={checkboxId}
+                            >
+                              <span className={scss.documentTopLine}>
+                                <strong>{document.filename}</strong>
+                              </span>
+                              <span className={scss.documentMeta}>
+                                <span>
+                                  {formatFileSize(document.sizeBytes)}
+                                </span>
+                                <span>{formatDocumentUnits(document)}</span>
+                                <span>{document.textPageCount} с текстом</span>
+                                <span>{document.chunkCount} фрагментов</span>
+                                <span className={scss.status}>
+                                  <span
+                                    className={scss.statusIndicator}
+                                    aria-hidden="true"
+                                  />
+                                  {formatDocumentStatus(document.status)}
+                                </span>
+                              </span>
+                              <span className={scss.documentDate}>
+                                Добавлен: {formatDate(document.uploadedAt)}
+                              </span>
+                            </label>
+                            <button
+                              className={scss.documentDeleteButton}
+                              type="button"
+                              onClick={() =>
+                                handleDocumentDeleteRequest(document)
+                              }
+                              aria-label={`Удалить документ «${document.filename}»`}
+                              title="Удалить документ"
+                            >
+                              <span aria-hidden="true">
+                                <IconRenderer icon="remove" />
+                              </span>
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </fieldset>
+              </article>
+
+              {((!searchResult && !synapseProject) ||
+                questionEditorState === "top") && (
+                <section
+                  ref={questionPanelRef}
+                  className={scss.panel}
+                  aria-labelledby="search-question"
+                >
                   <div className={scss.sectionHeading}>
                     <div>
-                      <h2>Выберите документы для поиска</h2>
-                    </div>
-                    <div className={scss.selectionActions}>
-                      <span className={scss.count}>
-                        {formatDocumentCount(documents.length)}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleDocumentsViewOpen}
-                      >
-                        Добавить документы
-                      </Button>
+                      <h2 id="search-question">Задайте вопрос</h2>
                     </div>
                   </div>
-
-                  <fieldset className={scss.documentSelection}>
-                    <legend>
-                      Выбрано {selectedDocumentIds.length} из {documents.length}
-                    </legend>
-                    <p className={scss.muted}>
-                      В поиск попадут отмеченные документы. За один запрос можно
-                      выбрать до {MAX_SELECTED_DOCUMENTS} файлов.
-                    </p>
-                    {selectionError && (
-                      <p className={scss.selectionError} role="alert">
-                        {selectionError}
-                      </p>
-                    )}
-                    <ul ref={documentListRef} className={scss.documentList}>
-                      {documents.map((document) => {
-                        const checkboxId = `document-${document.id}`;
-                        const isSelected = selectedDocumentIds.includes(
-                          document.id,
-                        );
-
-                        return (
-                          <li key={document.id} className={scss.documentItem}>
-                            <input
-                              id={checkboxId}
-                              className={scss.documentCheckbox}
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={(event) =>
-                                handleDocumentSelectionChange(
-                                  document.id,
-                                  event.target.checked,
-                                )
-                              }
-                            />
-                            <div className={scss.documentContent}>
-                              <label
-                                className={scss.documentLabel}
-                                htmlFor={checkboxId}
-                              >
-                                <span className={scss.documentTopLine}>
-                                  <strong>{document.filename}</strong>
-                                </span>
-                                <span className={scss.documentMeta}>
-                                  <span>
-                                    {formatFileSize(document.sizeBytes)}
-                                  </span>
-                                  <span>{formatDocumentUnits(document)}</span>
-                                  <span>
-                                    {document.textPageCount} с текстом
-                                  </span>
-                                  <span>{document.chunkCount} фрагментов</span>
-                                  <span className={scss.status}>
-                                    <span
-                                      className={scss.statusIndicator}
-                                      aria-hidden="true"
-                                    />
-                                    {formatDocumentStatus(document.status)}
-                                  </span>
-                                </span>
-                                <span className={scss.documentDate}>
-                                  Добавлен: {formatDate(document.uploadedAt)}
-                                </span>
-                              </label>
-                              <button
-                                className={scss.documentDeleteButton}
-                                type="button"
-                                onClick={() =>
-                                  handleDocumentDeleteRequest(document)
-                                }
-                                aria-label={`Удалить документ «${document.filename}»`}
-                                title="Удалить документ"
-                              >
-                                <span aria-hidden="true">
-                                  <IconRenderer icon="remove" />
-                                </span>
-                              </button>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </fieldset>
-                </article>
-
-                {((!searchResult && !synapseProject) ||
-                  questionEditorState === "top") && (
-                  <section
-                    ref={questionPanelRef}
-                    className={scss.panel}
-                    aria-labelledby="search-question"
-                  >
-                    <div className={scss.sectionHeading}>
-                      <div>
-                        <h2 id="search-question">Задайте вопрос</h2>
-                      </div>
-                    </div>
-                    {renderQuestionForm()}
-                  </section>
-                )}
-              </>
-            ) : (
-              <section
-                className={scss.emptyState}
-                aria-labelledby="search-empty"
+                  {renderQuestionForm()}
+                </section>
+              )}
+            </>
+          ) : (
+            <section className={scss.emptyState} aria-labelledby="search-empty">
+              <h2 id="search-empty">Сначала загрузите документы</h2>
+              <p>
+                Добавьте статью, выгрузку библиографической базы или техническую
+                документацию в поддерживаемом формате, чтобы начать поиск.
+              </p>
+              <Button
+                type="button"
+                id="add-documents"
+                onClick={handleUploadDialogOpen}
               >
-                <h2 id="search-empty">Сначала загрузите документы</h2>
-                <p>
-                  Добавьте статью, выгрузку библиографической базы или
-                  техническую документацию в поддерживаемом формате, чтобы
-                  начать поиск.
-                </p>
-                <Button type="button" onClick={handleDocumentsViewOpen}>
-                  Загрузить документы
-                </Button>
-              </section>
-            )}
-          </section>
-        )}
+                Добавить документы
+              </Button>
+            </section>
+          )}
+        </section>
 
-        {activeView === "search" && isSearching && (
+        {isSearching && (
           <section className={scss.searchLoading} aria-live="polite">
             <Loader
               variant="inline"
@@ -1213,7 +1215,7 @@ const DocumentsWorkspace = () => {
           </section>
         )}
 
-        {activeView === "search" && synapseProject && (
+        {synapseProject && (
           <section
             className={scss.researchProject}
             aria-live="polite"
@@ -1307,7 +1309,7 @@ const DocumentsWorkspace = () => {
           </section>
         )}
 
-        {activeView === "search" && searchResult && !isSearching && (
+        {searchResult && !isSearching && (
           <section
             ref={searchResultsRef}
             className={scss.searchResults}
@@ -1407,6 +1409,160 @@ const DocumentsWorkspace = () => {
             )}
           </section>
         )}
+
+        <dialog
+          ref={uploadDialogRef}
+          className={scss.uploadDialog}
+          aria-labelledby="document-upload-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            handleUploadDialogClose();
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Tab") return;
+
+            const controls = event.currentTarget.querySelectorAll<HTMLElement>(
+              "button:not(:disabled), input:not(:disabled)",
+            );
+            const firstControl = controls[0];
+            const lastControl = controls[controls.length - 1];
+
+            if (event.shiftKey && document.activeElement === firstControl) {
+              event.preventDefault();
+              lastControl?.focus();
+            } else if (
+              !event.shiftKey &&
+              document.activeElement === lastControl
+            ) {
+              event.preventDefault();
+              firstControl?.focus();
+            }
+          }}
+          onClick={(event) => {
+            if (event.target !== event.currentTarget) return;
+            const bounds = event.currentTarget.getBoundingClientRect();
+            if (
+              event.clientX < bounds.left ||
+              event.clientX > bounds.right ||
+              event.clientY < bounds.top ||
+              event.clientY > bounds.bottom
+            ) {
+              handleUploadDialogClose();
+            }
+          }}
+        >
+          <div className={scss.uploadDialogBody}>
+            <div className={scss.sectionHeading}>
+              <h2 id="document-upload-title">Добавить документы</h2>
+              <button
+                type="button"
+                className={scss.dialogCloseButton}
+                onClick={handleUploadDialogClose}
+                aria-label="Закрыть загрузку документов"
+              >
+                <IconRenderer icon="close" />
+              </button>
+            </div>
+            {isUploadDialogOpen && uploadToast && (
+              <div className={scss.dialogToast}>{uploadToast}</div>
+            )}
+            <form className={scss.uploadForm} onSubmit={handleUpload}>
+              <Field
+                label="Выберите файлы"
+                htmlFor="document-upload"
+                hint="Поддерживаются PDF, JSON/JSONL, CSV/TSV, XML (JATS/TEI), HTML, TXT/MD, RIS и BibTeX. Можно выбрать несколько файлов. После загрузки текст будет доступен для поиска."
+                required
+              >
+                <input
+                  ref={fileInputRef}
+                  id="document-upload"
+                  className={scss.fileInput}
+                  type="file"
+                  accept={SUPPORTED_DOCUMENT_ACCEPT}
+                  multiple
+                  onChange={handleFileChange}
+                  disabled={isUploading || isDocumentsLoading}
+                />
+              </Field>
+              {selectedFiles.length > 0 && (
+                <section
+                  className={scss.selectedFiles}
+                  aria-label="Выбранные файлы"
+                  aria-live="polite"
+                >
+                  <div className={scss.selectedFilesHeading}>
+                    <strong>Выбрано файлов: {selectedFiles.length}</strong>
+                  </div>
+                  <ul className={scss.selectedFilesList}>
+                    {selectedFiles.map((file, index) => (
+                      <li
+                        key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+                        className={scss.selectedFile}
+                      >
+                        <span
+                          className={scss.selectedFileName}
+                          title={file.name}
+                        >
+                          {file.name}
+                        </span>
+                        <span className={scss.selectedFileSize}>
+                          {formatFileSize(file.size)}
+                        </span>
+                        <button
+                          className={scss.removeSelectedFileButton}
+                          type="button"
+                          onClick={() => handleSelectedFileRemove(index)}
+                          disabled={isUploading}
+                          aria-label={`Убрать файл «${file.name}» из очереди загрузки`}
+                        >
+                          Убрать
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {uploadError && (
+                <section
+                  className={scss.uploadError}
+                  aria-label="Ошибки загрузки"
+                >
+                  <strong>{uploadError.title}</strong>
+                  <p>{uploadError.description}</p>
+                </section>
+              )}
+              {isUploading && (
+                <p role="status" className={scss.muted}>
+                  {uploadProgressLabel}
+                </p>
+              )}
+              <div className={scss.uploadActions}>
+                <Button
+                  className={scss.uploadButton}
+                  type="submit"
+                  disabled={isUploading || isDocumentsLoading}
+                >
+                  <IconRenderer className={scss.uploadIcon} icon="download" />
+                  {isUploading
+                    ? "Добавляем файлы…"
+                    : `Загрузить файлы${selectedFiles.length > 1 ? ` (${selectedFiles.length})` : ""}`}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleUploadDialogClose}
+                >
+                  {isUploading ? "Продолжить в фоне" : "Закрыть"}
+                </Button>
+              </div>
+              {uploadSuccess && (
+                <p className={scss.successMessage} role="status">
+                  {uploadSuccess}
+                </p>
+              )}
+            </form>
+          </div>
+        </dialog>
 
         {documentToDelete && (
           <div className={scss.confirmationOverlay}>

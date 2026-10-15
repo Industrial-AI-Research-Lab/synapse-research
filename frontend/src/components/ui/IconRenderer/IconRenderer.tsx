@@ -1,9 +1,4 @@
-import {
-  type ComponentType,
-  type CSSProperties,
-  type FC,
-  memo,
-} from "react";
+import { type ComponentType, type CSSProperties, type FC, memo } from "react";
 
 import ArrowLeftIcon from "./icons/ArrowLeft";
 import ArrowRightIcon from "./icons/ArrowRight";
@@ -14,11 +9,13 @@ import CopyIcon from "./icons/Copy";
 import DownloadIcon from "./icons/Download";
 import ErrorIcon from "./icons/Error";
 import ExternalLinkIcon from "./icons/ExternalLink";
+import InfoIcon from "./icons/Info";
 import PavLogoIcon from "./icons/PavLogo";
 import QuestionIcon from "./icons/Question";
 import ReloadIcon from "./icons/Reload";
 import RemoveIcon from "./icons/Remove";
 import SynapseResearchIcon from "./icons/SynapseResearch";
+import UploadIcon from "./icons/Upload";
 
 export type IIconRendererTypes =
   | "analyticsReport"
@@ -30,11 +27,13 @@ export type IIconRendererTypes =
   | "download"
   | "error"
   | "externalLink"
+  | "info"
   | "pavLogo"
   | "question"
   | "reload"
   | "remove"
-  | "synapseResearch";
+  | "synapseResearch"
+  | "upload";
 
 export const ICONS_ENUM: Record<
   IIconRendererTypes,
@@ -49,11 +48,13 @@ export const ICONS_ENUM: Record<
   download: DownloadIcon,
   error: ErrorIcon,
   externalLink: ExternalLinkIcon,
+  info: InfoIcon,
   pavLogo: PavLogoIcon,
   question: QuestionIcon,
   reload: ReloadIcon,
   remove: RemoveIcon,
   synapseResearch: SynapseResearchIcon,
+  upload: UploadIcon,
 } as const;
 
 const IconRenderer: FC<{

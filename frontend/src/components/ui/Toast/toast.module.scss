@@ -23,6 +23,14 @@
   --toast-color: var(--color-danger);
 }
 
+.info {
+  --toast-color: var(--color-accent);
+}
+
+.action {
+  margin-top: 0.5rem;
+}
+
 .statusIcon {
   display: grid;
   place-items: center;

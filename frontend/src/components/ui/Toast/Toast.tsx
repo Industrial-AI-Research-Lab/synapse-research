@@ -1,13 +1,15 @@
 import scss from "./toast.module.scss";
 
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import IconRenderer from "../IconRenderer/IconRenderer";
 
 interface IToast {
   title: string;
   description: string;
-  variant?: "success" | "error";
+  variant?: "success" | "error" | "info";
+  action?: ReactNode;
   autoClose?: number | false;
   showProgress?: boolean;
   onClose: () => void;
@@ -69,6 +71,7 @@ const Toast = ({
   title,
   description,
   variant = "success",
+  action,
   autoClose = 5_000,
   showProgress = true,
   onClose,
@@ -77,7 +80,9 @@ const Toast = ({
   const [hasFocus, setHasFocus] = useState(false);
   const [isPageHidden, setIsPageHidden] = useState(document.hidden);
   const hasAutoClose =
-    typeof autoClose === "number" && Number.isFinite(autoClose) && autoClose > 0;
+    typeof autoClose === "number" &&
+    Number.isFinite(autoClose) &&
+    autoClose > 0;
   const duration = hasAutoClose ? Math.min(autoClose, 2_147_483_647) : 0;
 
   useEffect(() => {
@@ -105,11 +110,20 @@ const Toast = ({
       }}
     >
       <span className={scss.statusIcon} aria-hidden="true">
-        <IconRenderer icon={variant === "error" ? "error" : "check"} />
+        <IconRenderer
+          icon={
+            variant === "error"
+              ? "error"
+              : variant === "info"
+                ? "info"
+                : "check"
+          }
+        />
       </span>
       <div className={scss.content}>
         <p className={scss.title}>{title}</p>
         <p className={scss.description}>{description}</p>
+        {action && <div className={scss.action}>{action}</div>}
       </div>
       <button
         className={scss.closeButton}
