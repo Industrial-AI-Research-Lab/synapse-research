@@ -1,34 +1,13 @@
 @use "../../../styles/mixin";
 
 .root {
-  @include mixin.transition(background-color);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  min-height: 2.75rem;
-  padding: 0.625rem 1rem;
-  font-weight: 700;
+  @include mixin.control;
 }
 
 .primary {
-  background: var(--color-accent);
-  color: #062016;
-}
-
-.primary:hover:not(:disabled) {
-  background: var(--color-accent-hover);
+  @include mixin.controlPrimary;
 }
 
 .secondary {
-  background: transparent;
-  border-color: var(--color-border);
-  color: var(--color-text);
-}
-
-.secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.root:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
+  @include mixin.controlSecondary;
 }

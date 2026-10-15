@@ -1,3 +1,4 @@
+@use "../../styles/mixin";
 @use "../../styles/media";
 
 .root {
@@ -109,7 +110,7 @@
 }
 
 .synapseButton .buttonIcon {
-  color: var(--color-text);
+  color: inherit;
 }
 
 .buttonIcon {
@@ -133,22 +134,12 @@
 }
 
 .downloadButton {
-  display: grid;
+  @include mixin.control;
+  @include mixin.controlSecondary;
   flex: 0 0 auto;
   width: 2.75rem;
   height: 2.75rem;
   padding: 0.75rem;
-  color: var(--color-text);
-  cursor: pointer;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-.downloadButton:hover,
-.downloadButton:focus-visible {
-  color: var(--color-accent);
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .analysisResult {

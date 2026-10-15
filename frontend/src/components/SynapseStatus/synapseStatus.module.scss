@@ -62,6 +62,7 @@
 }
 
 .summary strong {
+  font-weight: 400;
   font-size: 0.875rem;
 }
 
@@ -170,18 +171,9 @@
 }
 
 .refreshButton {
+  @include mixin.control;
+  @include mixin.controlSecondary;
   justify-self: start;
-  padding: 0;
-  color: var(--color-accent);
-  background: transparent;
-  border: 0;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.refreshButton:hover:not(:disabled) {
-  color: var(--color-accent-hover);
 }
 
 .refreshButton:disabled {

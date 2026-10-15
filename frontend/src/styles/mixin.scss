@@ -3,3 +3,70 @@
   transition-duration: 160ms;
   transition-timing-function: ease;
 }
+
+@mixin control {
+  @include transition((background-color, border-color, color));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding: 0.625rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--color-action);
+    outline-offset: 0.1875rem;
+  }
+
+  &:disabled {
+    color: var(--color-control-disabled);
+    background: var(--color-control-disabled-bg);
+    border-color: var(--color-border);
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+@mixin controlPrimary {
+  color: var(--color-action-text);
+  background: var(--color-action);
+
+  &:hover:not(:disabled) {
+    color: var(--color-action-text);
+    background: var(--color-action-hover);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-action-pressed);
+  }
+}
+
+@mixin controlSecondary {
+  color: var(--color-text);
+  background: var(--color-control);
+  border-color: var(--color-control-border);
+
+  &:hover:not(:disabled) {
+    background: var(--color-control-hover);
+    border-color: var(--color-text-muted);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-control-pressed);
+  }
+}

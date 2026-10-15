@@ -56,8 +56,13 @@
 
 .backLink,
 .formActions a {
-  color: var(--color-accent);
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-action);
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-underline-offset: 0.25rem;
 }
 
 .sourceLink {

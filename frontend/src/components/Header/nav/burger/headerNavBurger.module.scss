@@ -1,4 +1,5 @@
 @use "../../../../styles/media";
+@use "../../../../styles/mixin";
 
 .root {
   display: none;
@@ -6,16 +7,17 @@
 }
 
 .trigger {
+  @include mixin.control;
+  @include mixin.controlSecondary;
   width: 2.75rem;
   height: 2.75rem;
   padding: 0.625rem;
   color: var(--color-text);
   display: grid;
+  justify-content: stretch;
   align-content: center;
   gap: 0.25rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
 }
 
 .trigger:hover {
