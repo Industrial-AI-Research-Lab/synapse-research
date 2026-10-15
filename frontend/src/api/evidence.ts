@@ -11,12 +11,17 @@ import type {
   SynapseConfig,
   SynapseProject,
 } from "../assets/types/evidence";
+import { createResearchRequestId, ResearchApiError } from "./research";
+import { getTeamAccessToken } from "./teamAccess";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+  const headers = new Headers(init?.headers);
+  const token = getTeamAccessToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
   const responseText = await response.text();
   let payload: unknown = responseText;
 
@@ -36,10 +41,11 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
       typeof payload === "object" && payload !== null && "detail" in payload
         ? payload.detail
         : undefined;
-    throw new Error(
+    throw new ResearchApiError(
       typeof detail === "string"
         ? detail
         : `Сервис вернул ошибку HTTP ${response.status}.`,
+      response.status,
     );
   }
 
@@ -68,7 +74,8 @@ export const getEvidenceItem = (evidenceId: string) =>
 export const getSynapseConfig = () =>
   request<SynapseConfig>("/api/synapse/config");
 
-export const getQualityReport = () => request<QualityReport>("/api/quality/report");
+export const getQualityReport = () =>
+  request<QualityReport>("/api/quality/report");
 
 export const getPublicSources = () =>
   request<PublicSourcesResponse>("/api/public-sources");
@@ -103,5 +110,9 @@ export const createSynapseProject = (
   request<SynapseProject>("/api/synapse/projects", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, experiment_ids: experimentIds }),
+    body: JSON.stringify({
+      question,
+      experiment_ids: experimentIds,
+      request_id: createResearchRequestId(),
+    }),
   });

@@ -16,6 +16,10 @@ import Button from "../../components/ui/Button/Button";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
 import { getAnalysisFlow } from "./analysisFlow";
+import { ResearchApiError } from "../../api/research";
+import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
+import Field from "../../components/ui/Field/Field";
+import Input from "../../components/ui/Input/Input";
 
 interface AnalysisResultValue {
   answer: AnalysisAnswer;
@@ -86,6 +90,8 @@ const getAnswerConclusion = (answer: AnalysisAnswer) => {
 };
 
 const DataCompleteness = () => {
+  const [hasSynapseAccessError, setHasSynapseAccessError] = useState(false);
+  const [teamCode, setTeamCode] = useState(getTeamAccessToken);
   const [flow] = useState(getAnalysisFlow);
   const [evidence, setEvidence] = useState<EvidenceResponse>();
   const [result, setResult] = useState<Result>();
@@ -104,8 +110,7 @@ const DataCompleteness = () => {
       } catch (error) {
         setResult({
           title: "Ошибка загрузки",
-          value:
-            error instanceof Error ? error.message : "Неизвестная ошибка.",
+          value: error instanceof Error ? error.message : "Неизвестная ошибка.",
           kind: "generic",
         });
       } finally {
@@ -124,9 +129,7 @@ const DataCompleteness = () => {
   }, [evidence, flow]);
   const missingFields = useMemo(
     () =>
-      Array.from(
-        new Set(selectedItems.flatMap((item) => item.missing_fields)),
-      ),
+      Array.from(new Set(selectedItems.flatMap((item) => item.missing_fields))),
     [selectedItems],
   );
 
@@ -152,8 +155,7 @@ const DataCompleteness = () => {
     } catch (error) {
       setResult({
         title: "Ошибка анализа",
-        value:
-          error instanceof Error ? error.message : "Неизвестная ошибка.",
+        value: error instanceof Error ? error.message : "Неизвестная ошибка.",
         kind: "generic",
       });
     } finally {
@@ -165,17 +167,28 @@ const DataCompleteness = () => {
 
     setIsLoading(true);
     try {
-      const project = await createSynapseProject(flow.question, flow.selectedIds);
+      const project = await createSynapseProject(
+        flow.question,
+        flow.selectedIds,
+      );
+      if (project.research_id) {
+        window.location.assign(
+          `/researches/${encodeURIComponent(project.research_id)}`,
+        );
+        return;
+      }
       setResult({
         title: "Проект Synapse",
         value: project,
         kind: "generic",
       });
     } catch (error) {
+      setHasSynapseAccessError(
+        error instanceof ResearchApiError && error.status === 401,
+      );
       setResult({
         title: "Synapse недоступен",
-        value:
-          error instanceof Error ? error.message : "Неизвестная ошибка.",
+        value: error instanceof Error ? error.message : "Неизвестная ошибка.",
         kind: "generic",
       });
     } finally {
@@ -289,6 +302,33 @@ const DataCompleteness = () => {
         </Button>
       </section>
 
+      {hasSynapseAccessError && (
+        <section className={scss.panel}>
+          <h2>Код команды для исследования</h2>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setTeamAccessToken(teamCode);
+              void handleSynapse();
+            }}
+          >
+            <Field label="Код команды" htmlFor="evidence-team-code">
+              <Input
+                id="evidence-team-code"
+                type="password"
+                autoComplete="off"
+                value={teamCode}
+                onChange={(event) => setTeamCode(event.target.value)}
+                required
+              />
+            </Field>
+            <Button type="submit" disabled={isLoading}>
+              Сохранить код и запустить исследование
+            </Button>
+          </form>
+        </section>
+      )}
+
       {result && (
         <section className={scss.result}>
           <p className={scss.eyebrow}>Результат</p>
@@ -321,10 +361,10 @@ const DataCompleteness = () => {
                 {result.value.answer.confirmed_facts.length > 0 ? (
                   <ol className={scss.factList}>
                     {result.value.answer.confirmed_facts.map((fact) => {
-                      const sourceFragment =
-                        result.value.source_fragments.find(
-                          (fragment) => fragment.experiment === fact.experiment_id,
-                        );
+                      const sourceFragment = result.value.source_fragments.find(
+                        (fragment) =>
+                          fragment.experiment === fact.experiment_id,
+                      );
                       const citationLink = getSafeCitationLink(
                         fact.citation.url,
                       );
@@ -367,11 +407,13 @@ const DataCompleteness = () => {
                                 target="_blank"
                                 rel="noreferrer"
                               >
-                                {fact.citation.document}, {fact.citation.location}
+                                {fact.citation.document},{" "}
+                                {fact.citation.location}
                               </a>
                             ) : (
                               <p>
-                                {fact.citation.document}, {fact.citation.location}
+                                {fact.citation.document},{" "}
+                                {fact.citation.location}
                               </p>
                             )}
                             {sourceFragment && (

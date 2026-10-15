@@ -13,6 +13,10 @@ export const HEADER_NAVIGATION_ITEMS: IHeaderNavigationItem[] = [
     label: "Работа с документами",
   },
   {
+    href: "/researches",
+    label: "Исследования",
+  },
+  {
     href: "/sources",
     label: "Каталог источников",
   },

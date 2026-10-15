@@ -46,6 +46,7 @@ export interface DocumentResearchParams {
 }
 
 export interface DocumentResearchProject {
+  researchId?: string;
   projectId: string;
   status: string;
   phase: string;

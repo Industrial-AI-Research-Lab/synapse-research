@@ -165,6 +165,7 @@ export interface SynapseConfig {
   approval_mode: string;
 }
 export interface SynapseProject {
+  research_id?: string;
   status: string;
   awaiting_approval: boolean;
   synapse_url: string;

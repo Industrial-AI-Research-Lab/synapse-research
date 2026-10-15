@@ -6,7 +6,10 @@ import { HEADER_NAVIGATION_ITEMS } from "../headerNavigation";
 import HeaderItem from "../item/HeaderItem";
 import HeaderNavBurger from "./burger/HeaderNavBurger";
 
-const getIsActive = (href: string) => window.location.pathname === href;
+const getIsActive = (href: string) =>
+  window.location.pathname === href ||
+  (href === "/researches" &&
+    window.location.pathname.startsWith("/researches/"));
 
 const HeaderNav = () => (
   <>

@@ -6,6 +6,8 @@ import type {
   DocumentSearchParams,
   DocumentSearchResponse,
 } from "../assets/types/documents";
+import { getTeamAccessToken } from "./teamAccess";
+import { createResearchRequestId } from "./research";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
@@ -51,6 +53,7 @@ interface IApiDocumentAccessCode {
 }
 
 interface IApiDocumentResearchProject {
+  research_id?: string;
   project_id: string;
   status: string;
   phase: string;
@@ -66,7 +69,7 @@ const getRequestHeaders = (
   accessToken?: string,
 ) => {
   const requestHeaders = new Headers(headers);
-  const normalizedToken = accessToken?.trim();
+  const normalizedToken = (accessToken ?? getTeamAccessToken()).trim();
 
   if (normalizedToken) {
     requestHeaders.set("Authorization", `Bearer ${normalizedToken}`);
@@ -147,9 +150,7 @@ const mapDocument = (document: IApiDocument): DocumentMetadata => ({
   status: document.status,
 });
 
-const mapSearchItem = (
-  item: IApiDocumentSearchItem,
-): DocumentSearchItem => ({
+const mapSearchItem = (item: IApiDocumentSearchItem): DocumentSearchItem => ({
   documentId: item.document_id,
   documentName: item.document_name,
   page: item.page,
@@ -162,6 +163,7 @@ const mapSearchItem = (
 const mapResearchProject = (
   project: IApiDocumentResearchProject,
 ): DocumentResearchProject => ({
+  researchId: project.research_id,
   projectId: project.project_id,
   status: project.status,
   phase: project.phase,
@@ -206,10 +208,14 @@ export const uploadDocument = async (
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await request<IApiDocument>("/api/documents", {
-    method: "POST",
-    body: formData,
-  }, accessToken);
+  const response = await request<IApiDocument>(
+    "/api/documents",
+    {
+      method: "POST",
+      body: formData,
+    },
+    accessToken,
+  );
   return mapDocument(response);
 };
 
@@ -261,6 +267,7 @@ export const startDocumentResearch = async (
       body: JSON.stringify({
         query: params.query,
         document_ids: params.documentIds,
+        request_id: createResearchRequestId(),
       }),
     },
     accessToken,

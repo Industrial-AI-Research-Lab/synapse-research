@@ -6,6 +6,7 @@ from typing import Any, Protocol
 
 from backend.app.application.document_service import DocumentService
 from backend.app.application.evidence_service import EvidenceService
+from backend.app.application.research_service import ResearchService
 from backend.app.domain.evidence import brief_for_synapse
 
 
@@ -33,17 +34,24 @@ class SynapseService:
         client: SynapseGateway,
         evidence_service: EvidenceService,
         document_service: DocumentService,
+        researches: ResearchService | None = None,
     ) -> None:
         self._client = client
         self._evidence_service = evidence_service
         self._document_service = document_service
+        self._researches = researches
 
-    def start_research(self, question: str, experiment_ids: list[str]) -> dict[str, Any]:
+    def start_research(self, question: str, experiment_ids: list[str], request_id: str | None = None) -> dict[str, Any]:
         rows = self._evidence_service.selected_rows(question, experiment_ids)
+        if self._researches:
+            return self._saved_project(self._researches.start(
+                "evidence", question, [{"id": row["id"], "filename": row.get("source", {}).get("document", row["id"]), "evidence": row} for row in rows],
+                lambda: self._client.create_project(brief_for_synapse(question, rows)), request_id,
+            ))
         return self._public_project(self._client.create_project(brief_for_synapse(question, rows)))
 
     def start_document_research(
-        self, question: str, document_ids: list[str]
+        self, question: str, document_ids: list[str], request_id: str | None = None
     ) -> dict[str, Any]:
         attachments: list[SynapseAttachment] = []
         seen_document_ids: set[str] = set()
@@ -60,6 +68,12 @@ class SynapseService:
                 )
             )
 
+        if self._researches:
+            return self._saved_project(self._researches.start(
+                "documents", question,
+                [{"id": document_id, "filename": attachment.filename} for document_id, attachment in zip(dict.fromkeys(document_ids), attachments)],
+                lambda: self._client.create_document_research(_document_research_brief(question, attachments), attachments), request_id,
+            ))
         return self._public_project(
             self._client.create_document_research(
                 _document_research_brief(question, attachments), attachments
@@ -68,6 +82,16 @@ class SynapseService:
 
     def get_project(self, project_id: str) -> dict[str, Any]:
         return self._public_project(self._client.get_project(project_id))
+
+    @staticmethod
+    def _saved_project(record: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "research_id": record["id"], "project_id": record["project_id"],
+            "title": record["title"], "status": record["status"], "phase": record["phase"],
+            "awaiting_approval": bool(record["approvals"]),
+            "result_preview": record["result_text"][:1200],
+            "result_url": record["result_url"], "synapse_url": record["synapse_url"],
+        }
 
     def _public_project(self, project: dict[str, Any]) -> dict[str, Any]:
         pending = project.get("pending_approvals") or []

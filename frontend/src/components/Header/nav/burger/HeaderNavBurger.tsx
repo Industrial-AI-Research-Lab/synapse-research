@@ -40,7 +40,11 @@ const HeaderNavBurger = ({ items }: IHeaderNavBurger) => {
               <li key={item.href}>
                 <HeaderItem
                   item={item}
-                  isActive={window.location.pathname === item.href}
+                  isActive={
+                    window.location.pathname === item.href ||
+                    (item.href === "/researches" &&
+                      window.location.pathname.startsWith("/researches/"))
+                  }
                   onClick={handleClose}
                 />
               </li>

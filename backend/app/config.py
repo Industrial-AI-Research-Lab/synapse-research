@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     host: str = Field(default="127.0.0.1", alias="HOST")
     port: int = Field(default=8091, alias="PORT")
+    http_trace_enabled: bool = Field(default=False, alias="PAV_HTTP_TRACE_ENABLED")
     synapse_url: str = Field(default="", alias="SYNAPSE_URL")
     synapse_user: str = Field(default="", alias="SYNAPSE_USER")
     synapse_password: str = Field(default="", alias="SYNAPSE_PASSWORD")

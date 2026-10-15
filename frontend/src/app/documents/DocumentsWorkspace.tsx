@@ -26,6 +26,7 @@ import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Input from "../../components/ui/Input/Input";
 import Loader from "../../components/ui/Loader/Loader";
 import Textarea from "../../components/ui/Textarea/Textarea";
+import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 
 const SEARCH_LIMIT = 10;
 const MAX_SELECTED_DOCUMENTS = 50;
@@ -164,7 +165,7 @@ const DocumentsWorkspace = () => {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [activeView, setActiveView] = useState<WorkspaceView>("search");
-  const [accessToken, setAccessToken] = useState("");
+  const [accessToken, setAccessToken] = useState(getTeamAccessToken);
   const [canCopyAccessCode, setCanCopyAccessCode] = useState(false);
   const [isAccessCodeCopying, setIsAccessCodeCopying] = useState(false);
   const [accessCodeCopyStatus, setAccessCodeCopyStatus] = useState("");
@@ -183,8 +184,7 @@ const DocumentsWorkspace = () => {
   const [researchError, setResearchError] = useState<string>();
   const [sourceError, setSourceError] = useState<string>();
   const [deletionNotification, setDeletionNotification] = useState<string>();
-  const [documentToDelete, setDocumentToDelete] =
-    useState<DocumentMetadata>();
+  const [documentToDelete, setDocumentToDelete] = useState<DocumentMetadata>();
   const [isDocumentsLoading, setIsDocumentsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -258,7 +258,10 @@ const DocumentsWorkspace = () => {
       setResearchError(undefined);
 
       try {
-        const project = await getDocumentResearchProject(projectId, accessToken);
+        const project = await getDocumentResearchProject(
+          projectId,
+          accessToken,
+        );
         setSynapseProject(project);
       } catch (error) {
         setResearchError(
@@ -585,6 +588,13 @@ const DocumentsWorkspace = () => {
         },
         accessToken,
       );
+      if (project.researchId) {
+        setTeamAccessToken(accessToken);
+        window.location.assign(
+          `/researches/${encodeURIComponent(project.researchId)}`,
+        );
+        return;
+      }
       setSynapseProject(project);
       setSearchResult(undefined);
       setQuestion(normalizedQuestion);
@@ -602,6 +612,7 @@ const DocumentsWorkspace = () => {
 
   const handleAccessSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setTeamAccessToken(accessToken);
     setAccessCodeCopyStatus("");
     void loadDocuments(accessToken);
   };
@@ -715,7 +726,9 @@ const DocumentsWorkspace = () => {
       <div className={scss.questionActions}>
         <Button
           type="submit"
-          disabled={isSearching || isResearchStarting || !selectedDocumentIds.length}
+          disabled={
+            isSearching || isResearchStarting || !selectedDocumentIds.length
+          }
         >
           {isResearchStarting
             ? "Передаём исследование в Synapse…"
@@ -725,13 +738,15 @@ const DocumentsWorkspace = () => {
           type="button"
           variant="secondary"
           onClick={() => void handleLocalSearch()}
-          disabled={isSearching || isResearchStarting || !selectedDocumentIds.length}
+          disabled={
+            isSearching || isResearchStarting || !selectedDocumentIds.length
+          }
         >
           {isSearching ? "Ищем фрагменты…" : "Найти фрагменты локально"}
         </Button>
         <span>
-          В Synapse уйдут {selectedDocumentIds.length} выбранных файлов. Локальный
-          поиск покажет до {SEARCH_LIMIT} фрагментов.
+          В Synapse уйдут {selectedDocumentIds.length} выбранных файлов.
+          Локальный поиск покажет до {SEARCH_LIMIT} фрагментов.
         </span>
       </div>
     </form>
@@ -809,8 +824,8 @@ const DocumentsWorkspace = () => {
       <header className={scss.header}>
         <h1>Поиск по документам</h1>
         <p className={scss.lead}>
-          Загрузите документы, выберите, где искать, и задайте вопрос.
-          Сервис найдёт подходящие фрагменты из первоисточников.
+          Загрузите документы, выберите, где искать, и задайте вопрос. Сервис
+          найдёт подходящие фрагменты из первоисточников.
         </p>
       </header>
 
@@ -1097,8 +1112,9 @@ const DocumentsWorkspace = () => {
               >
                 <h2 id="search-empty">Сначала загрузите документы</h2>
                 <p>
-                  Добавьте статью, выгрузку библиографической базы или техническую
-                  документацию в поддерживаемом формате, чтобы начать поиск.
+                  Добавьте статью, выгрузку библиографической базы или
+                  техническую документацию в поддерживаемом формате, чтобы
+                  начать поиск.
                 </p>
                 <Button type="button" onClick={handleDocumentsViewOpen}>
                   Загрузить документы

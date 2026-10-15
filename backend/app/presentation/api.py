@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from secrets import compare_digest
-from typing import Any
+from typing import Any, Callable
+from typing import Literal
+from uuid import UUID
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Response, UploadFile, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from backend.app.application.document_service import (
     DocumentCapacityError,
@@ -32,6 +35,7 @@ from backend.app.application.evidence_review_service import (
 from backend.app.application.quality_service import QualityService
 from backend.app.application.public_source_service import PublicSourceService
 from backend.app.application.synapse_service import SynapseService
+from backend.app.application.research_service import ResearchConflictError, ResearchGatewayError, ResearchNotFoundError, ResearchService
 from backend.app.config import settings
 from backend.app.infrastructure.control_question_repository import JsonControlQuestionRepository
 from backend.app.infrastructure.document_repository import JsonDocumentRepository
@@ -41,6 +45,7 @@ from backend.app.infrastructure.public_source_gateway import HttpPublicSourceGat
 from backend.app.infrastructure.public_source_repository import JsonPublicSourceRepository
 from backend.app.infrastructure.multiformat_text_extractor import MultiFormatTextExtractor
 from backend.app.infrastructure.synapse_client import SynapseClient, SynapseError
+from backend.app.infrastructure.research_repository import SqliteResearchRepository
 
 router = APIRouter(prefix="/api")
 evidence_repository = JsonEvidenceRepository()
@@ -56,6 +61,7 @@ public_source_service = PublicSourceService(
     HttpPublicSourceGateway(),
 )
 document_config = settings()
+research_repository = SqliteResearchRepository(document_config.document_store_dir / "researches.sqlite3")
 document_service = DocumentService(
     JsonDocumentRepository(document_config.document_store_dir),
     MultiFormatTextExtractor(),
@@ -115,6 +121,12 @@ def document_upload_content_length_exceeds_limit(content_length: str | None) -> 
 class AnalysisBody(BaseModel):
     question: str = Field(min_length=5, max_length=1200)
     experiment_ids: list[str] = Field(default_factory=list, max_length=30)
+    request_id: UUID | None = None
+
+    @field_validator("question", mode="before")
+    @classmethod
+    def trim_question(cls, value: Any) -> Any:
+        return value.strip() if isinstance(value, str) else value
 
 
 class SourceReferenceBody(BaseModel):
@@ -165,6 +177,12 @@ class DocumentSearchBody(BaseModel):
 class DocumentResearchBody(BaseModel):
     query: str = Field(min_length=2, max_length=1200)
     document_ids: list[str] = Field(min_length=1, max_length=50)
+    request_id: UUID | None = None
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def trim_query(cls, value: Any) -> Any:
+        return value.strip() if isinstance(value, str) else value
 
 
 @router.get("/documents/access-code/availability")
@@ -189,7 +207,12 @@ def document_access_code(response: Response) -> dict[str, str]:
 
 
 def synapse_service() -> SynapseService:
-    return SynapseService(SynapseClient(settings()), evidence_service, document_service)
+    client = SynapseClient(settings())
+    return SynapseService(client, evidence_service, document_service, ResearchService(research_repository, client))
+
+
+def research_service() -> ResearchService:
+    return ResearchService(research_repository, SynapseClient(settings()))
 
 
 @router.get("/health")
@@ -276,11 +299,16 @@ def search_documents(body: DocumentSearchBody) -> dict[str, Any]:
 @router.post("/documents/research", dependencies=[Depends(require_document_access_token)])
 def start_document_research(body: DocumentResearchBody) -> dict[str, Any]:
     try:
-        return synapse_service().start_document_research(body.query, body.document_ids)
+        service = synapse_service()
+        if body.request_id:
+            return service.start_document_research(body.query, body.document_ids, str(body.request_id))
+        return service.start_document_research(body.query, body.document_ids)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except SynapseError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ResearchConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.get(
@@ -351,17 +379,78 @@ def synapse_config() -> dict[str, Any]:
     return {"configured": config.synapse_configured, "approval_mode": config.synapse_approval_mode}
 
 
-@router.post("/synapse/projects")
+@router.post("/synapse/projects", dependencies=[Depends(require_document_access_token)])
 def start_synapse_research(body: AnalysisBody) -> dict[str, Any]:
     try:
-        return synapse_service().start_research(body.question, body.experiment_ids)
+        service = synapse_service()
+        if body.request_id:
+            return service.start_research(body.question, body.experiment_ids, str(body.request_id))
+        return service.start_research(body.question, body.experiment_ids)
     except EvidenceSelectionNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Не найдены выбранные опыты.") from exc
     except SynapseError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ResearchConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
-@router.get("/synapse/projects/{project_id}")
+class ResearchApprovalBody(BaseModel):
+    approved: bool
+    feedback: str = Field(default="", max_length=5000)
+
+
+def research_action(action: Callable[[], Any]) -> Any:
+    try:
+        return action()
+    except ResearchNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ResearchConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ResearchGatewayError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.get("/researches", dependencies=[Depends(require_document_access_token)])
+def list_researches(response: Response, kind: Literal["documents", "evidence"] | None = None, research_status: str | None = None) -> dict[str, Any]:
+    response.headers["Cache-Control"] = "no-store"
+    records = research_service().list(kind, research_status)
+    items = []
+    for record in records:
+        item = {key: value for key, value in record.items() if key not in ("sources", "result_text", "files", "approvals")}
+        item["sources"] = [{"id": source["id"], "filename": source["filename"]} for source in record["sources"]]
+        item["file_count"] = len(record["files"])
+        item["approval_count"] = len(record["approvals"])
+        items.append(item)
+    return {"items": items}
+
+
+@router.get("/researches/{research_id}", dependencies=[Depends(require_document_access_token)])
+def research_detail(research_id: str, response: Response) -> dict[str, Any]:
+    response.headers["Cache-Control"] = "no-store"
+    return research_action(lambda: research_service().get(research_id))
+
+
+@router.post("/researches/{research_id}/refresh", dependencies=[Depends(require_document_access_token)])
+def refresh_research(research_id: str) -> dict[str, Any]:
+    return research_action(lambda: research_service().refresh(research_id))
+
+
+@router.post("/researches/{research_id}/approvals/{approval_id}", dependencies=[Depends(require_document_access_token)])
+def resolve_research_approval(research_id: str, approval_id: str, body: ResearchApprovalBody) -> dict[str, Any]:
+    return research_action(lambda: research_service().resolve(research_id, approval_id, body.approved, body.feedback.strip()))
+
+
+@router.get("/researches/{research_id}/files/{file_id}", dependencies=[Depends(require_document_access_token)])
+def research_file(research_id: str, file_id: str) -> Response:
+    item, content = research_action(lambda: research_service().file(research_id, file_id))
+    return Response(content, media_type=item["content_type"], headers={
+        "Content-Disposition": "attachment; filename*=UTF-8''" + quote(item["filename"], safe=""),
+        "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox; default-src 'none'",
+    })
+
+
+@router.get("/synapse/projects/{project_id}", dependencies=[Depends(require_document_access_token)])
 def synapse_project(project_id: str) -> dict[str, Any]:
     try:
         return synapse_service().get_project(project_id)
