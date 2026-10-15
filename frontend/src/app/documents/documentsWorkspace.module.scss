@@ -256,8 +256,10 @@
 
 .selectedFilesList {
   display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 0.5rem;
-  max-height: 12.5rem;
+  max-height: var(--selected-files-max-height, none);
   margin: 0;
   padding: 0 0.5rem 0 0;
   overflow-y: auto;

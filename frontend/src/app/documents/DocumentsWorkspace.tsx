@@ -1,6 +1,6 @@
 import scss from "./documentsWorkspace.module.scss";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import {
@@ -30,7 +30,7 @@ import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 
 const SEARCH_LIMIT = 10;
 const MAX_SELECTED_DOCUMENTS = 50;
-const MAX_VISIBLE_SELECTED_FILES = 4;
+const MIN_VISIBLE_SELECTED_FILES = 3;
 const RESEARCH_POLLING_INTERVAL = 5_000;
 const SUPPORTED_DOCUMENT_ACCEPT =
   ".pdf,.json,.jsonl,.ndjson,.csv,.tsv,.xml,.tei,.jats,.nxml,.html,.htm,.txt,.md,.ris,.bib";
@@ -154,6 +154,9 @@ const copyText = async (value: string) => {
 };
 
 const DocumentsWorkspace = () => {
+  const workspaceRef = useRef<HTMLElement>(null);
+  const uploadPanelRef = useRef<HTMLElement>(null);
+  const selectedFilesListRef = useRef<HTMLUListElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLElement>(null);
   const questionEditorRef = useRef<HTMLFormElement>(null);
@@ -164,6 +167,8 @@ const DocumentsWorkspace = () => {
   const [documents, setDocuments] = useState<DocumentMetadata[]>();
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [hasSelectedFilesOverflow, setHasSelectedFilesOverflow] =
+    useState(false);
   const [activeView, setActiveView] = useState<WorkspaceView>("search");
   const [accessToken, setAccessToken] = useState(getTeamAccessToken);
   const [canCopyAccessCode, setCanCopyAccessCode] = useState(false);
@@ -279,6 +284,50 @@ const DocumentsWorkspace = () => {
   useEffect(() => {
     void loadDocuments();
   }, [loadDocuments]);
+
+  useLayoutEffect(() => {
+    const workspace = workspaceRef.current;
+    const panel = uploadPanelRef.current;
+    const list = selectedFilesListRef.current;
+
+    if (!workspace || !panel || !list || !list.children.length) return;
+
+    const updateSelectedFilesHeight = () => {
+      const firstItem = list.children[0];
+      const lastVisibleItem =
+        list.children[
+          Math.min(MIN_VISIBLE_SELECTED_FILES, list.children.length) - 1
+        ];
+      const minimumHeight =
+        lastVisibleItem.getBoundingClientRect().bottom -
+        firstItem.getBoundingClientRect().top;
+      const listBounds = list.getBoundingClientRect();
+      const controlsHeight =
+        panel.getBoundingClientRect().bottom - listBounds.bottom;
+      const workspacePadding = parseFloat(
+        getComputedStyle(workspace).paddingBottom,
+      );
+      const availableHeight =
+        workspace.getBoundingClientRect().bottom -
+        workspacePadding -
+        listBounds.top -
+        controlsHeight;
+
+      list.style.setProperty(
+        "--selected-files-max-height",
+        `${Math.max(minimumHeight, availableHeight)}px`,
+      );
+      setHasSelectedFilesOverflow(list.scrollHeight > list.clientHeight);
+    };
+
+    const observer = new ResizeObserver(updateSelectedFilesHeight);
+    observer.observe(workspace);
+    observer.observe(panel);
+    observer.observe(list);
+    updateSelectedFilesHeight();
+
+    return () => observer.disconnect();
+  }, [activeView, documentsError, selectedFiles]);
 
   useEffect(() => {
     if (!documentsError || documents) return;
@@ -820,7 +869,7 @@ const DocumentsWorkspace = () => {
   }
 
   return (
-    <main className={scss.root}>
+    <main ref={workspaceRef} className={scss.root}>
       <header className={scss.header}>
         <h1>Поиск по документам</h1>
         <p className={scss.lead}>
@@ -887,7 +936,7 @@ const DocumentsWorkspace = () => {
 
         {activeView === "documents" ? (
           <section className={scss.documentsWorkspace} aria-label="Документы">
-            <article className={scss.panel}>
+            <article ref={uploadPanelRef} className={scss.panel}>
               <div className={scss.sectionHeading}>
                 <div>
                   <h2>Загрузить документы</h2>
@@ -920,11 +969,14 @@ const DocumentsWorkspace = () => {
                   >
                     <div className={scss.selectedFilesHeading}>
                       <strong>Выбрано файлов: {selectedFiles.length}</strong>
-                      {selectedFiles.length > MAX_VISIBLE_SELECTED_FILES && (
+                      {hasSelectedFilesOverflow && (
                         <span>Прокрутите, чтобы увидеть все</span>
                       )}
                     </div>
-                    <ul className={scss.selectedFilesList}>
+                    <ul
+                      ref={selectedFilesListRef}
+                      className={scss.selectedFilesList}
+                    >
                       {selectedFiles.map((file, index) => (
                         <li
                           key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
