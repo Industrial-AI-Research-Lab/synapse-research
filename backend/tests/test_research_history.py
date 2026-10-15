@@ -84,6 +84,45 @@ def test_restart_retains_full_answer_and_all_materials_when_synapse_is_offline(t
     assert stale["sync_error"] == "Synapse недоступен"
 
 
+def test_successful_refresh_updates_the_configured_synapse_link(tmp_path):
+    gateway = Gateway()
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    gateway.project_url = lambda project_id: f"https://dev.synapse.example/monitor/{project_id}"
+    updated = researches.refresh(record["id"])
+    assert updated["synapse_url"] == "https://dev.synapse.example/monitor/project-1"
+
+
+def test_failure_reason_survives_restart_and_failed_synchronization(tmp_path):
+    gateway = Gateway()
+    gateway.snapshot.update(status="failed", approvals=[], failure_reason="Причина остановки")
+    researches = service(tmp_path, gateway)
+    record = researches.refresh(launch(researches, gateway)["id"])
+    gateway.offline = True
+    assert service(tmp_path, gateway).refresh(record["id"])["failure_reason"] == "Причина остановки"
+
+
+@pytest.mark.parametrize("reviewed_data", [None, {}, {"documents": ["previous.pdf"]}])
+def test_changed_approval_data_is_not_approved_under_the_same_id(tmp_path, reviewed_data):
+    gateway = Gateway()
+    gateway.snapshot["approvals"][0]["expected_data"] = {"documents": ["latest.pdf"]}
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    with pytest.raises(ResearchConflictError, match="Данные запроса изменились"):
+        researches.resolve(record["id"], "approval-1", True, "", reviewed_data)
+    assert gateway.decisions == []
+
+
+def test_reviewed_approval_snapshot_is_accepted(tmp_path):
+    gateway = Gateway()
+    reviewed_data = {"documents": ["source.pdf"]}
+    gateway.snapshot["approvals"][0]["expected_data"] = reviewed_data
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    assert researches.resolve(record["id"], "approval-1", True, "", reviewed_data)["status"] == "completed"
+    assert len(gateway.decisions) == 1
+
+
 def test_concurrent_duplicate_start_creates_one_external_project(tmp_path):
     gateway = Gateway()
     researches = service(tmp_path, gateway)
@@ -224,6 +263,8 @@ def test_failed_file_download_does_not_hide_other_saved_materials(tmp_path):
 
 def test_api_requires_team_access_for_history_decisions_and_files(tmp_path, monkeypatch):
     gateway = Gateway()
+    expected_data = {"documents": ["source.pdf"]}
+    gateway.snapshot["approvals"][0]["expected_data"] = expected_data
     researches = service(tmp_path, gateway)
     record = launch(researches, gateway)
     monkeypatch.setattr(api.document_config, "document_access_token", "test-team-code")
@@ -235,7 +276,10 @@ def test_api_requires_team_access_for_history_decisions_and_files(tmp_path, monk
         assert client.get("/api/researches", headers=headers).json()["items"][0]["id"] == record["id"]
         assert "result_text" not in client.get("/api/researches", headers=headers).json()["items"][0]
         assert client.post(f"/api/researches/{record['id']}/refresh", headers=headers).json()["approvals"][0]["id"] == "approval-1"
-        resolved = client.post(f"/api/researches/{record['id']}/approvals/approval-1", headers=headers, json={"approved": True, "feedback": "да"})
+        stale = client.post(f"/api/researches/{record['id']}/approvals/approval-1", headers=headers, json={"approved": True, "expected_data": {"documents": ["previous.pdf"]}})
+        assert stale.status_code == 409
+        assert gateway.decisions == []
+        resolved = client.post(f"/api/researches/{record['id']}/approvals/approval-1", headers=headers, json={"approved": True, "feedback": "да", "expected_data": expected_data})
         assert resolved.status_code == 200
         file = client.get(f"/api/researches/{record['id']}/files/report", headers=headers)
         assert file.content == gateway.contents["report"]

@@ -20,6 +20,7 @@ export interface ResearchApproval {
   content: string;
   details: unknown;
   interactionSchema?: unknown;
+  expectedData?: Record<string, unknown>;
 }
 
 export interface ResearchSummary {
@@ -42,6 +43,7 @@ export interface ResearchSummary {
 
 export interface Research extends ResearchSummary {
   resultText: string;
+  failureReason: string;
   files: ResearchFile[];
   approvals: ResearchApproval[];
 }

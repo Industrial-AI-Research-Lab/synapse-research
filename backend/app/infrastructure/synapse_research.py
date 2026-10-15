@@ -30,6 +30,7 @@ def approval_details(approval: dict[str, Any]) -> dict[str, Any] | None:
         "title": str(data.get("label") or data.get("title") or approval.get("subtype") or "Требуется решение команды"),
         "content": str(approval.get("content") or ""), "details": details,
         "interaction_schema": data.get("interaction_schema"),
+        "expected_data": data,
     }
 
 
@@ -61,6 +62,15 @@ def report_attachment_ids(value: Any) -> set[str]:
     elif isinstance(value, list):
         for child in value:
             ids.update(report_attachment_ids(child))
+    elif isinstance(value, str):
+        content = value.strip()
+        if content.startswith("```json") and content.endswith("```"):
+            content = content[7:-3].strip()
+        if content.startswith(("{", "[")):
+            try:
+                ids.update(report_attachment_ids(json.loads(content)))
+            except ValueError:
+                pass
     return ids
 
 
@@ -68,3 +78,28 @@ def full_text(value: Any) -> str:
     if value is None:
         return ""
     return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, indent=2)
+
+
+def failure_reason(messages: list[Any]) -> str:
+    for content in reversed(messages):
+        if isinstance(content, str):
+            content = content.strip()
+            if content.startswith("```json") and content.endswith("```"):
+                content = content[7:-3].strip()
+            try:
+                content = json.loads(content)
+            except ValueError:
+                continue
+        if not isinstance(content, dict):
+            continue
+        report = content.get("task_report")
+        if not isinstance(report, dict) or report.get("outcome") != "failed":
+            continue
+        if report.get("code") == "FACT_BATCHES_MIN_ITEMS_CONFLICT":
+            return "В выбранном сценарии Synapse требуется минимум два пакета извлечённых фактов. По документу получен один пакет, поэтому проверка остановила исследование."
+        if report.get("code") == "workflow_not_approved":
+            return "Synapse не получил подтверждение состава документов. Построение индекса и обработка документов не запускались."
+        message = report.get("message")
+        if isinstance(message, str) and message.strip():
+            return message.strip()
+    return ""

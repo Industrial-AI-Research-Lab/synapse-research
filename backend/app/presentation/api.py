@@ -397,6 +397,7 @@ def start_synapse_research(body: AnalysisBody) -> dict[str, Any]:
 class ResearchApprovalBody(BaseModel):
     approved: bool
     feedback: str = Field(default="", max_length=5000)
+    expected_data: dict[str, Any] | None = None
 
 
 def research_action(action: Callable[[], Any]) -> Any:
@@ -437,7 +438,7 @@ def refresh_research(research_id: str) -> dict[str, Any]:
 
 @router.post("/researches/{research_id}/approvals/{approval_id}", dependencies=[Depends(require_document_access_token)])
 def resolve_research_approval(research_id: str, approval_id: str, body: ResearchApprovalBody) -> dict[str, Any]:
-    return research_action(lambda: research_service().resolve(research_id, approval_id, body.approved, body.feedback.strip()))
+    return research_action(lambda: research_service().resolve(research_id, approval_id, body.approved, body.feedback.strip(), body.expected_data))
 
 
 @router.get("/researches/{research_id}/files/{file_id}", dependencies=[Depends(require_document_access_token)])

@@ -46,6 +46,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 const ResearchDetail = ({ researchId }: { researchId: string }) => {
   const [research, setResearch] = useState<Research>();
   const [error, setError] = useState("");
+  const [decisionError, setDecisionError] = useState("");
   const [hasAccessError, setHasAccessError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [resolvingId, setResolvingId] = useState("");
@@ -155,17 +156,19 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
     if (resolvingId) return;
     const comment = feedback[approvalId]?.trim() ?? "";
     if (!approved && !comment) {
-      setError("Укажите причину отклонения в комментарии.");
+      setDecisionError("Укажите причину отклонения в комментарии.");
       return;
     }
     setResolvingId(approvalId);
-    setError("");
+    setDecisionError("");
     try {
       const updated = await resolveResearchApproval(
         researchId,
         approvalId,
         approved,
         comment,
+        research?.approvals.find((approval) => approval.id === approvalId)
+          ?.expectedData,
       );
       if (isMountedRef.current) {
         setResearch(updated);
@@ -173,7 +176,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
       }
     } catch (failure) {
       if (isMountedRef.current)
-        setError(
+        setDecisionError(
           failure instanceof Error
             ? failure.message
             : "Не удалось передать решение. Обновите состояние перед повторной попыткой.",
@@ -230,6 +233,11 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
           {error && (
             <p className={scss.error} role="alert">
               {error}
+            </p>
+          )}
+          {decisionError && (
+            <p className={scss.error} role="alert">
+              {decisionError}
             </p>
           )}
           {!research && !error && (
@@ -298,6 +306,12 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                       ? "Synapse мог принять запрос. Не запускайте его повторно, пока не проверите историю в Synapse."
                       : "Сохранённые данные остаются доступны. Повторите обновление состояния."}
                   </p>
+                </div>
+              )}
+              {research.failureReason && (
+                <div className={scss.warning} role="alert">
+                  <strong>Причина остановки</strong>
+                  <p>{research.failureReason}</p>
                 </div>
               )}
               <section className={scss.section}>

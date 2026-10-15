@@ -9,8 +9,8 @@ from urllib.parse import quote, urlsplit
 import httpx
 
 from backend.app.application.synapse_service import SynapseAttachment
-from backend.app.application.research_service import ResearchGatewayError
-from backend.app.infrastructure.synapse_research import approval_details, full_text, generated_file, public_url, report_attachment_ids
+from backend.app.application.research_service import ResearchConflictError, ResearchGatewayError
+from backend.app.infrastructure.synapse_research import approval_details, failure_reason, full_text, generated_file, public_url, report_attachment_ids
 from backend.app.config import Settings
 from backend.app.observability import request_id
 
@@ -113,9 +113,12 @@ class SynapseClient:
                 (perf_counter() - started_at) * 1000,
                 type(exc).__name__,
             )
-            raise SynapseError(
-                "Synapse не ответил вовремя. Повторите запрос или увеличьте SYNAPSE_TIMEOUT."
-            ) from exc
+            message = (
+                "Synapse не ответил вовремя. Результат создания проекта неизвестен. Проверьте историю Synapse перед новым запуском."
+                if method == "POST" and path == "/api/projects"
+                else "Synapse не ответил вовремя. Повторите запрос или увеличьте SYNAPSE_TIMEOUT."
+            )
+            raise SynapseError(message) from exc
         except httpx.HTTPError as exc:
             logger.warning(
                 "pav.synapse.request.failed request_id=%s destination=%s method=%s path=%s duration_ms=%.1f type=%s",
@@ -211,12 +214,20 @@ class SynapseClient:
                 approvals = [pending["pending_approval"]]
             normalized = [approval_details(a) for a in approvals if isinstance(a, dict)]
             report_ids: set[str] = set()
-            try:
-                trace = self._request("GET", path + "/execution-trace", params={"include_payloads": True, "payload_node_id": "render_report"}).json()
-                report_ids = report_attachment_ids(trace)
-            except SynapseError as exc:
-                if exc.status_code not in (404, 422):
-                    raise
+            result_failure = ""
+            if project.get("status") in ("completed", "done", "output", "failed", "error"):
+                params = {"limit": 1000}
+                if project.get("current_run_id"):
+                    params["run_id"] = project["current_run_id"]
+                messages = self._request("GET", path + "/messages", params=params).json()
+                rows = messages.get("messages", []) if isinstance(messages, dict) else messages
+                contents = [
+                    message.get("content") for message in rows
+                    if isinstance(message, dict) and message.get("type") == "assistant"
+                ]
+                report_ids = report_attachment_ids(contents)
+                if project.get("status") in ("failed", "error"):
+                    result_failure = failure_reason(contents)
             files: list[dict[str, Any]] = []
             skip = 0
             while True:
@@ -246,6 +257,7 @@ class SynapseClient:
                 "approvals": [a for a in normalized if a], "files": files,
                 "result_text": full_text(project.get("final_output") or project.get("result") or project.get("summary")),
                 "result_url": public_url(result_url),
+                "failure_reason": result_failure,
             }
         except (ValueError, TypeError, AttributeError) as exc:
             raise SynapseError("Synapse вернул состояние исследования в неподдерживаемом формате.") from exc
@@ -255,7 +267,15 @@ class SynapseClient:
         if approval.get("run_id"):
             path += f"/runs/{quote(approval['run_id'], safe='')}"
         path += f"/approvals/{quote(approval['id'], safe='')}/resolve"
-        self._request("POST", path, json={"approved": approved, "feedback": feedback or None})
+        payload = {"approved": approved, "feedback": feedback or None}
+        if isinstance(approval.get("expected_data"), dict):
+            payload["expected_data"] = approval["expected_data"]
+        try:
+            self._request("POST", path, json=payload)
+        except SynapseError as exc:
+            if exc.status_code == 409:
+                raise ResearchConflictError("Запрос изменился или уже обработан в Synapse. Обновите карточку перед принятием решения.") from exc
+            raise
 
     def download_research_file(self, project_id: str, file_id: str) -> bytes:
         return self._request("GET", f"/api/projects/{quote(project_id, safe='')}/attachments/{quote(file_id, safe='')}", params={"raw": True}, max_response_bytes=20 * 1024 * 1024).content

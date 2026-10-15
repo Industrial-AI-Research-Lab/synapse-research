@@ -106,7 +106,7 @@ class ResearchService:
                 return record
             try:
                 snapshot = self._gateway.research_snapshot(record["project_id"])
-                changes = {**snapshot, "checked_at": utc_now(), "sync_error": ""}
+                changes = {**snapshot, "synapse_url": self._gateway.project_url(record["project_id"]), "checked_at": utc_now(), "sync_error": ""}
                 if not changes.get("result_text"):
                     changes.pop("result_text", None)
                 cached_files = {item["id"]: item for item in record["files"]}
@@ -128,7 +128,7 @@ class ResearchService:
             except ResearchGatewayError as exc:
                 return self._repository.patch(research_id, {"sync_error": str(exc)})
 
-    def resolve(self, research_id: str, approval_id: str, approved: bool, feedback: str) -> dict[str, Any]:
+    def resolve(self, research_id: str, approval_id: str, approved: bool, feedback: str, expected_data: dict[str, Any] | None = None) -> dict[str, Any]:
         with self._repository.locked(research_id):
             record = self.refresh(research_id)
             if record["sync_error"]:
@@ -136,6 +136,8 @@ class ResearchService:
             approval = next((item for item in record["approvals"] if item["id"] == approval_id), None)
             if approval is None:
                 raise ResearchConflictError("Запрос уже обработан или больше не ожидает решения. Обновите состояние.")
+            if approval.get("expected_data") is not None and approval["expected_data"] != expected_data:
+                raise ResearchConflictError("Данные запроса изменились. Обновите карточку и проверьте их перед принятием решения.")
             self._gateway.resolve_approval(record["project_id"], approval, approved, feedback)
             self._repository.patch(research_id, {"approvals": [], "status": "running", "checked_at": utc_now()})
             return self.refresh(research_id)

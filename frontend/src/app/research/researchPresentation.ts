@@ -60,6 +60,7 @@ export const formatResearchDate = (date: string | null) =>
 const RESEARCH_PHASE_LABELS: Record<string, string> = {
   planning: "Подготовка исследования",
   requirements: "Уточнение запроса",
+  execution: "Выполнение исследования",
   approve_manifest: "Согласование запроса и документов",
   design_ontology: "Подготовка структуры данных",
   approve_ontology: "Согласование структуры данных",

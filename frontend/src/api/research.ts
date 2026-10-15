@@ -21,6 +21,7 @@ interface ApiResearch {
   file_count?: number;
   approval_count?: number;
   result_text?: string;
+  failure_reason?: string;
   files?: Array<{
     id: string;
     filename: string;
@@ -34,6 +35,7 @@ interface ApiResearch {
     content: string;
     details: unknown;
     interaction_schema?: unknown;
+    expected_data?: Record<string, unknown>;
   }>;
 }
 
@@ -82,6 +84,7 @@ const mapResearch = (item: ApiResearch): Research => ({
   resultUrl: item.result_url,
   syncError: item.sync_error,
   resultText: item.result_text ?? "",
+  failureReason: item.failure_reason ?? "",
   fileCount: item.file_count ?? item.files?.length ?? 0,
   approvalCount: item.approval_count ?? item.approvals?.length ?? 0,
   files: (item.files ?? []).map((file) => ({
@@ -97,6 +100,7 @@ const mapResearch = (item: ApiResearch): Research => ({
     content: approval.content,
     details: approval.details,
     interactionSchema: approval.interaction_schema,
+    expectedData: approval.expected_data,
   })),
 });
 
@@ -125,6 +129,7 @@ export const resolveResearchApproval = async (
   approvalId: string,
   approved: boolean,
   feedback: string,
+  expectedData?: Record<string, unknown>,
 ) =>
   mapResearch(
     await (
@@ -133,7 +138,11 @@ export const resolveResearchApproval = async (
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ approved, feedback }),
+          body: JSON.stringify({
+            approved,
+            feedback,
+            expected_data: expectedData,
+          }),
         },
       )
     ).json(),
