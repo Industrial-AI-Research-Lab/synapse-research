@@ -589,7 +589,7 @@
   align-content: start;
   grid-auto-rows: max-content;
   grid-template-columns: minmax(0, 1fr);
-  max-height: min(var(--list-max-height, 20rem), 20rem);
+  max-height: var(--list-max-height, none);
   padding-right: 0.5rem;
   overflow-y: auto;
   scrollbar-gutter: stable;
