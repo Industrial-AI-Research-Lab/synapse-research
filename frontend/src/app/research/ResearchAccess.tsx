@@ -1,6 +1,6 @@
 import scss from "./researchAccess.module.scss";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   getDocumentAccessCode,
@@ -12,6 +12,7 @@ import Field from "../../components/ui/Field/Field";
 import Input from "../../components/ui/Input/Input";
 
 const ResearchAccess = ({ onAccess }: { onAccess: () => void }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState(getTeamAccessToken);
   const [canGetCode, setCanGetCode] = useState(false);
   const [error, setError] = useState("");
@@ -33,6 +34,7 @@ const ResearchAccess = ({ onAccess }: { onAccess: () => void }) => {
     event.preventDefault();
     if (!code.trim()) {
       setError("Введите код команды.");
+      inputRef.current?.focus();
       return;
     }
     setTeamAccessToken(code);
@@ -40,6 +42,7 @@ const ResearchAccess = ({ onAccess }: { onAccess: () => void }) => {
   };
 
   const handleGetCode = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     setError("");
     try {
@@ -63,6 +66,7 @@ const ResearchAccess = ({ onAccess }: { onAccess: () => void }) => {
       <form onSubmit={handleSubmit}>
         <Field label="Код команды" htmlFor="research-access-code" error={error}>
           <Input
+            ref={inputRef}
             id="research-access-code"
             type="password"
             value={code}
@@ -76,10 +80,11 @@ const ResearchAccess = ({ onAccess }: { onAccess: () => void }) => {
             <Button
               type="button"
               variant="secondary"
-              disabled={isLoading}
+              isLoading={isLoading}
+              loadingLabel="Получаем код…"
               onClick={() => void handleGetCode()}
             >
-              {isLoading ? "Получаем код…" : "Подставить код стенда"}
+              Подставить код стенда
             </Button>
           )}
         </div>

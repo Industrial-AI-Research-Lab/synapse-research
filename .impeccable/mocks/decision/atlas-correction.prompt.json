@@ -1,0 +1,6 @@
+{
+  "prompt": "Edit this desktop UI mockup with exactly one correction: remove the small settings gear and the word «Настройки» from the upper-right header. Fill that area with the exact existing light header background. Preserve every other pixel, all layout, Russian text, brand «Атлас», colors, typography, dimensions, files, source selection, textarea and buttons unchanged. Do not add any feature or label. The app has no settings feature; the preview must not imply one.",
+  "approved": false,
+  "tool": "image_gen",
+  "purpose": "remove-unimplemented-control"
+}

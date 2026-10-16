@@ -11,3 +11,65 @@
 .secondary {
   @include mixin.controlSecondary;
 }
+
+.text {
+  @include mixin.controlText;
+}
+
+.icon {
+  @include mixin.controlIcon;
+}
+
+.danger {
+  color: var(--color-action-text);
+  background: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger-hover);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-danger-pressed);
+  }
+
+  &:focus-visible {
+    outline-color: var(--color-danger);
+  }
+}
+
+.content {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  min-width: 0;
+}
+
+.label,
+.loading {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.loading {
+  visibility: hidden;
+}
+
+.loading > :first-child {
+  animation-play-state: paused;
+}
+
+.root[aria-busy="true"] .label {
+  visibility: hidden;
+}
+
+.root[aria-busy="true"] .loading {
+  visibility: visible;
+}
+
+.root[aria-busy="true"] .loading > :first-child {
+  animation-play-state: running;
+}

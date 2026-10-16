@@ -2,6 +2,8 @@ export const RESEARCH_STATUS_LABELS: Record<string, string> = {
   starting: "Передаётся в Synapse",
   started: "Запущено",
   initialized: "Подготовка",
+  queued: "Ожидает запуска",
+  pending: "Ожидает запуска",
   running: "В работе",
   in_progress: "В работе",
   awaiting_approval: "Требуется решение",
@@ -19,7 +21,9 @@ export const RESEARCH_STATUS_LABELS: Record<string, string> = {
 };
 
 export const formatResearchStatus = (status: string) =>
-  RESEARCH_STATUS_LABELS[status] ?? "Исследование выполняется";
+  Object.hasOwn(RESEARCH_STATUS_LABELS, status)
+    ? RESEARCH_STATUS_LABELS[status]
+    : "Статус неизвестен";
 
 export const formatResearchResultHint = (status: string) => {
   if (["completed", "done"].includes(status))

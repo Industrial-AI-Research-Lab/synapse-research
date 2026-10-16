@@ -1,0 +1,1423 @@
+{
+  "tool": "comp-spec",
+  "version": 1,
+  "createdAt": "2026-10-16T11:01:45.895Z",
+  "comp": ".impeccable/mocks/decision/folio-final-document-action.png",
+  "warnings": [
+    "region sidebar: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region section-heads: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)",
+    "region source-selection: \"container\": true set in the regions file (the region-size refusal is overridden: one undivided element)"
+  ],
+  "uncoveredInkCells": [],
+  "compSize": {
+    "width": 1536,
+    "height": 1024
+  },
+  "aspect": 1.5,
+  "orientation": "landscape",
+  "palette": [
+    {
+      "hex": "#f8f8f7",
+      "coverage": 0.9632
+    },
+    {
+      "hex": "#526647",
+      "coverage": 0.015
+    },
+    {
+      "hex": "#b6b9c5",
+      "coverage": 0.0097
+    },
+    {
+      "hex": "#737b8b",
+      "coverage": 0.0066
+    },
+    {
+      "hex": "#080b17",
+      "coverage": 0.0055
+    }
+  ],
+  "bands": [
+    {
+      "y": 0.1059,
+      "strength": 0.3468
+    },
+    {
+      "y": 0.1412,
+      "strength": 0.5885
+    },
+    {
+      "y": 0.1647,
+      "strength": 0.2405
+    },
+    {
+      "y": 0.2824,
+      "strength": 0.4978
+    },
+    {
+      "y": 0.3765,
+      "strength": 0.4177
+    },
+    {
+      "y": 0.4588,
+      "strength": 0.2115
+    },
+    {
+      "y": 0.6471,
+      "strength": 0.4122
+    },
+    {
+      "y": 0.7059,
+      "strength": 0.2342
+    }
+  ],
+  "regions": [
+    {
+      "id": "sidebar",
+      "kind": "chrome",
+      "note": "Warm beige narrow navigation rail with monogram, toggle, two navigation icons and connection indicator",
+      "grid": "A0:A9",
+      "container": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0.0586,
+        "h": 1
+      },
+      "px": {
+        "x": 0,
+        "y": 0,
+        "w": 90,
+        "h": 1024
+      },
+      "aspect": 0.0879,
+      "palette": [
+        {
+          "hex": "#f7f7e8",
+          "coverage": 0.9906
+        },
+        {
+          "hex": "#4d5d46",
+          "coverage": 0.0034
+        },
+        {
+          "hex": "#bfbfbf",
+          "coverage": 0.0033
+        },
+        {
+          "hex": "#8e988e",
+          "coverage": 0.0016
+        },
+        {
+          "hex": "#080818",
+          "coverage": 0.0011
+        }
+      ],
+      "detail": {
+        "energy": 1.7472
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "headline",
+      "kind": "text",
+      "note": "Исследование по документам, dark serif heading",
+      "grid": "A0:G1",
+      "box": {
+        "x": 0.0846,
+        "y": 0.0938,
+        "w": 0.5208,
+        "h": 0.0566
+      },
+      "px": {
+        "x": 130,
+        "y": 96,
+        "w": 800,
+        "h": 58
+      },
+      "aspect": 13.7931,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.792
+        },
+        {
+          "hex": "#0a0f1c",
+          "coverage": 0.14
+        },
+        {
+          "hex": "#5c636e",
+          "coverage": 0.0342
+        },
+        {
+          "hex": "#bbc0c8",
+          "coverage": 0.0243
+        },
+        {
+          "hex": "#313949",
+          "coverage": 0.0095
+        }
+      ],
+      "detail": {
+        "energy": 106.7226
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 18,
+          "capHeightPx": 39.7,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.807,
+          "advTall": 0.9583,
+          "advX": 0.7565,
+          "gap": 0.0504,
+          "xRatio": 0.7124,
+          "stemW": 0.1433,
+          "contrast": 2.1999,
+          "serif": 3.5273,
+          "densTall": 0.4272,
+          "densX": 0.4331,
+          "weight": 0.4272
+        },
+        "widthClass": "wide",
+        "weightClass": "regular",
+        "chosen": {
+          "family": "Noto Serif HK",
+          "weight": 700,
+          "fontSizePx": 57,
+          "source": "catalog",
+          "estimatedSize": true,
+          "stamp": "991eacc5c73d"
+        }
+      }
+    },
+    {
+      "id": "intro",
+      "kind": "text",
+      "note": "Выберите источники и задайте исследовательский вопрос.",
+      "grid": "A1:I1",
+      "box": {
+        "x": 0.0846,
+        "y": 0.1582,
+        "w": 0.7161,
+        "h": 0.0293
+      },
+      "px": {
+        "x": 130,
+        "y": 162,
+        "w": 1100,
+        "h": 30
+      },
+      "aspect": 36.6667,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.862
+        },
+        {
+          "hex": "#6b6f82",
+          "coverage": 0.0934
+        },
+        {
+          "hex": "#aaaebb",
+          "coverage": 0.0421
+        },
+        {
+          "hex": "#788888",
+          "coverage": 0.0014
+        },
+        {
+          "hex": "#484868",
+          "coverage": 0.0011
+        }
+      ],
+      "detail": {
+        "energy": 29.618
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 49,
+          "capHeightPx": 20.1,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.572,
+          "advTall": 0.6093,
+          "advX": 0.572,
+          "gap": 0.1368,
+          "xRatio": 0.7133,
+          "stemW": 0.1168,
+          "contrast": 1.0369,
+          "serif": 0.9223,
+          "densTall": 0.441,
+          "densX": 0.4806,
+          "weight": 0.441
+        },
+        "widthClass": "condensed",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "sources-heading",
+      "kind": "text",
+      "note": "Источники, italic serif heading",
+      "grid": "A2:C2",
+      "box": {
+        "x": 0.0846,
+        "y": 0.2539,
+        "w": 0.1367,
+        "h": 0.041
+      },
+      "px": {
+        "x": 130,
+        "y": 260,
+        "w": 210,
+        "h": 42
+      },
+      "aspect": 5,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.8154
+        },
+        {
+          "hex": "#0a0d20",
+          "coverage": 0.1056
+        },
+        {
+          "hex": "#bcc0c9",
+          "coverage": 0.0338
+        },
+        {
+          "hex": "#3c4356",
+          "coverage": 0.0277
+        },
+        {
+          "hex": "#707888",
+          "coverage": 0.0174
+        }
+      ],
+      "detail": {
+        "energy": 48.1901
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 9,
+          "capHeightPx": 24.8,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6854,
+          "advTall": 0.7661,
+          "advX": 0.6854,
+          "gap": 0.1008,
+          "xRatio": 0.6915,
+          "stemW": 0.13,
+          "contrast": 1.764,
+          "serif": 0.3793,
+          "densTall": 0.315,
+          "densX": 0.4362,
+          "weight": 0.315
+        },
+        "widthClass": "normal",
+        "weightClass": "light"
+      }
+    },
+    {
+      "id": "upload",
+      "kind": "control",
+      "note": "Outlined capsule with download icon and Добавить документы",
+      "grid": "C2:E3",
+      "box": {
+        "x": 0.2995,
+        "y": 0.25,
+        "w": 0.1797,
+        "h": 0.0508
+      },
+      "px": {
+        "x": 460,
+        "y": 256,
+        "w": 276,
+        "h": 52
+      },
+      "aspect": 5.3077,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.881
+        },
+        {
+          "hex": "#364a39",
+          "coverage": 0.0552
+        },
+        {
+          "hex": "#0a0b16",
+          "coverage": 0.0316
+        },
+        {
+          "hex": "#6f7481",
+          "coverage": 0.0174
+        },
+        {
+          "hex": "#2d3543",
+          "coverage": 0.0149
+        }
+      ],
+      "detail": {
+        "energy": 51.659
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "selection",
+      "kind": "text",
+      "note": "Выбрано 3 из 6",
+      "grid": "A3:C3",
+      "box": {
+        "x": 0.0846,
+        "y": 0.3203,
+        "w": 0.1758,
+        "h": 0.0293
+      },
+      "px": {
+        "x": 130,
+        "y": 328,
+        "w": 270,
+        "h": 30
+      },
+      "aspect": 9,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9179
+        },
+        {
+          "hex": "#151a3e",
+          "coverage": 0.0281
+        },
+        {
+          "hex": "#c7cbda",
+          "coverage": 0.0236
+        },
+        {
+          "hex": "#3d4a67",
+          "coverage": 0.0169
+        },
+        {
+          "hex": "#68748d",
+          "coverage": 0.0135
+        }
+      ],
+      "detail": {
+        "energy": 35.5734
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 12,
+          "capHeightPx": 15,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.5997,
+          "advTall": 0.633,
+          "advX": 0.5331,
+          "gap": 0.1333,
+          "xRatio": 0.6839,
+          "stemW": 0.142,
+          "contrast": 1.022,
+          "serif": 0.3954,
+          "densTall": 0.4895,
+          "densX": 0.5638,
+          "weight": 0.4895
+        },
+        "widthClass": "condensed",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "selection-actions",
+      "kind": "control",
+      "note": "Выбрать все and Снять выбор",
+      "grid": "D3:E3",
+      "box": {
+        "x": 0.319,
+        "y": 0.3203,
+        "w": 0.1595,
+        "h": 0.0293
+      },
+      "px": {
+        "x": 490,
+        "y": 328,
+        "w": 245,
+        "h": 30
+      },
+      "aspect": 8.1667,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.8549
+        },
+        {
+          "hex": "#818ca0",
+          "coverage": 0.0418
+        },
+        {
+          "hex": "#1f2b45",
+          "coverage": 0.0369
+        },
+        {
+          "hex": "#48556d",
+          "coverage": 0.0344
+        },
+        {
+          "hex": "#c9cfd9",
+          "coverage": 0.032
+        }
+      ],
+      "detail": {
+        "energy": 39.4465
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "question-heading",
+      "kind": "text",
+      "note": "Исследовательский вопрос, italic serif heading",
+      "grid": "F2:I2",
+      "box": {
+        "x": 0.5182,
+        "y": 0.252,
+        "w": 0.332,
+        "h": 0.0449
+      },
+      "px": {
+        "x": 796,
+        "y": 258,
+        "w": 510,
+        "h": 46
+      },
+      "aspect": 11.087,
+      "palette": [
+        {
+          "hex": "#f7f7f8",
+          "coverage": 0.887
+        },
+        {
+          "hex": "#090c23",
+          "coverage": 0.0606
+        },
+        {
+          "hex": "#a3a8b6",
+          "coverage": 0.0233
+        },
+        {
+          "hex": "#30364a",
+          "coverage": 0.0181
+        },
+        {
+          "hex": "#5a6073",
+          "coverage": 0.0109
+        }
+      ],
+      "detail": {
+        "energy": 70.7325
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 20,
+          "capHeightPx": 26,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6146,
+          "advTall": 0.7682,
+          "advX": 0.5954,
+          "gap": 0.0768,
+          "xRatio": 0.6609,
+          "stemW": 0.1256,
+          "contrast": 1.6334,
+          "serif": 0.4061,
+          "densTall": 0.3513,
+          "densX": 0.4131,
+          "weight": 0.3513
+        },
+        "widthClass": "normal",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "question-input",
+      "kind": "control",
+      "note": "Textarea with the research question and an outlined boundary",
+      "grid": "F3:J5",
+      "box": {
+        "x": 0.5182,
+        "y": 0.3223,
+        "w": 0.459,
+        "h": 0.2578
+      },
+      "px": {
+        "x": 796,
+        "y": 330,
+        "w": 705,
+        "h": 264
+      },
+      "aspect": 2.6705,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.967
+        },
+        {
+          "hex": "#aeb2bc",
+          "coverage": 0.0206
+        },
+        {
+          "hex": "#172241",
+          "coverage": 0.0092
+        },
+        {
+          "hex": "#687888",
+          "coverage": 0.0019
+        },
+        {
+          "hex": "#3f4f68",
+          "coverage": 0.0014
+        }
+      ],
+      "detail": {
+        "energy": 12.0222
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "question-selection",
+      "kind": "text",
+      "note": "Выбрано 3 из 6",
+      "grid": "F6:G6",
+      "box": {
+        "x": 0.5182,
+        "y": 0.6074,
+        "w": 0.1563,
+        "h": 0.0254
+      },
+      "px": {
+        "x": 796,
+        "y": 622,
+        "w": 240,
+        "h": 26
+      },
+      "aspect": 9.2308,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9063
+        },
+        {
+          "hex": "#c3c9d4",
+          "coverage": 0.0308
+        },
+        {
+          "hex": "#313d53",
+          "coverage": 0.0252
+        },
+        {
+          "hex": "#181f43",
+          "coverage": 0.021
+        },
+        {
+          "hex": "#8d98a9",
+          "coverage": 0.0168
+        }
+      ],
+      "detail": {
+        "energy": 35.0207
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 12,
+          "capHeightPx": 14.1,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6013,
+          "advTall": 0.6366,
+          "advX": 0.5659,
+          "gap": 0.1415,
+          "xRatio": 0.7284,
+          "stemW": 0.1475,
+          "contrast": 1.0549,
+          "serif": 0.5396,
+          "densTall": 0.5144,
+          "densX": 0.5302,
+          "weight": 0.5144
+        },
+        "widthClass": "condensed",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "start",
+      "kind": "control",
+      "note": "Olive capsule Запустить исследование with right arrow",
+      "grid": "F6:H7",
+      "box": {
+        "x": 0.5182,
+        "y": 0.6484,
+        "w": 0.2461,
+        "h": 0.0645
+      },
+      "px": {
+        "x": 796,
+        "y": 664,
+        "w": 378,
+        "h": 66
+      },
+      "aspect": 5.7273,
+      "palette": [
+        {
+          "hex": "#536748",
+          "coverage": 0.8581
+        },
+        {
+          "hex": "#f6f7f6",
+          "coverage": 0.1188
+        },
+        {
+          "hex": "#b1bdaf",
+          "coverage": 0.0123
+        },
+        {
+          "hex": "#81907e",
+          "coverage": 0.0109
+        }
+      ],
+      "detail": {
+        "energy": 31.2092
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "search",
+      "kind": "control",
+      "note": "Outlined capsule Найти фрагменты",
+      "grid": "H6:J7",
+      "box": {
+        "x": 0.7734,
+        "y": 0.6484,
+        "w": 0.2044,
+        "h": 0.0645
+      },
+      "px": {
+        "x": 1188,
+        "y": 664,
+        "w": 314,
+        "h": 66
+      },
+      "aspect": 4.7576,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.8648
+        },
+        {
+          "hex": "#6c8376",
+          "coverage": 0.0465
+        },
+        {
+          "hex": "#243b2a",
+          "coverage": 0.0443
+        },
+        {
+          "hex": "#09090e",
+          "coverage": 0.0319
+        },
+        {
+          "hex": "#bfc7c6",
+          "coverage": 0.0124
+        }
+      ],
+      "detail": {
+        "energy": 38.7054
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "start-hint",
+      "kind": "text",
+      "note": "Исследование подготовит ответ по выбранным источникам.",
+      "grid": "F7:H7",
+      "box": {
+        "x": 0.5182,
+        "y": 0.7246,
+        "w": 0.2441,
+        "h": 0.0449
+      },
+      "px": {
+        "x": 796,
+        "y": 742,
+        "w": 375,
+        "h": 46
+      },
+      "aspect": 8.1522,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.862
+        },
+        {
+          "hex": "#828797",
+          "coverage": 0.0825
+        },
+        {
+          "hex": "#b6bbc8",
+          "coverage": 0.051
+        },
+        {
+          "hex": "#666a88",
+          "coverage": 0.0045
+        }
+      ],
+      "detail": {
+        "energy": 34.3561
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 2,
+          "glyphs": 50,
+          "capHeightPx": 12.2,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6447,
+          "advTall": 0.7687,
+          "advX": 0.6089,
+          "gap": 0.1433,
+          "xRatio": 0.6729,
+          "stemW": 0.1549,
+          "contrast": 0.9521,
+          "serif": 0.4916,
+          "densTall": 0.5484,
+          "densX": 0.5186,
+          "weight": 0.5484
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "search-hint",
+      "kind": "text",
+      "note": "Поиск покажет фрагменты документов.",
+      "grid": "H7:J7",
+      "box": {
+        "x": 0.7734,
+        "y": 0.7246,
+        "w": 0.2044,
+        "h": 0.0449
+      },
+      "px": {
+        "x": 1188,
+        "y": 742,
+        "w": 314,
+        "h": 46
+      },
+      "aspect": 6.8261,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.8923
+        },
+        {
+          "hex": "#8a8fa0",
+          "coverage": 0.0673
+        },
+        {
+          "hex": "#c2c6d1",
+          "coverage": 0.0351
+        },
+        {
+          "hex": "#666a7f",
+          "coverage": 0.0054
+        }
+      ],
+      "detail": {
+        "energy": 28.9416
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 2,
+          "glyphs": 31,
+          "capHeightPx": 12.4,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.61,
+          "advTall": 0.7837,
+          "advX": 0.61,
+          "gap": 0.1383,
+          "xRatio": 0.6831,
+          "stemW": 0.1514,
+          "contrast": 0.9552,
+          "serif": 0.5985,
+          "densTall": 0.5449,
+          "densX": 0.5147,
+          "weight": 0.5449
+        },
+        "widthClass": "normal",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "result-note",
+      "kind": "text",
+      "note": "Результат и материалы сохранятся в разделе Исследования",
+      "grid": "F8:J8",
+      "box": {
+        "x": 0.5182,
+        "y": 0.8203,
+        "w": 0.459,
+        "h": 0.0293
+      },
+      "px": {
+        "x": 796,
+        "y": 840,
+        "w": 705,
+        "h": 30
+      },
+      "aspect": 23.5,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9066
+        },
+        {
+          "hex": "#898ea0",
+          "coverage": 0.0554
+        },
+        {
+          "hex": "#c7cbd5",
+          "coverage": 0.0337
+        },
+        {
+          "hex": "#686881",
+          "coverage": 0.003
+        },
+        {
+          "hex": "#98a8a8",
+          "coverage": 0.0013
+        }
+      ],
+      "detail": {
+        "energy": 24.3314
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 47,
+          "capHeightPx": 14.1,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.6039,
+          "advTall": 0.7105,
+          "advX": 0.6039,
+          "gap": 0.1066,
+          "xRatio": 0.7303,
+          "stemW": 0.1488,
+          "contrast": 1.0735,
+          "serif": 0.3867,
+          "densTall": 0.469,
+          "densX": 0.5441,
+          "weight": 0.469
+        },
+        "widthClass": "normal",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "footer",
+      "kind": "text",
+      "note": "Synapse readiness and demonstration-data label",
+      "grid": "A9:J9",
+      "box": {
+        "x": 0.0846,
+        "y": 0.9277,
+        "w": 0.8919,
+        "h": 0.0371
+      },
+      "px": {
+        "x": 130,
+        "y": 950,
+        "w": 1370,
+        "h": 38
+      },
+      "aspect": 36.0526,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9701
+        },
+        {
+          "hex": "#a0a2b2",
+          "coverage": 0.0156
+        },
+        {
+          "hex": "#cccfd7",
+          "coverage": 0.0068
+        },
+        {
+          "hex": "#71788d",
+          "coverage": 0.0059
+        },
+        {
+          "hex": "#588848",
+          "coverage": 0.0015
+        }
+      ],
+      "detail": {
+        "energy": 9.0995
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 44,
+          "capHeightPx": 13.6,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.5507,
+          "advTall": 0.7893,
+          "advX": 0.5507,
+          "gap": 0.1101,
+          "xRatio": 0.7163,
+          "stemW": 0.1422,
+          "contrast": 0.9863,
+          "serif": 1.5121,
+          "densTall": 0.6064,
+          "densX": 0.5459,
+          "weight": 0.6064
+        },
+        "widthClass": "condensed",
+        "weightClass": "bold"
+      }
+    },
+    {
+      "id": "source-row-1",
+      "kind": "control",
+      "note": "Document row 1, checkbox, file name and metadata, open and delete controls",
+      "grid": "A3:E4",
+      "box": {
+        "x": 0.0846,
+        "y": 0.3652,
+        "w": 0.3932,
+        "h": 0.0664
+      },
+      "px": {
+        "x": 130,
+        "y": 374,
+        "w": 604,
+        "h": 68
+      },
+      "aspect": 8.8824,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.94
+        },
+        {
+          "hex": "#a1a6b4",
+          "coverage": 0.0218
+        },
+        {
+          "hex": "#516549",
+          "coverage": 0.0193
+        },
+        {
+          "hex": "#1a2442",
+          "coverage": 0.012
+        },
+        {
+          "hex": "#f82218",
+          "coverage": 0.0069
+        }
+      ],
+      "detail": {
+        "energy": 26.6119
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "source-row-2",
+      "kind": "control",
+      "note": "Document row 2, checkbox, file name and metadata, open and delete controls",
+      "grid": "A4:E5",
+      "box": {
+        "x": 0.0846,
+        "y": 0.4512,
+        "w": 0.3932,
+        "h": 0.0664
+      },
+      "px": {
+        "x": 130,
+        "y": 462,
+        "w": 604,
+        "h": 68
+      },
+      "aspect": 8.8824,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.9353
+        },
+        {
+          "hex": "#506447",
+          "coverage": 0.0196
+        },
+        {
+          "hex": "#099365",
+          "coverage": 0.0169
+        },
+        {
+          "hex": "#cfd3dc",
+          "coverage": 0.0156
+        },
+        {
+          "hex": "#a4aab6",
+          "coverage": 0.0127
+        }
+      ],
+      "detail": {
+        "energy": 23.5812
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "source-row-3",
+      "kind": "control",
+      "note": "Document row 3, checkbox, file name and metadata, open and delete controls",
+      "grid": "A5:E6",
+      "box": {
+        "x": 0.0846,
+        "y": 0.5371,
+        "w": 0.3932,
+        "h": 0.0664
+      },
+      "px": {
+        "x": 130,
+        "y": 550,
+        "w": 604,
+        "h": 68
+      },
+      "aspect": 8.8824,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9522
+        },
+        {
+          "hex": "#526649",
+          "coverage": 0.0196
+        },
+        {
+          "hex": "#a7a9b7",
+          "coverage": 0.011
+        },
+        {
+          "hex": "#0d132a",
+          "coverage": 0.0093
+        },
+        {
+          "hex": "#72768e",
+          "coverage": 0.0079
+        }
+      ],
+      "detail": {
+        "energy": 25.1869
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "source-row-4",
+      "kind": "control",
+      "note": "Document row 4, checkbox, file name and metadata, open and delete controls",
+      "grid": "A6:E6",
+      "box": {
+        "x": 0.0846,
+        "y": 0.623,
+        "w": 0.3932,
+        "h": 0.0664
+      },
+      "px": {
+        "x": 130,
+        "y": 638,
+        "w": 604,
+        "h": 68
+      },
+      "aspect": 8.8824,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9692
+        },
+        {
+          "hex": "#babcc8",
+          "coverage": 0.0115
+        },
+        {
+          "hex": "#f8130f",
+          "coverage": 0.0089
+        },
+        {
+          "hex": "#101939",
+          "coverage": 0.0053
+        },
+        {
+          "hex": "#7b8691",
+          "coverage": 0.0051
+        }
+      ],
+      "detail": {
+        "energy": 22.7611
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "source-row-5",
+      "kind": "control",
+      "note": "Document row 5, checkbox, file name and metadata, open and delete controls",
+      "grid": "A7:E7",
+      "box": {
+        "x": 0.0846,
+        "y": 0.709,
+        "w": 0.3932,
+        "h": 0.0664
+      },
+      "px": {
+        "x": 130,
+        "y": 726,
+        "w": 604,
+        "h": 68
+      },
+      "aspect": 8.8824,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9275
+        },
+        {
+          "hex": "#6b7587",
+          "coverage": 0.0335
+        },
+        {
+          "hex": "#c2c7d1",
+          "coverage": 0.0153
+        },
+        {
+          "hex": "#969da9",
+          "coverage": 0.0151
+        },
+        {
+          "hex": "#0f1431",
+          "coverage": 0.0085
+        }
+      ],
+      "detail": {
+        "energy": 24.9094
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "source-row-6",
+      "kind": "control",
+      "note": "Document row 6, checkbox, file name and metadata, open and delete controls",
+      "grid": "A7:E8",
+      "box": {
+        "x": 0.0846,
+        "y": 0.7949,
+        "w": 0.3932,
+        "h": 0.0664
+      },
+      "px": {
+        "x": 130,
+        "y": 814,
+        "w": 604,
+        "h": 68
+      },
+      "aspect": 8.8824,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9509
+        },
+        {
+          "hex": "#757c8e",
+          "coverage": 0.0265
+        },
+        {
+          "hex": "#c6cad3",
+          "coverage": 0.0092
+        },
+        {
+          "hex": "#9da6af",
+          "coverage": 0.0088
+        },
+        {
+          "hex": "#1e2c45",
+          "coverage": 0.0046
+        }
+      ],
+      "detail": {
+        "energy": 20.0515
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "section-heads",
+      "kind": "chrome",
+      "note": "Shared section-header baseline, warm background and thin horizontal rule; individual headings and upload control measured separately",
+      "grid": "A2:J2",
+      "container": true,
+      "box": {
+        "x": 0.0846,
+        "y": 0.2139,
+        "w": 0.8932,
+        "h": 0.0879
+      },
+      "px": {
+        "x": 130,
+        "y": 219,
+        "w": 1372,
+        "h": 90
+      },
+      "aspect": 15.2444,
+      "palette": [
+        {
+          "hex": "#f8f8f8",
+          "coverage": 0.9593
+        },
+        {
+          "hex": "#0a0c22",
+          "coverage": 0.0193
+        },
+        {
+          "hex": "#aeb1bd",
+          "coverage": 0.0086
+        },
+        {
+          "hex": "#383f50",
+          "coverage": 0.0066
+        },
+        {
+          "hex": "#77808e",
+          "coverage": 0.0063
+        }
+      ],
+      "detail": {
+        "energy": 28.0537
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "source-selection",
+      "kind": "chrome",
+      "note": "Source selection fieldset on continuous warm ground, rows and thin horizontal separators; individual document controls measured separately",
+      "grid": "A3:E8",
+      "container": true,
+      "box": {
+        "x": 0.0846,
+        "y": 0.3125,
+        "w": 0.3945,
+        "h": 0.5664
+      },
+      "px": {
+        "x": 130,
+        "y": 320,
+        "w": 606,
+        "h": 580
+      },
+      "aspect": 1.0448,
+      "palette": [
+        {
+          "hex": "#f8f8f7",
+          "coverage": 0.962
+        },
+        {
+          "hex": "#adb1bd",
+          "coverage": 0.013
+        },
+        {
+          "hex": "#747d8f",
+          "coverage": 0.0113
+        },
+        {
+          "hex": "#1a2340",
+          "coverage": 0.0073
+        },
+        {
+          "hex": "#506446",
+          "coverage": 0.0063
+        }
+      ],
+      "detail": {
+        "energy": 18.4142
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    }
+  ]
+}

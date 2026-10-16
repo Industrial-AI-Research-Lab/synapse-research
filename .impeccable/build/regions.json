@@ -1,0 +1,295 @@
+{
+  "regions": [
+    {
+      "id": "sidebar",
+      "kind": "chrome",
+      "box": {
+        "x": 0.0,
+        "y": 0.0,
+        "w": 0.05859375,
+        "h": 1.0
+      },
+      "note": "Warm beige narrow navigation rail with monogram, toggle, two navigation icons and connection indicator",
+      "container": true,
+      "grid": "A0:A9"
+    },
+    {
+      "id": "headline",
+      "kind": "text",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.09375,
+        "w": 0.5208333333333334,
+        "h": 0.056640625
+      },
+      "note": "Исследование по документам, dark serif heading",
+      "grid": "A0:G1"
+    },
+    {
+      "id": "intro",
+      "kind": "text",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.158203125,
+        "w": 0.7161458333333334,
+        "h": 0.029296875
+      },
+      "note": "Выберите источники и задайте исследовательский вопрос.",
+      "grid": "A1:I1"
+    },
+    {
+      "id": "sources-heading",
+      "kind": "text",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.25390625,
+        "w": 0.13671875,
+        "h": 0.041015625
+      },
+      "note": "Источники, italic serif heading",
+      "grid": "A2:C2"
+    },
+    {
+      "id": "upload",
+      "kind": "control",
+      "box": {
+        "x": 0.2994791666666667,
+        "y": 0.25,
+        "w": 0.1796875,
+        "h": 0.05078125
+      },
+      "note": "Outlined capsule with download icon and Добавить документы",
+      "grid": "C2:E3"
+    },
+    {
+      "id": "selection",
+      "kind": "text",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.3203125,
+        "w": 0.17578125,
+        "h": 0.029296875
+      },
+      "note": "Выбрано 3 из 6",
+      "grid": "A3:C3"
+    },
+    {
+      "id": "selection-actions",
+      "kind": "control",
+      "box": {
+        "x": 0.3190104166666667,
+        "y": 0.3203125,
+        "w": 0.15950520833333334,
+        "h": 0.029296875
+      },
+      "note": "Выбрать все and Снять выбор",
+      "grid": "D3:E3"
+    },
+    {
+      "id": "question-heading",
+      "kind": "text",
+      "box": {
+        "x": 0.5182291666666666,
+        "y": 0.251953125,
+        "w": 0.33203125,
+        "h": 0.044921875
+      },
+      "note": "Исследовательский вопрос, italic serif heading",
+      "grid": "F2:I2"
+    },
+    {
+      "id": "question-input",
+      "kind": "control",
+      "box": {
+        "x": 0.5182291666666666,
+        "y": 0.322265625,
+        "w": 0.458984375,
+        "h": 0.2578125
+      },
+      "note": "Textarea with the research question and an outlined boundary",
+      "grid": "F3:J5"
+    },
+    {
+      "id": "question-selection",
+      "kind": "text",
+      "box": {
+        "x": 0.5182291666666666,
+        "y": 0.607421875,
+        "w": 0.15625,
+        "h": 0.025390625
+      },
+      "note": "Выбрано 3 из 6",
+      "grid": "F6:G6"
+    },
+    {
+      "id": "start",
+      "kind": "control",
+      "box": {
+        "x": 0.5182291666666666,
+        "y": 0.6484375,
+        "w": 0.24609375,
+        "h": 0.064453125
+      },
+      "note": "Olive capsule Запустить исследование with right arrow",
+      "grid": "F6:H7"
+    },
+    {
+      "id": "search",
+      "kind": "control",
+      "box": {
+        "x": 0.7734375,
+        "y": 0.6484375,
+        "w": 0.20442708333333334,
+        "h": 0.064453125
+      },
+      "note": "Outlined capsule Найти фрагменты",
+      "grid": "H6:J7"
+    },
+    {
+      "id": "start-hint",
+      "kind": "text",
+      "box": {
+        "x": 0.5182291666666666,
+        "y": 0.724609375,
+        "w": 0.244140625,
+        "h": 0.044921875
+      },
+      "note": "Исследование подготовит ответ по выбранным источникам.",
+      "grid": "F7:H7"
+    },
+    {
+      "id": "search-hint",
+      "kind": "text",
+      "box": {
+        "x": 0.7734375,
+        "y": 0.724609375,
+        "w": 0.20442708333333334,
+        "h": 0.044921875
+      },
+      "note": "Поиск покажет фрагменты документов.",
+      "grid": "H7:J7"
+    },
+    {
+      "id": "result-note",
+      "kind": "text",
+      "box": {
+        "x": 0.5182291666666666,
+        "y": 0.8203125,
+        "w": 0.458984375,
+        "h": 0.029296875
+      },
+      "note": "Результат и материалы сохранятся в разделе Исследования",
+      "grid": "F8:J8"
+    },
+    {
+      "id": "footer",
+      "kind": "text",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.927734375,
+        "w": 0.8919270833333334,
+        "h": 0.037109375
+      },
+      "note": "Synapse readiness and demonstration-data label",
+      "grid": "A9:J9"
+    },
+    {
+      "id": "source-row-1",
+      "kind": "control",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.365234375,
+        "w": 0.3932291666666667,
+        "h": 0.06640625
+      },
+      "note": "Document row 1, checkbox, file name and metadata, open and delete controls",
+      "grid": "A3:E4"
+    },
+    {
+      "id": "source-row-2",
+      "kind": "control",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.451171875,
+        "w": 0.3932291666666667,
+        "h": 0.06640625
+      },
+      "note": "Document row 2, checkbox, file name and metadata, open and delete controls",
+      "grid": "A4:E5"
+    },
+    {
+      "id": "source-row-3",
+      "kind": "control",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.537109375,
+        "w": 0.3932291666666667,
+        "h": 0.06640625
+      },
+      "note": "Document row 3, checkbox, file name and metadata, open and delete controls",
+      "grid": "A5:E6"
+    },
+    {
+      "id": "source-row-4",
+      "kind": "control",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.623046875,
+        "w": 0.3932291666666667,
+        "h": 0.06640625
+      },
+      "note": "Document row 4, checkbox, file name and metadata, open and delete controls",
+      "grid": "A6:E6"
+    },
+    {
+      "id": "source-row-5",
+      "kind": "control",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.708984375,
+        "w": 0.3932291666666667,
+        "h": 0.06640625
+      },
+      "note": "Document row 5, checkbox, file name and metadata, open and delete controls",
+      "grid": "A7:E7"
+    },
+    {
+      "id": "source-row-6",
+      "kind": "control",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.794921875,
+        "w": 0.3932291666666667,
+        "h": 0.06640625
+      },
+      "note": "Document row 6, checkbox, file name and metadata, open and delete controls",
+      "grid": "A7:E8"
+    },
+    {
+      "id": "section-heads",
+      "kind": "chrome",
+      "grid": "A2:J2",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.2138671875,
+        "w": 0.8932291666666666,
+        "h": 0.087890625
+      },
+      "container": true,
+      "note": "Shared section-header baseline, warm background and thin horizontal rule; individual headings and upload control measured separately"
+    },
+    {
+      "id": "source-selection",
+      "kind": "chrome",
+      "grid": "A3:E8",
+      "box": {
+        "x": 0.08463541666666667,
+        "y": 0.3125,
+        "w": 0.39453125,
+        "h": 0.56640625
+      },
+      "container": true,
+      "note": "Source selection fieldset on continuous warm ground, rows and thin horizontal separators; individual document controls measured separately"
+    }
+  ]
+}

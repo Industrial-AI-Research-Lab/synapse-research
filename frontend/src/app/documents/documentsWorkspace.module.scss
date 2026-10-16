@@ -1,21 +1,21 @@
+@use "../../styles/typography";
 @use "../../styles/mixin";
 @use "../../styles/media";
 
 .root {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  width: min(
-    var(--content-width),
-    calc(100% - var(--page-gutter) - var(--page-gutter))
-  );
+  width: min(var(--content-width), 100%);
   height: 100%;
   min-height: 0;
   margin: 0 auto;
-  padding: 1.5rem 0 3rem;
+  padding: 2.5rem var(--page-gutter) 2rem;
 }
 
 .header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.125rem;
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
 }
 
@@ -29,17 +29,20 @@
 
 .header h1,
 .panel h1 {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  @include typography.headerM;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .sectionHeading h2,
 .resultsHeading h2 {
-  font-size: 1.375rem;
+  @include typography.headerS;
 }
 
 .lead {
   margin-top: 0.75rem;
   color: var(--color-text-muted);
+  @include typography.textM;
 }
 
 .muted {
@@ -47,7 +50,7 @@
 }
 
 .content {
-  --document-item-min-height: 4.5rem;
+  --document-item-min-height: 5.5rem;
   --document-list-min-height: calc(
     3 * var(--document-item-min-height) + 2 * 0.75rem
   );
@@ -66,28 +69,188 @@
 
 .searchWorkspace {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 0.46fr) minmax(0, 0.54fr);
+  gap: 1.75rem;
   align-content: start;
   min-height: 0;
 }
 
 .questionPanel {
   min-width: 0;
-  padding: 1.5rem;
-  border: 1px solid
-    color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  padding: 0 0 0 1.75rem;
+  border-left: 1px solid var(--color-border);
 }
 
 .questionPanel h2 {
   margin-top: 0;
 }
 
-.selectionSummary {
-  margin-top: 0.5rem;
+.sourcesCollapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.sourcesCollapsed .questionPanel {
+  padding: 0;
+  border: 0;
+}
+
+.sourcesSummary {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sourcesSummary[hidden],
+.documentPanel[hidden] {
+  display: none;
+}
+
+.sourcesSummaryText {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.sourcesSummaryText h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  @include typography.headerS;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.sourcesSummaryText span {
   color: var(--color-text-muted);
-  font-size: 0.875rem;
+  @include typography.textS;
+}
+
+.sourcesCollapseButton,
+.sourcesExpandButton {
+  @include mixin.control;
+}
+
+.sourcesExpandButton {
+  @include mixin.controlSecondary;
+}
+
+.sourcesCollapseButton {
+  padding: 0.5rem;
+  color: var(--color-text-muted);
+  background: transparent;
+  @include typography.textXs;
+}
+
+.sourcesCollapseButton:hover {
+  color: var(--color-text);
+  background: var(--color-control-hover);
+}
+
+.sourcesCollapseButton svg,
+.sourcesExpandButton svg {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+}
+
+.documentPanel {
+  container: documentSources / inline-size;
+  min-width: 0;
+  min-height: 0;
+}
+
+.documentPanel .sectionHeading,
+.questionPanel > .sectionHeading {
+  min-height: 3.25rem;
+  align-items: center;
+}
+
+.documentPanel .sectionHeading {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.documentPanel .selectionActions {
+  gap: 0.5rem;
+}
+
+.documentPanel h2,
+.questionPanel h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  @include typography.headerS;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.questionField > div:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.questionField {
+  position: relative;
+}
+
+.resultNote {
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+  @include typography.textS;
+}
+
+.fileType {
+  align-self: center;
+  width: 1.5rem;
+  height: 2.25rem;
+  color: var(--color-action);
+}
+
+.fileType[data-format=".pdf"] {
+  color: var(--color-danger);
+}
+
+.fileType svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.documentOpenButton {
+  @include mixin.control;
+  @include mixin.controlIcon;
+  align-self: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.75rem;
+  color: var(--color-text);
+  background: transparent;
+}
+
+.documentOpenButton:hover:not(:disabled) {
+  background: var(--color-control-hover);
+}
+
+.documentOpenButton svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.selectionSummary {
+  color: var(--color-text);
+  @include typography.textS;
 }
 
 .panel,
@@ -124,7 +287,7 @@
   border: 1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-  font-size: 0.8125rem;
+  @include typography.textXs;
   font-weight: 700;
 }
 
@@ -142,7 +305,7 @@
   align-items: center;
   min-height: 2.25rem;
   padding: 0.375rem 0.625rem;
-  font-size: 0.8125rem;
+  @include typography.textXs;
 }
 
 .copyAccessCodeIcon {
@@ -154,14 +317,14 @@
   min-height: 1.25rem;
   margin-top: -0.5rem;
   color: var(--color-success);
-  font-size: 0.8125rem;
+  @include typography.textXs;
   font-weight: 700;
 }
 
 .fileInput {
   width: 100%;
-  min-height: 2.75rem;
-  padding: 0.5rem;
+  min-height: 3rem;
+  padding: 0.375rem;
   color: var(--color-text);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
@@ -181,9 +344,10 @@
 .fileInput::file-selector-button {
   @include mixin.control;
   @include mixin.controlSecondary;
-  min-height: 2.25rem;
+  min-height: 2rem;
   margin-right: 0.75rem;
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 .fileInput:disabled {
@@ -203,20 +367,21 @@
   justify-content: space-between;
   align-items: center;
   color: var(--color-text);
-  font-size: 0.875rem;
+  @include typography.textS;
 }
 
 .clearSelectedFilesButton {
   @include mixin.control;
+  @include mixin.controlText;
   padding: 0.5rem;
   color: var(--color-text-muted);
   background: transparent;
-  font-size: 0.8125rem;
+  @include typography.textXs;
 }
 
 .clearSelectedFilesButton:hover:not(:disabled) {
-  color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  color: var(--color-text);
+  background: var(--color-control-hover);
 }
 
 .selectedFilesList {
@@ -252,12 +417,13 @@
 
 .selectedFileSize {
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  @include typography.textXs;
   white-space: nowrap;
 }
 
 .removeSelectedFileButton {
   @include mixin.control;
+  @include mixin.controlIcon;
   width: 2.75rem;
   height: 2.75rem;
   padding: 0.75rem;
@@ -272,12 +438,12 @@
 }
 
 .removeSelectedFileButton:hover:not(:disabled) {
-  color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  color: var(--color-text);
+  background: var(--color-control-hover);
 }
 
 .removeSelectedFileButton:focus-visible {
-  outline: 1px solid var(--color-danger);
+  outline: 2px solid var(--color-action);
   outline-offset: 2px;
 }
 
@@ -294,30 +460,46 @@
 }
 
 .questionActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   align-items: stretch;
+}
+
+.questionActions button {
+  flex: 1 1 13rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  @include typography.textS;
+  overflow-wrap: normal;
 }
 
 .questionActionHint,
 .questionContext {
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  @include typography.textS;
 }
 
 .questionActionHint {
-  max-width: 75ch;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 0.75rem;
   margin-top: -0.5rem;
   line-height: 1.5;
 }
 
 .questionContext {
-  margin-top: -0.25rem;
+  margin-top: 0.5rem;
+  color: var(--color-text);
+  @include typography.textS;
 }
 
-.questionInput {
+.questionPanel .questionInput {
   padding: 1rem;
-  border-color: var(--color-control-disabled);
-  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
-  font-size: 1rem;
+  min-height: 12rem;
+  border-color: #929a93;
+  background: transparent;
+  @include typography.textM;
 }
 
 .questionInput::placeholder {
@@ -327,9 +509,31 @@
 
 .uploadActions {
   justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.root .uploadActions > button {
+  min-height: 2.25rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.root .uploadActions .uploadIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.root .uploadActions .uploadCloseButton {
+  border-color: transparent;
+
+  &:hover:not(:disabled),
+  &:active:not(:disabled) {
+    border-color: transparent;
+  }
 }
 
 .uploadStatus {
+  grid-column: 1 / -1;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
@@ -340,17 +544,54 @@
   background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
 }
 
-.uploadButton {
+.root .uploadButton {
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.625rem 1rem;
+  @include typography.textS;
 }
 
 .uploadIcon {
   flex: 0 0 auto;
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 1.625rem;
+  height: 1.625rem;
+}
+
+.root .documentPanel .uploadButton {
+  min-height: 2.25rem;
+  padding: 0.375rem 0.75rem;
+  @include typography.textXs;
+  white-space: nowrap;
+}
+
+.documentPanel .uploadIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.uploadLabelShort {
+  display: none;
+}
+
+@container documentSources (max-width: 30rem) {
+  .uploadLabelFull {
+    display: none;
+  }
+
+  .uploadLabelShort {
+    display: inline;
+  }
+}
+
+@media (pointer: coarse) {
+  .root .documentPanel .uploadButton,
+  .root .uploadActions > button,
+  .fileInput::file-selector-button {
+    min-height: 2.75rem;
+  }
 }
 
 .synapseButton {
@@ -362,15 +603,14 @@
 
 .synapseButton .synapseButtonIcon {
   flex: 0 0 auto;
-  width: 1rem;
-  height: 1rem;
+  width: 1.5rem;
+  height: 1.5rem;
   color: inherit;
 }
 
-.uploadActions span,
-.questionActions span {
+.uploadActions > span {
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  @include typography.textXs;
 }
 
 .successMessage {
@@ -378,7 +618,7 @@
   color: var(--color-success);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-success) 12%, transparent);
-  font-size: 0.875rem;
+  @include typography.textS;
 }
 
 .uploadDialog {
@@ -460,7 +700,7 @@
 }
 
 .uploadDialogBody h2 {
-  font-size: 1.375rem;
+  @include typography.headerS;
 }
 
 .dialogToast {
@@ -468,6 +708,8 @@
 }
 
 .dialogCloseButton {
+  @include mixin.control;
+  @include mixin.controlIcon;
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -487,7 +729,7 @@
 }
 
 .dialogCloseButton:focus-visible {
-  outline: 1px solid var(--color-accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 0.125rem;
 }
 
@@ -504,23 +746,12 @@
   white-space: pre-line;
 }
 
-.toastStack {
-  position: fixed;
-  right: max(1.5rem, env(safe-area-inset-right));
-  top: max(1.5rem, env(safe-area-inset-top));
-  z-index: var(--z-status);
-  display: grid;
-  gap: 0.75rem;
-  width: min(28rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 3rem);
-  overflow-y: auto;
-}
-
 .documentSelection {
+  position: relative;
   display: grid;
   min-width: 0;
   min-height: 0;
-  margin: 1.25rem 0 0;
+  margin: 1rem 0 0;
   padding: 0;
   border: 0;
 }
@@ -528,13 +759,17 @@
 .documentSelection legend {
   margin-bottom: 0.5rem;
   color: var(--color-text);
-  font-size: 0.875rem;
+  @include typography.textS;
   font-weight: 700;
 }
 
 .documentSelection .selectionLegend {
-  margin-bottom: 0;
-  font-weight: 400;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .selectionToolbar {
@@ -544,7 +779,7 @@
   align-items: center;
   justify-content: space-between;
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  @include typography.textXs;
 }
 
 .bulkSelectionActions {
@@ -555,11 +790,12 @@
 
 .selectionButton {
   @include mixin.control;
+  @include mixin.controlText;
   min-height: 2.75rem;
   padding: 0.5rem;
   color: var(--color-text);
   background: transparent;
-  font-size: 0.8125rem;
+  @include typography.textS;
 }
 
 .selectionButton:hover:not(:disabled) {
@@ -574,7 +810,7 @@
 .selectionError {
   margin-top: 0.75rem;
   color: var(--color-danger);
-  font-size: 0.875rem;
+  @include typography.textS;
   font-weight: 700;
 }
 
@@ -587,12 +823,13 @@
 }
 
 .documentList {
+  margin-top: 0;
   gap: 0;
   align-content: start;
   grid-auto-rows: max-content;
   grid-template-columns: minmax(0, 1fr);
   max-height: var(--list-max-height, none);
-  padding-right: 0.5rem;
+  padding-right: 0.25rem;
   overflow-y: auto;
   scrollbar-gutter: stable;
   scrollbar-color: var(--color-border) var(--color-surface);
@@ -600,41 +837,38 @@
 
 .documentItem {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto 1.5rem minmax(0, 1fr);
   gap: 0.75rem;
   min-height: var(--document-item-min-height);
-  padding: 0.875rem;
-  border-top: 1px solid var(--color-border);
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--color-border);
   background: transparent;
 }
 
 .documentItem:has(.documentCheckbox:checked) {
-  background: color-mix(
-    in srgb,
-    var(--color-surface-raised) 55%,
-    var(--color-surface)
-  );
+  background: transparent;
 }
 
 .documentCheckbox {
   align-self: center;
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
   margin: 0;
   accent-color: var(--color-accent);
 }
 
 .documentContent {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.25rem;
   min-width: 0;
 }
 
 .documentLabel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.375rem 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 0.25rem;
   min-width: 0;
   cursor: pointer;
 }
@@ -652,7 +886,12 @@
 .documentTopLine strong {
   display: block;
   min-width: 0;
-  overflow-wrap: anywhere;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @include typography.textM;
+  font-weight: 400;
 }
 
 .status {
@@ -663,7 +902,7 @@
   gap: 0.375rem;
   align-items: center;
   color: var(--color-success);
-  font-size: 0.75rem;
+  @include typography.textXs;
   font-weight: 400;
 }
 
@@ -679,39 +918,45 @@
   flex-wrap: wrap;
   gap: 0.25rem 0.625rem;
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  @include typography.textXs;
 }
 
 .documentDate {
   color: var(--color-text-muted);
-  font-size: 0.75rem;
+  @include typography.textXs;
 }
 
 .documentDeleteButton {
   @include mixin.control;
+  @include mixin.controlIcon;
   flex: 0 0 auto;
   align-self: center;
   width: 2.75rem;
   height: 2.75rem;
-  padding: 0.875rem;
-  color: var(--color-text-muted);
+  padding: 0.625rem;
+  color: var(--color-text);
   background: transparent;
 }
 
-.documentDeleteButton:hover {
+.documentDeleteButton:hover:not(:disabled) {
   color: var(--color-danger);
   background: color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
 .documentDeleteButton:focus-visible {
-  outline: 1px solid var(--color-danger);
+  outline: 2px solid var(--color-danger);
   outline-offset: 0.125rem;
+}
+
+.documentDeleteButton:active:not(:disabled) {
+  color: var(--color-danger-pressed);
+  background: color-mix(in srgb, var(--color-danger) 20%, var(--color-bg));
 }
 
 .documentDeleteButton span {
   display: block;
-  width: 1rem;
-  height: 1rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .emptyState {
@@ -726,7 +971,7 @@
 .emptyState h2,
 .emptyState h3 {
   color: var(--color-text);
-  font-size: 1rem;
+  @include typography.textM;
 }
 
 .emptyState p {
@@ -785,7 +1030,7 @@
   border: 1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-  font-size: 0.8125rem;
+  @include typography.textXs;
   font-weight: 700;
   text-align: center;
 }
@@ -807,7 +1052,7 @@
 
 .researchMeta dt {
   color: var(--color-text-muted);
-  font-size: 0.75rem;
+  @include typography.textXs;
 }
 
 .researchMeta dd {
@@ -823,7 +1068,7 @@
 }
 
 .researchPreview h3 {
-  font-size: 1rem;
+  @include typography.textM;
 }
 
 .researchPreview p {
@@ -845,7 +1090,7 @@
 }
 
 .researchLink:focus-visible {
-  outline: 1px solid var(--color-accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 0.1875rem;
 }
 
@@ -894,7 +1139,7 @@
   border-radius: 50%;
   background: var(--color-accent);
   content: counter(citations);
-  font-size: 0.75rem;
+  @include typography.textXs;
   font-weight: 800;
 }
 
@@ -914,25 +1159,12 @@
 .relevance {
   margin-top: 0.25rem;
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  @include typography.textXs;
 }
 
 .sourceLink {
-  @include mixin.transition((color, background-color));
-  display: inline-flex;
+  @include typography.textS;
   flex: 0 0 auto;
-  gap: 0.375rem;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0;
-  color: var(--color-action);
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-control);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 400;
   text-align: left;
 }
 
@@ -942,26 +1174,24 @@
   height: 1rem;
 }
 
-.sourceLink:hover {
-  color: var(--color-action-hover);
+.uncertainStart {
+  margin-top: 1rem;
+  color: var(--color-warning);
+  @include typography.textS;
 }
 
-.sourceLink:focus-visible {
-  outline: 1px solid var(--color-accent);
-  outline-offset: 0.1875rem;
-  border-radius: 0.125rem;
-}
-
-.sourceLink:disabled {
-  cursor: wait;
-  opacity: 0.65;
+.uncertainStart a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: var(--color-action);
 }
 
 .resultItem blockquote {
   margin: 1rem 0 0;
   padding-left: 1rem;
   color: var(--color-text);
-  border-left: 0.1875rem solid var(--color-accent);
+  border-left: 1px solid var(--color-border);
   font-size: 0.9375rem;
   white-space: pre-wrap;
 }
@@ -970,7 +1200,7 @@
   margin-top: 1.25rem;
   padding: 1rem;
   color: var(--color-text-muted);
-  border-left: 0.25rem solid var(--color-warning);
+  border: 1px solid var(--color-border);
   background: color-mix(in srgb, var(--color-warning) 10%, transparent);
 }
 
@@ -1009,7 +1239,7 @@
 }
 
 .confirmationDialog h2 {
-  font-size: 1.375rem;
+  @include typography.headerS;
 }
 
 .confirmationDialog p {
@@ -1029,36 +1259,88 @@
   margin-top: 1.5rem;
 }
 
-.confirmDeleteButton {
-  color: #31110f;
-  background: var(--color-danger);
-}
+@container workspace (max-width: 54rem) {
+  .root {
+    height: auto;
+    min-height: 100%;
+    grid-template-rows: auto auto;
+    align-content: start;
+    padding-top: 2rem;
+  }
 
-.confirmDeleteButton:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-danger) 84%, white);
+  .searchWorkspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .questionPanel {
+    padding: 1.5rem 0 0;
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
 }
 
 @include media.tablet {
-  .documentLabel {
-    grid-template-columns: minmax(0, 1fr);
+  .documentItem {
+    gap: 0.75rem;
   }
 
+  .documentTopLine strong,
+  .questionPanel .questionInput {
+    @include typography.textM;
+  }
+
+  .root {
+    height: auto;
+    min-height: 100%;
+    padding-top: 2rem;
+    padding-right: 1.25rem;
+    padding-left: 1.25rem;
+  }
+
+  .documentPanel .sectionHeading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .documentOpenButton {
+    justify-self: end;
+  }
+
+  .questionPanel .questionInput {
+    min-height: 12rem;
+  }
   .status {
     grid-column: 1;
     grid-row: auto;
   }
 }
 
+@container documentSources (max-width: 22rem) {
+  .documentContent {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .documentLabel {
+    grid-column: 1 / -1;
+  }
+}
+
 @include media.mobile {
   .questionPanel {
-    padding: 1rem;
+    padding: 1.5rem 0 0;
   }
 
   .questionActions {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .questionActionHint {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .questionActions button {
+    flex-basis: auto;
     width: 100%;
   }
 
@@ -1096,11 +1378,6 @@
 
   .copyAccessCodeButton {
     margin-left: auto;
-  }
-
-  .toastStack {
-    right: 1rem;
-    top: 1rem;
   }
 
   .uploadDialogBody {

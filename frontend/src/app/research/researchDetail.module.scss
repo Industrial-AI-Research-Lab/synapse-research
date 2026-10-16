@@ -1,3 +1,4 @@
+@use "../../styles/typography";
 @use "../../styles/media";
 
 .root {
@@ -16,7 +17,7 @@
 }
 
 .root :focus-visible {
-  outline: 1px solid var(--color-accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: 4px;
 }
 
@@ -34,7 +35,7 @@
 
 .header h1 {
   max-width: 45ch;
-  font-size: 1.75rem;
+  @include typography.headerM;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -42,23 +43,6 @@
 .header p {
   margin-top: 0.75rem;
   color: var(--color-text-muted);
-}
-
-.status {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  font-weight: 700;
-}
-
-.status[data-status="awaiting_approval"] {
-  color: var(--color-warning);
-}
-
-.status[data-status="completed"],
-.status[data-status="done"] {
-  color: var(--color-success);
 }
 
 .stateBar {
@@ -70,11 +54,11 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.stateBar span {
+.stateBar > div > span {
   display: block;
   margin-top: 0.5rem;
   color: var(--color-text-muted);
-  font-size: 0.875rem;
+  @include typography.textS;
 }
 
 .section {
@@ -84,12 +68,15 @@
 
 .section h2 {
   margin-bottom: 1rem;
-  font-size: 1.25rem;
+  font-family: var(--font-display);
+  @include typography.headerS;
+  font-style: italic;
+  font-weight: 400;
 }
 
 .section h3 {
   margin: 1.5rem 0 0.75rem;
-  font-size: 1rem;
+  @include typography.textM;
 }
 
 .question,
@@ -107,14 +94,33 @@
   list-style: none;
 }
 
-.sources button {
-  max-width: 100%;
-  text-align: left;
-  overflow-wrap: anywhere;
-}
-
 .sources li {
   max-width: 100%;
+}
+
+.sourceFile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sources .sourceDownload {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.75rem;
+}
+
+.sourceDownload span {
+  display: flex;
+  width: 1rem;
+  height: 1rem;
+}
+
+.sourceFilename {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .actions {

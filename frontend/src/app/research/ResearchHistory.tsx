@@ -7,15 +7,15 @@ import {
   ResearchApiError,
 } from "../../api/research";
 import type { ResearchSummary } from "../../assets/types/research";
+import { usePagination } from "../../assets/hooks/usePagination";
 import Button from "../../components/ui/Button/Button";
 import Field from "../../components/ui/Field/Field";
+import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
 import ResearchAccess from "./ResearchAccess";
-import {
-  formatResearchDate,
-  formatResearchStatus,
-  isResearchFinal,
-} from "./researchPresentation";
+import ResearchStatus from "./ResearchStatus";
+import ResearchPagination from "./ResearchPagination";
+import { formatResearchDate, isResearchFinal } from "./researchPresentation";
 
 const STATUS_FILTERS = [
   {
@@ -25,6 +25,8 @@ const STATUS_FILTERS = [
       "starting",
       "started",
       "initialized",
+      "queued",
+      "pending",
       "running",
       "in_progress",
       "output",
@@ -44,10 +46,32 @@ const STATUS_FILTERS = [
   },
 ];
 
+const formatSourceCount = (record: ResearchSummary) => {
+  const count = record.sources.length;
+  const forms =
+    record.kind === "documents"
+      ? { one: "документ", few: "документа", other: "документов" }
+      : { one: "опыт", few: "опыта", other: "опытов" };
+  const plural = new Intl.PluralRules("ru-RU").select(count);
+  const label =
+    plural === "one" || plural === "few" ? forms[plural] : forms.other;
+
+  return `${count} ${label}`;
+};
+
 const ResearchHistory = () => {
   const [researches, setResearches] = useState<ResearchSummary[]>();
-  const [kind, setKind] = useState("");
-  const [status, setStatus] = useState("");
+  const [initialParams] = useState(
+    () => new URLSearchParams(window.location.search),
+  );
+  const [kind, setKind] = useState(() => {
+    const value = initialParams.get("kind") ?? "";
+    return ["documents", "evidence"].includes(value) ? value : "";
+  });
+  const [status, setStatus] = useState(() => {
+    const value = initialParams.get("status") ?? "";
+    return STATUS_FILTERS.some((filter) => filter.id === value) ? value : "";
+  });
   const [error, setError] = useState("");
   const [hasAccessError, setHasAccessError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -118,6 +142,26 @@ const ResearchHistory = () => {
           record.status,
         )),
   );
+  const pagination = usePagination({
+    items: filtered,
+    initialPage: Number(initialParams.get("page") ?? 1),
+    initialPageSize: initialParams.get("pageSize") === "5" ? 5 : 10,
+    resetKey: `${kind}:${status}`,
+  });
+  const historyParams = new URLSearchParams();
+  if (kind) historyParams.set("kind", kind);
+  if (status) historyParams.set("status", status);
+  if (pagination.page > 1) historyParams.set("page", String(pagination.page));
+  if (pagination.pageSize !== 10) {
+    historyParams.set("pageSize", String(pagination.pageSize));
+  }
+  const historySearch = historyParams.size > 0 ? `?${historyParams}` : "";
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.search = historySearch;
+    window.history.replaceState(window.history.state, "", url);
+  }, [historySearch]);
 
   return (
     <main className={scss.root}>
@@ -130,11 +174,17 @@ const ResearchHistory = () => {
           </p>
         </div>
         <Button
+          className={scss.refreshButton}
           variant="secondary"
           disabled={isRefreshing}
+          isLoading={isRefreshing}
+          loadingLabel="Обновляем…"
           onClick={() => void loadResearches()}
         >
-          {isRefreshing ? "Обновляем…" : "Обновить историю"}
+          <span className={scss.refreshIcon} aria-hidden="true">
+            <IconRenderer icon="reload" />
+          </span>
+          Обновить историю
         </Button>
       </header>
       {hasAccessError ? (
@@ -153,19 +203,22 @@ const ResearchHistory = () => {
             <section className={scss.empty}>
               <h2>История начнётся с первого запуска</h2>
               <p>
-                Задайте вопрос по документам или выбранным опытам и запустите
-                исследование. Здесь сохранятся его статус, ответ и материалы.
+                Задайте вопрос по выбранным документам и запустите исследование.
+                Здесь сохранятся его статус, ответ и материалы.
               </p>
               <div className={scss.links}>
                 <a href="/documents">Исследовать документы</a>
-                <a href="/">Выбрать опыты</a>
               </div>
             </section>
           )}
           {researches && researches.length > 0 && (
             <>
               <div className={scss.filters}>
-                <Field label="Тип исследования" htmlFor="research-kind">
+                <Field
+                  className={scss.kindFilter}
+                  label="Тип исследования"
+                  htmlFor="research-kind"
+                >
                   <select
                     id="research-kind"
                     value={kind}
@@ -176,7 +229,11 @@ const ResearchHistory = () => {
                     <option value="evidence">По опытам</option>
                   </select>
                 </Field>
-                <Field label="Состояние" htmlFor="research-status">
+                <Field
+                  className={scss.statusFilter}
+                  label="Состояние"
+                  htmlFor="research-status"
+                >
                   <select
                     id="research-status"
                     value={status}
@@ -190,44 +247,47 @@ const ResearchHistory = () => {
                     ))}
                   </select>
                 </Field>
-                <p className={scss.count} aria-live="polite">
-                  Найдено: {filtered?.length}
-                </p>
+                <Field
+                  className={scss.pageSizeFilter}
+                  label="На странице"
+                  htmlFor="research-page-size"
+                >
+                  <select
+                    id="research-page-size"
+                    value={pagination.pageSize}
+                    onChange={(event) =>
+                      pagination.setPageSize(Number(event.target.value))
+                    }
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                  </select>
+                </Field>
               </div>
               <section className={scss.list} aria-label="История исследований">
-                {filtered?.map((record) => (
+                {pagination.items.map((record) => (
                   <article className={scss.row} key={record.id}>
                     <div className={scss.rowMain}>
+                      <h2>
+                        <a
+                          className={scss.titleLink}
+                          href={`/researches/${encodeURIComponent(record.id)}${historySearch}`}
+                          title={record.question}
+                        >
+                          <span className={scss.titleText}>
+                            {record.question}
+                          </span>
+                        </a>
+                      </h2>
                       <div className={scss.meta}>
-                        <span>
-                          {record.kind === "documents"
-                            ? "По документам"
-                            : "По опытам"}
-                        </span>
                         <time dateTime={record.createdAt}>
                           {formatResearchDate(record.createdAt)}
                         </time>
+                        <span>{formatSourceCount(record)}</span>
                       </div>
-                      <h2>
-                        <a
-                          href={`/researches/${encodeURIComponent(record.id)}`}
-                        >
-                          {record.question}
-                        </a>
-                      </h2>
-                      <p className={scss.sources}>
-                        {record.sources
-                          .slice(0, 2)
-                          .map((source) => source.filename)
-                          .join(" · ")}
-                        {record.sources.length > 2 &&
-                          ` · ещё ${record.sources.length - 2}`}
-                      </p>
                     </div>
                     <div className={scss.rowState}>
-                      <span className={scss.status} data-status={record.status}>
-                        {formatResearchStatus(record.status)}
-                      </span>
+                      <ResearchStatus status={record.status} />
                       {record.approvalCount > 0 && (
                         <span>Ожидает решения команды</span>
                       )}
@@ -236,12 +296,6 @@ const ResearchHistory = () => {
                           Не удалось обновить состояние
                         </span>
                       )}
-                      <span>
-                        Проверено: {formatResearchDate(record.checkedAt)}
-                      </span>
-                      <a href={`/researches/${encodeURIComponent(record.id)}`}>
-                        Открыть исследование
-                      </a>
                     </div>
                   </article>
                 ))}
@@ -251,6 +305,17 @@ const ResearchHistory = () => {
                   </p>
                 )}
               </section>
+              {pagination.total > 0 && (
+                <ResearchPagination
+                  page={pagination.page}
+                  pageCount={pagination.pageCount}
+                  pages={pagination.pages}
+                  start={pagination.start}
+                  end={pagination.end}
+                  total={pagination.total}
+                  onPageChange={pagination.setPage}
+                />
+              )}
             </>
           )}
         </>

@@ -1,0 +1,83 @@
+@use "../../styles/typography";
+@use "../../styles/media";
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  padding-top: 1.25rem;
+}
+
+.range {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  @include typography.textS;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.navigation .page {
+  flex-shrink: 0;
+  min-width: 2.75rem;
+  padding: 0.625rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.navigation .page[aria-current="page"] {
+  color: var(--color-action-pressed);
+  background: var(--color-selected);
+  text-decoration: none;
+}
+
+.navigation .arrow:disabled {
+  color: var(--color-control-disabled);
+  background: transparent;
+  border-color: transparent;
+}
+
+.icon {
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ellipsis {
+  flex: 0 0 1rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.mobilePage {
+  display: none;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  @include typography.textS;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@include media.tablet {
+  .navigation .page,
+  .ellipsis {
+    display: none;
+  }
+
+  .mobilePage {
+    display: block;
+    padding: 0 0.5rem;
+  }
+}

@@ -9,6 +9,15 @@ import type {
 import { getTeamAccessToken } from "./teamAccess";
 import { createResearchRequestId } from "./research";
 
+export class DocumentApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
 
@@ -129,7 +138,11 @@ const request = async <T>(
   });
   const payload = await readResponsePayload(response);
 
-  if (!response.ok) throw new Error(getErrorMessage(payload, response.status));
+  if (!response.ok)
+    throw new DocumentApiError(
+      getErrorMessage(payload, response.status),
+      response.status,
+    );
 
   if (typeof payload === "string") {
     throw new Error("Сервис вернул ответ в неподдерживаемом формате.");

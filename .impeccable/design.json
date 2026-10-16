@@ -1,0 +1,623 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T11:31:14.783Z",
+  "title": "Design System: Фолио",
+  "extensions": {
+    "colorMeta": {
+      "action": {
+        "role": "primary",
+        "displayName": "Оливковое действие",
+        "tonalRamp": [
+          "oklch(15.00% 0.05033 142.79)",
+          "oklch(26.43% 0.05033 142.79)",
+          "oklch(37.86% 0.05033 142.79)",
+          "oklch(49.29% 0.05033 142.79)",
+          "oklch(60.71% 0.05033 142.79)",
+          "oklch(72.14% 0.05033 142.79)",
+          "oklch(83.57% 0.05033 142.79)",
+          "oklch(95.00% 0.05033 142.79)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "Действие при наведении",
+        "tonalRamp": [
+          "oklch(15.00% 0.04629 143.62)",
+          "oklch(26.43% 0.04629 143.62)",
+          "oklch(37.86% 0.04629 143.62)",
+          "oklch(49.29% 0.04629 143.62)",
+          "oklch(60.71% 0.04629 143.62)",
+          "oklch(72.14% 0.04629 143.62)",
+          "oklch(83.57% 0.04629 143.62)",
+          "oklch(95.00% 0.04629 143.62)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "action-pressed": {
+        "role": "primary",
+        "displayName": "Нажатое действие",
+        "tonalRamp": [
+          "oklch(15.00% 0.04560 143.48)",
+          "oklch(26.43% 0.04560 143.48)",
+          "oklch(37.86% 0.04560 143.48)",
+          "oklch(49.29% 0.04560 143.48)",
+          "oklch(60.71% 0.04560 143.48)",
+          "oklch(72.14% 0.04560 143.48)",
+          "oklch(83.57% 0.04560 143.48)",
+          "oklch(95.00% 0.04560 143.48)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "action-text": {
+        "role": "primary",
+        "displayName": "Текст действия",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Светлая бумага",
+        "tonalRamp": [
+          "oklch(15.00% 0.00526 106.49)",
+          "oklch(26.43% 0.00526 106.49)",
+          "oklch(37.86% 0.00526 106.49)",
+          "oklch(49.29% 0.00526 106.49)",
+          "oklch(60.71% 0.00526 106.49)",
+          "oklch(72.14% 0.00526 106.49)",
+          "oklch(83.57% 0.00526 106.49)",
+          "oklch(95.00% 0.00526 106.49)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Тёплое поле",
+        "tonalRamp": [
+          "oklch(15.00% 0.01238 91.52)",
+          "oklch(26.43% 0.01238 91.52)",
+          "oklch(37.86% 0.01238 91.52)",
+          "oklch(49.29% 0.01238 91.52)",
+          "oklch(60.71% 0.01238 91.52)",
+          "oklch(72.14% 0.01238 91.52)",
+          "oklch(83.57% 0.01238 91.52)",
+          "oklch(95.00% 0.01238 91.52)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Лист",
+        "tonalRamp": [
+          "oklch(15.00% 0.00537 95.10)",
+          "oklch(26.43% 0.00537 95.10)",
+          "oklch(37.86% 0.00537 95.10)",
+          "oklch(49.29% 0.00537 95.10)",
+          "oklch(60.71% 0.00537 95.10)",
+          "oklch(72.14% 0.00537 95.10)",
+          "oklch(83.57% 0.00537 95.10)",
+          "oklch(95.00% 0.00537 95.10)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Подложка",
+        "tonalRamp": [
+          "oklch(15.00% 0.01211 96.42)",
+          "oklch(26.43% 0.01211 96.42)",
+          "oklch(37.86% 0.01211 96.42)",
+          "oklch(49.29% 0.01211 96.42)",
+          "oklch(60.71% 0.01211 96.42)",
+          "oklch(72.14% 0.01211 96.42)",
+          "oklch(83.57% 0.01211 96.42)",
+          "oklch(95.00% 0.01211 96.42)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "selected": {
+        "role": "neutral",
+        "displayName": "Выбранное",
+        "tonalRamp": [
+          "oklch(15.00% 0.01786 120.70)",
+          "oklch(26.43% 0.01786 120.70)",
+          "oklch(37.86% 0.01786 120.70)",
+          "oklch(49.29% 0.01786 120.70)",
+          "oklch(60.71% 0.01786 120.70)",
+          "oklch(72.14% 0.01786 120.70)",
+          "oklch(83.57% 0.01786 120.70)",
+          "oklch(95.00% 0.01786 120.70)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Чернила",
+        "tonalRamp": [
+          "oklch(15.00% 0.03669 264.14)",
+          "oklch(26.43% 0.03669 264.14)",
+          "oklch(37.86% 0.03669 264.14)",
+          "oklch(49.29% 0.03669 264.14)",
+          "oklch(60.71% 0.03669 264.14)",
+          "oklch(72.14% 0.03669 264.14)",
+          "oklch(83.57% 0.03669 264.14)",
+          "oklch(95.00% 0.03669 264.14)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Приглушённые чернила",
+        "tonalRamp": [
+          "oklch(15.00% 0.02856 265.40)",
+          "oklch(26.43% 0.02856 265.40)",
+          "oklch(37.86% 0.02856 265.40)",
+          "oklch(49.29% 0.02856 265.40)",
+          "oklch(60.71% 0.02856 265.40)",
+          "oklch(72.14% 0.02856 265.40)",
+          "oklch(83.57% 0.02856 265.40)",
+          "oklch(95.00% 0.02856 265.40)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Тонкая линия",
+        "tonalRamp": [
+          "oklch(15.00% 0.01220 111.78)",
+          "oklch(26.43% 0.01220 111.78)",
+          "oklch(37.86% 0.01220 111.78)",
+          "oklch(49.29% 0.01220 111.78)",
+          "oklch(60.71% 0.01220 111.78)",
+          "oklch(72.14% 0.01220 111.78)",
+          "oklch(83.57% 0.01220 111.78)",
+          "oklch(95.00% 0.01220 111.78)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "control": {
+        "role": "neutral",
+        "displayName": "Прозрачный control",
+        "description": "Прозрачность; цветовая шкала неприменима."
+      },
+      "control-hover": {
+        "role": "neutral",
+        "displayName": "Control при наведении",
+        "tonalRamp": [
+          "oklch(15.00% 0.01346 115.84)",
+          "oklch(26.43% 0.01346 115.84)",
+          "oklch(37.86% 0.01346 115.84)",
+          "oklch(49.29% 0.01346 115.84)",
+          "oklch(60.71% 0.01346 115.84)",
+          "oklch(72.14% 0.01346 115.84)",
+          "oklch(83.57% 0.01346 115.84)",
+          "oklch(95.00% 0.01346 115.84)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "control-pressed": {
+        "role": "neutral",
+        "displayName": "Нажатый control",
+        "tonalRamp": [
+          "oklch(15.00% 0.01947 122.85)",
+          "oklch(26.43% 0.01947 122.85)",
+          "oklch(37.86% 0.01947 122.85)",
+          "oklch(49.29% 0.01947 122.85)",
+          "oklch(60.71% 0.01947 122.85)",
+          "oklch(72.14% 0.01947 122.85)",
+          "oklch(83.57% 0.01947 122.85)",
+          "oklch(95.00% 0.01947 122.85)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Контур control",
+        "tonalRamp": [
+          "oklch(15.00% 0.04659 140.58)",
+          "oklch(26.43% 0.04659 140.58)",
+          "oklch(37.86% 0.04659 140.58)",
+          "oklch(49.29% 0.04659 140.58)",
+          "oklch(60.71% 0.04659 140.58)",
+          "oklch(72.14% 0.04659 140.58)",
+          "oklch(83.57% 0.04659 140.58)",
+          "oklch(95.00% 0.04659 140.58)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "control-disabled-bg": {
+        "role": "neutral",
+        "displayName": "Подложка недоступного",
+        "tonalRamp": [
+          "oklch(15.00% 0.01085 118.03)",
+          "oklch(26.43% 0.01085 118.03)",
+          "oklch(37.86% 0.01085 118.03)",
+          "oklch(49.29% 0.01085 118.03)",
+          "oklch(60.71% 0.01085 118.03)",
+          "oklch(72.14% 0.01085 118.03)",
+          "oklch(83.57% 0.01085 118.03)",
+          "oklch(95.00% 0.01085 118.03)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "control-disabled": {
+        "role": "neutral",
+        "displayName": "Недоступный control",
+        "tonalRamp": [
+          "oklch(15.00% 0.01476 130.89)",
+          "oklch(26.43% 0.01476 130.89)",
+          "oklch(37.86% 0.01476 130.89)",
+          "oklch(49.29% 0.01476 130.89)",
+          "oklch(60.71% 0.01476 130.89)",
+          "oklch(72.14% 0.01476 130.89)",
+          "oklch(83.57% 0.01476 130.89)",
+          "oklch(95.00% 0.01476 130.89)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Успех",
+        "tonalRamp": [
+          "oklch(15.00% 0.07681 150.76)",
+          "oklch(26.43% 0.07681 150.76)",
+          "oklch(37.86% 0.07681 150.76)",
+          "oklch(49.29% 0.07681 150.76)",
+          "oklch(60.71% 0.07681 150.76)",
+          "oklch(72.14% 0.07681 150.76)",
+          "oklch(83.57% 0.07681 150.76)",
+          "oklch(95.00% 0.07681 150.76)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Предупреждение",
+        "tonalRamp": [
+          "oklch(15.00% 0.10567 74.00)",
+          "oklch(26.43% 0.10567 74.00)",
+          "oklch(37.86% 0.10567 74.00)",
+          "oklch(49.29% 0.10567 74.00)",
+          "oklch(60.71% 0.10567 74.00)",
+          "oklch(72.14% 0.10567 74.00)",
+          "oklch(83.57% 0.10567 74.00)",
+          "oklch(95.00% 0.10567 74.00)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Ошибка",
+        "tonalRamp": [
+          "oklch(15.00% 0.15352 28.96)",
+          "oklch(26.43% 0.15352 28.96)",
+          "oklch(37.86% 0.15352 28.96)",
+          "oklch(49.29% 0.15352 28.96)",
+          "oklch(60.71% 0.15352 28.96)",
+          "oklch(72.14% 0.15352 28.96)",
+          "oklch(83.57% 0.15352 28.96)",
+          "oklch(95.00% 0.15352 28.96)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "Информация",
+        "tonalRamp": [
+          "oklch(15.00% 0.07994 249.30)",
+          "oklch(26.43% 0.07994 249.30)",
+          "oklch(37.86% 0.07994 249.30)",
+          "oklch(49.29% 0.07994 249.30)",
+          "oklch(60.71% 0.07994 249.30)",
+          "oklch(72.14% 0.07994 249.30)",
+          "oklch(83.57% 0.07994 249.30)",
+          "oklch(95.00% 0.07994 249.30)"
+        ],
+        "rampPurpose": "Синтезированная шкала для просмотра; не дополнительные токены интерфейса."
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Заголовок документов",
+        "purpose": "Главный заголовок рабочей области документов."
+      },
+      "headline": {
+        "displayName": "Заголовок истории",
+        "purpose": "Главный заголовок списка исследований."
+      },
+      "title": {
+        "displayName": "Заголовок колонки",
+        "purpose": "Названия колонок документов.",
+        "fontStyle": "italic"
+      },
+      "body": {
+        "displayName": "Основной текст",
+        "purpose": "Содержимое и пояснения; browser default 1rem, глобальный line-height 1.5."
+      },
+      "label": {
+        "displayName": "Управление",
+        "purpose": "Базовые кнопки; главные действия документов используют увеличенный размер."
+      },
+      "document-title": {
+        "displayName": "Название файла",
+        "purpose": "Переносимые имена документов.",
+        "responsive": [
+          {
+            "maxWidth": "48rem",
+            "fontSize": "1.125rem"
+          }
+        ]
+      },
+      "metadata": {
+        "displayName": "Вспомогательная подпись",
+        "purpose": "Короткие пояснения и сведения."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-panel",
+        "value": "0 1rem 2.5rem rgba(24, 32, 31, 0.08)",
+        "purpose": "Вспомогательные панели, диалоги и раскрытый статус."
+      },
+      {
+        "name": "field-focus",
+        "value": "0 0 0 1px color-mix(in srgb, var(--color-action) 28%, transparent)",
+        "purpose": "Обрамление фокуса поля."
+      },
+      {
+        "name": "nav-active",
+        "value": "inset 2px 0 var(--color-action)",
+        "purpose": "Внутренняя полоса активной навигации."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition",
+        "value": "280ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Изменения цвета, границы и обрамления; 80ms при reduced motion, control отключает переход."
+      },
+      {
+        "name": "sidebar",
+        "value": "240ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Изменение ширины меню; reduced motion отключает переход."
+      },
+      {
+        "name": "dialog-open",
+        "value": "240ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Появление upload dialog, opacity и translateY(.75rem) scale(.98), при поддержке discrete transitions."
+      },
+      {
+        "name": "dialog-close",
+        "value": "180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Закрытие upload dialog; reduced motion — 100ms без transform."
+      },
+      {
+        "name": "status-pulse",
+        "value": "1.4s ease-in-out infinite",
+        "purpose": "Loading indicator: opacity .4 на 50%; reduced motion отключает animation."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tablet",
+        "value": "48rem",
+        "purpose": "Последовательные колонки, rail 4.5rem, раскрытое меню занимает экран."
+      },
+      {
+        "name": "mobile",
+        "value": "26.5625rem",
+        "purpose": "Одна колонка действий и фильтров; перенос групп управления."
+      }
+    ],
+    "layout": {
+      "contentWidth": "90rem",
+      "shellHeight": "100dvh",
+      "minimumWidth": "20rem",
+      "sidebarCollapsed": "5.5rem",
+      "sidebarExpanded": "18rem",
+      "sidebarTablet": "4.5rem",
+      "documentColumns": "minmax(0, 0.46fr) minmax(0, 0.54fr)",
+      "documentTopPadding": "5.5rem",
+      "documentTabletPadding": "2rem 1.25rem",
+      "documentMobileTopPadding": "1rem",
+      "statusMinHeight": "4rem",
+      "researchProseMaxWidth": "75ch",
+      "researchProseLineHeight": "1.7"
+    },
+    "layers": {
+      "header": 900,
+      "status": 950,
+      "tooltip": 1000,
+      "modal": 1100,
+      "modalBackdrop": "rgb(0 12 20 / 72%)"
+    },
+    "fonts": {
+      "display": {
+        "family": "Lora",
+        "normal": "frontend/public/fonts/Lora-Regular.ttf",
+        "italic": "frontend/public/fonts/Lora-Italic.ttf",
+        "weightRange": "400 700",
+        "license": "frontend/public/fonts/OFL-Lora.txt",
+        "fontDisplay": "swap",
+        "coverage": "Кириллица"
+      },
+      "body": {
+        "selfHosted": false,
+        "description": "Inter указан первым в стеке; отдельный font-face для Inter отсутствует."
+      }
+    },
+    "sourceEvidence": {
+      "styles": [
+        "frontend/src/styles/palette.scss",
+        "frontend/src/styles/constants.scss",
+        "frontend/src/styles/global.scss",
+        "frontend/src/styles/mixin.scss",
+        "frontend/src/styles/media.scss",
+        "frontend/src/app/app.module.scss"
+      ],
+      "components": [
+        "frontend/src/components/ui/Button/button.module.scss",
+        "frontend/src/components/ui/Input/input.module.scss",
+        "frontend/src/components/ui/Textarea/textarea.module.scss",
+        "frontend/src/components/Sidebar/Sidebar.tsx",
+        "frontend/src/components/Sidebar/sidebar.module.scss",
+        "frontend/src/components/SynapseStatus/SynapseStatus.tsx",
+        "frontend/src/components/SynapseStatus/synapseStatus.module.scss",
+        "frontend/src/app/documents/documentsWorkspace.module.scss",
+        "frontend/src/app/research/researchHistory.module.scss",
+        "frontend/src/app/research/researchDetail.module.scss",
+        "frontend/src/app/research/researchAccess.module.scss"
+      ],
+      "approvedComp": ".impeccable/mocks/decision/folio-final-document-action.png",
+      "renderedCaptures": [
+        ".impeccable/review/desktop.png",
+        ".impeccable/review/mobile.png",
+        ".impeccable/review/folio-expanded.png"
+      ],
+      "verdict": ".impeccable/review/manual-fidelity-verdict.json",
+      "automaticGate": {
+        "score": 0.8366,
+        "gatePassed": false,
+        "status": "open",
+        "reason": "Фиксированные crops строк и footer; ручная оценка полного экрана допускает семантические адаптации и не меняет machine result."
+      },
+      "limits": [
+        "Снимки используют синтетические API-ответы.",
+        "Live workflow Synapse не запускался.",
+        "QUALITY BAR card задним числом не создавалась."
+      ],
+      "notCanonized": "Исходные доли 43/57 и фиксированные crops компа не превращены в токены; описаны реальные 46/54, фактические метаданные и состояние интеграции. Открытый автоматический gate не выдан за PASS."
+    }
+  },
+  "components": [
+    {
+      "name": "Основное действие",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Капсула запуска исследования: увеличенный вариант базовой основной кнопки.",
+      "html": "<button class=\"ds-primary\">Запустить исследование <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:2.75rem;max-width:100%;padding:.625rem 1rem;border:1px solid transparent;border-radius:var(--radius-control,999px);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:.875rem;font-weight:400;line-height:1.5;text-align:center;text-decoration:none;overflow-wrap:anywhere;cursor:pointer;transition:background-color 280ms cubic-bezier(0.22,1,0.36,1),border-color 280ms cubic-bezier(0.22,1,0.36,1),color 280ms cubic-bezier(0.22,1,0.36,1);color:var(--color-action-text,#fff);background:var(--color-action,#4a6248);min-height:4.125rem;padding:.75rem 1rem;font-size:1.25rem;}.ds-primary:hover:not(:disabled){background:var(--color-action-hover,#3e543d)}.ds-primary:active:not(:disabled){background:var(--color-action-pressed,#30452f)}.ds-primary:focus-visible{outline:1px solid var(--color-action,#4a6248);outline-offset:.1875rem}.ds-primary:disabled{color:var(--color-control-disabled,#777c73);background:var(--color-control-disabled-bg,#eaece4);border-color:var(--color-border,#d8d9d0);cursor:not-allowed;opacity:1}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}.ds-primary svg{width:1.5rem;height:1.5rem;flex-shrink:0}"
+    },
+    {
+      "name": "Вторичное действие",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Контурная капсула поиска фрагментов, равная основной по читаемости.",
+      "html": "<button class=\"ds-secondary\">Найти фрагменты</button>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:2.75rem;max-width:100%;padding:.625rem 1rem;border:1px solid transparent;border-radius:var(--radius-control,999px);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:.875rem;font-weight:400;line-height:1.5;text-align:center;text-decoration:none;overflow-wrap:anywhere;cursor:pointer;transition:background-color 280ms cubic-bezier(0.22,1,0.36,1),border-color 280ms cubic-bezier(0.22,1,0.36,1),color 280ms cubic-bezier(0.22,1,0.36,1);color:var(--color-text,#0c1425);background:var(--color-control,transparent);border-color:var(--color-control-border,#52674e);min-height:4.125rem;padding:.75rem 1rem;font-size:1.25rem;}.ds-secondary:hover:not(:disabled){background:var(--color-control-hover,#eaece2);border-color:var(--color-text-muted,#626a7b)}.ds-secondary:active:not(:disabled){background:var(--color-control-pressed,#dfe4d6)}.ds-secondary:focus-visible{outline:1px solid var(--color-action,#4a6248);outline-offset:.1875rem}.ds-secondary:disabled{color:var(--color-control-disabled,#777c73);background:var(--color-control-disabled-bg,#eaece4);border-color:var(--color-border,#d8d9d0);cursor:not-allowed;opacity:1}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}"
+    },
+    {
+      "name": "Добавление документов",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Капсула и download выбраны пользователем; действие добавляет документы.",
+      "html": "<button class=\"ds-upload\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v12m-5-5 5 5 5-5M3 15v6h18v-6\"/></svg>Добавить документы</button>",
+      "css": ".ds-upload{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:2.75rem;max-width:100%;padding:.625rem 1rem;border:1px solid transparent;border-radius:var(--radius-control,999px);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:.875rem;font-weight:400;line-height:1.5;text-align:center;text-decoration:none;overflow-wrap:anywhere;cursor:pointer;transition:background-color 280ms cubic-bezier(0.22,1,0.36,1),border-color 280ms cubic-bezier(0.22,1,0.36,1),color 280ms cubic-bezier(0.22,1,0.36,1);color:var(--color-text,#0c1425);background:var(--color-control,transparent);border-color:var(--color-control-border,#52674e);min-height:3.25rem;padding:.625rem 1.375rem;font-size:1.25rem;}.ds-upload:hover:not(:disabled){background:var(--color-control-hover,#eaece2);border-color:var(--color-text-muted,#626a7b)}.ds-upload:active:not(:disabled){background:var(--color-control-pressed,#dfe4d6)}.ds-upload:focus-visible{outline:1px solid var(--color-action,#4a6248);outline-offset:.1875rem}.ds-upload:disabled{color:var(--color-control-disabled,#777c73);background:var(--color-control-disabled-bg,#eaece4);border-color:var(--color-border,#d8d9d0);cursor:not-allowed;opacity:1}@media(prefers-reduced-motion:reduce){.ds-upload{transition:none}}.ds-upload svg{width:1.625rem;height:1.625rem;flex-shrink:0}"
+    },
+    {
+      "name": "Текстовое поле",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Базовое поле кода команды с тёплой подложкой.",
+      "html": "<input class=\"ds-input\" aria-label=\"Код команды\" placeholder=\"Введите код команды\">",
+      "css": ".ds-input{width:100%;min-height:2.75rem;padding:.625rem .75rem;color:var(--color-text,#0c1425);background:var(--color-surface-raised,#f4f2e9);border:1px solid var(--color-border,#d8d9d0);border-radius:var(--radius-sm,.5rem);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:1rem;line-height:1.5;transition:border-color 280ms cubic-bezier(0.22,1,0.36,1),box-shadow 280ms cubic-bezier(0.22,1,0.36,1)}.ds-input:hover:not(:disabled){border-color:var(--color-text-muted,#626a7b)}.ds-input:focus-visible{outline:0;border-color:var(--color-action,#4a6248);box-shadow:0 0 0 1px color-mix(in srgb,var(--color-action,#4a6248) 28%,transparent)}.ds-input:disabled{opacity:.65;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-input{transition-duration:80ms}}"
+    },
+    {
+      "name": "Исследовательский вопрос",
+      "kind": "input",
+      "refersTo": "question-input",
+      "description": "Открытое многострочное поле с крупным текстом; на узком экране становится ниже.",
+      "html": "<textarea class=\"ds-question\" aria-label=\"Исследовательский вопрос\" placeholder=\"Сформулируйте вопрос по выбранным документам\"></textarea>",
+      "css": ".ds-question{width:100%;min-height:16.5rem;padding:1rem;color:var(--color-text,#0c1425);background:transparent;border:1px solid #929a93;border-radius:var(--radius-sm,.5rem);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:1.25rem;line-height:1.5;resize:vertical;caret-color:var(--color-action,#4a6248);transition:border-color 280ms cubic-bezier(0.22,1,0.36,1),box-shadow 280ms cubic-bezier(0.22,1,0.36,1)}.ds-question::placeholder{color:var(--color-text-muted,#626a7b);opacity:1}.ds-question:hover:not(:disabled){border-color:var(--color-action,#4a6248)}.ds-question:focus-visible{outline:0;border-color:var(--color-action,#4a6248);box-shadow:0 0 0 1px color-mix(in srgb,var(--color-action,#4a6248) 28%,transparent)}.ds-question:disabled{opacity:.65;cursor:not-allowed}@media(max-width:48rem){.ds-question{min-height:12rem;font-size:1.125rem}}@media(prefers-reduced-motion:reduce){.ds-question{transition-duration:80ms}}"
+    },
+    {
+      "name": "Левая навигация",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Раскрытые пункты меню: два активных направления и пример временно недоступного пункта.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><a class=\"ds-nav-link\" href=\"/documents\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6\"/></svg><span>Документы</span></a><a class=\"ds-nav-link\" href=\"/researches\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"7\"/><path d=\"m16 16 5 5\"/></svg><span>Исследования</span></a><p class=\"ds-nav-note\">Временно недоступно</p><span class=\"ds-nav-disabled\" role=\"link\" aria-disabled=\"true\">Доказательная база</span></nav>",
+      "css": ".ds-nav{display:grid;gap:.5rem;padding:.75rem;background:var(--color-sidebar,#f3f0e7);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:1rem;line-height:1.5}.ds-nav-link,.ds-nav-disabled{display:flex;align-items:center;gap:1rem;min-height:3.5rem;padding:.75rem;border-radius:.375rem;color:var(--color-text,#0c1425);text-decoration:none}.ds-nav-link svg{width:1.5rem;height:1.5rem;flex-shrink:0}.ds-nav-link:hover{background:var(--color-control-hover,#eaece2)}.ds-nav-link[aria-current]{color:var(--color-action,#4a6248);background:var(--color-selected,#e3e7da);box-shadow:inset 2px 0 var(--color-action,#4a6248)}.ds-nav-link:focus-visible{outline:1px solid var(--color-action,#4a6248)}.ds-nav-note{padding-top:1.5rem;border-top:1px solid var(--color-border,#d8d9d0);color:var(--color-text-muted,#626a7b);font-size:.8125rem}.ds-nav-disabled{color:var(--color-control-disabled,#777c73);cursor:not-allowed}"
+    },
+    {
+      "name": "Счётчик / короткий статус",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Информационная капсула количества или состояния.",
+      "html": "<span class=\"ds-chip\">6 результатов</span>",
+      "css": ".ds-chip{display:inline-flex;padding:.375rem .625rem;color:var(--color-action,#4a6248);background:color-mix(in srgb,var(--color-action,#4a6248) 12%,transparent);border:1px solid color-mix(in srgb,var(--color-action,#4a6248) 55%,transparent);border-radius:999px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:.8125rem;font-weight:700;line-height:1.5}"
+    },
+    {
+      "name": "Вспомогательная панель",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Бумажная поверхность доступа, результатов или сведений; не оболочка каждой строки.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">Доступ к исследованиям</h2><p class=\"ds-panel-copy\">Введите код команды, чтобы открыть сохранённые исследования.</p></section>",
+      "css": ".ds-panel{padding:1.5rem;color:var(--color-text,#0c1425);background:var(--color-surface,#fffefa);border:1px solid var(--color-border,#d8d9d0);border-radius:var(--radius-md,.75rem);box-shadow:var(--shadow-panel,0 1rem 2.5rem rgba(24,32,31,.08));font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;font-size:1rem;line-height:1.5}.ds-panel-title{margin:0;font-size:1.375rem}.ds-panel-copy{margin:1rem 0 0;color:var(--color-text-muted,#626a7b);line-height:1.6}"
+    },
+    {
+      "name": "Строка документа",
+      "kind": "custom",
+      "description": "Открытая строка с выбором, форматом и переносимыми сведениями. Данные в образце демонстрационные.",
+      "html": "<div class=\"ds-doc\"><input class=\"ds-doc-check\" type=\"checkbox\" checked aria-label=\"Выбрать Обзор методов.pdf\"><span class=\"ds-doc-icon\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6\"/></svg></span><label class=\"ds-doc-label\"><span class=\"ds-doc-name\">Обзор методов.pdf</span><span class=\"ds-doc-meta\">PDF · 42 стр. · 47 КБ</span></label></div>",
+      "css": ".ds-doc{display:grid;grid-template-columns:auto 2rem minmax(0,1fr);gap:clamp(.75rem,2.1vw,2rem);min-height:5.5rem;padding:1rem 0;border-bottom:1px solid var(--color-border,#d8d9d0);background:transparent;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;line-height:1.5}.ds-doc-check{align-self:center;width:1.875rem;height:1.875rem;margin:0;accent-color:var(--color-action,#4a6248)}.ds-doc-check:focus-visible{outline:1px solid var(--color-action,#4a6248);outline-offset:.125rem}.ds-doc-icon{align-self:center;width:2rem;height:2.25rem;color:var(--color-danger,#ac382d)}.ds-doc-icon svg{width:100%;height:100%}.ds-doc-label{display:grid;align-content:center;gap:.25rem;min-width:0;color:var(--color-text,#0c1425)}.ds-doc-name{font-size:1.25rem;overflow-wrap:anywhere}.ds-doc-meta{font-size:1.0625rem;color:var(--color-text-muted,#626a7b)}@media(max-width:48rem){.ds-doc{gap:.75rem}.ds-doc-name{font-size:1.125rem}}"
+    },
+    {
+      "name": "Состояние Synapse",
+      "kind": "custom",
+      "description": "Точка дополняет текст фактического состояния. Этот самостоятельный образец иллюстрирует configured/human.",
+      "html": "<button class=\"ds-status\" type=\"button\" aria-expanded=\"false\"><span class=\"ds-status-dot\" aria-hidden=\"true\"></span><span class=\"ds-status-summary\"><strong>Synapse настроен</strong><span>Режим: с подтверждением оператора</span></span><span class=\"ds-status-chevron\" aria-hidden=\"true\"></span></button>",
+      "css": ".ds-status{display:flex;align-items:center;gap:.75rem;width:100%;min-height:4rem;padding:.75rem 0;color:var(--color-text,#0c1425);background:var(--color-bg,#fefefa);border:0;border-top:1px solid var(--color-border,#d8d9d0);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;line-height:1.5;text-align:left;cursor:pointer}.ds-status:focus-visible{outline:1px solid var(--color-action,#4a6248);outline-offset:.125rem}.ds-status-dot{flex:0 0 auto;width:.625rem;height:.625rem;border-radius:50%;background:var(--color-success,#386744)}.ds-status-summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1rem}.ds-status-summary strong{font-size:.875rem;font-weight:400}.ds-status-summary>span{color:var(--color-text-muted,#626a7b);font-size:.75rem}.ds-status-chevron{flex:0 0 auto;width:.5rem;height:.5rem;margin-left:auto;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(225deg)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Фолио",
+    "overview": "Фолио — светлый исследовательский разворот: тёплая бумажная основа, чернильный текст, приглушённый оливковый акцент и тонкие разделители. Кириллическая антиква задаёт характер заголовков; повседневное управление и содержимое документов остаются в sans-serif. Интерфейс рассчитан на чтение и работу специалиста в светлом офисе.\n\nКомпозиция спокойная и просторная, при этом документы образуют рабочий список, а результаты и состояние системы имеют собственную иерархию. Левая навигация сворачивается, освобождая место содержимому. Название Фолио принадлежит продукту; Synapse обозначает исполнителя исследования и состояние интеграции.",
+    "keyCharacteristics": [
+      "Тёплые почти белые поверхности и оливковые действия.",
+      "Lora в крупных заголовках и курсивных названиях секций.",
+      "Тонкие линии, открытые списки и сдержанная глубина.",
+      "Левая навигация с компактным и раскрытым состояниями.",
+      "Капсулы для добавления документов, запуска исследования и поиска фрагментов."
+    ],
+    "rules": [
+      {
+        "name": "The Action Rule",
+        "body": "Оливковая заливка выделяет основное действие; вторичное действие использует контур и цвет основного текста.",
+        "section": "colors"
+      },
+      {
+        "name": "The Reading Rule",
+        "body": "Антиква организует разделы; управление, названия файлов и читаемый ответ используют sans-serif. Курсив — акцент заголовка секции, а не всего текста.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Depth Rule",
+        "body": "Разделение рабочих колонок и строк создаётся линиями; мягкая тень обозначает самостоятельную вспомогательную поверхность.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do сохранять тёплую основу, чернильный текст и оливковую иерархию действий через общие токены.",
+      "Do использовать локальную кириллическую Lora для заголовков и курсивных названий секций.",
+      "Do сохранять три согласованные капсулы и download у добавления документов.",
+      "Do обеспечивать перенос длинных русских названий, видимый клавиатурный фокус и доступные названия иконок.",
+      "Do показывать фактическое состояние Synapse и смысл состояния текстом рядом с цветом."
+    ],
+    "donts": [
+      "Don't превращать каждый документ или строку истории в поднятую карточку.",
+      "Don't заменять доступные SVG действия текстовыми символами или цветом без названия.",
+      "Don't применять название PAV Evidence Navigator или предмет ПАВ как пользовательский бренд Фолио.",
+      "Don't выдавать временно отключённые разделы за доступную навигацию.",
+      "Don't переносить демонстрационную готовность или примерные файлы макета в фактические данные интерфейса."
+    ]
+  }
+}

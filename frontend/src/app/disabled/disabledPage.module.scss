@@ -1,0 +1,25 @@
+@use "../../styles/typography";
+@use "../../styles/mixin";
+
+.root {
+  max-width: 52rem;
+  padding: 5rem var(--page-gutter);
+}
+
+.root h1 {
+  font-family: var(--font-display);
+  @include typography.headerM;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.root p {
+  margin: 1.5rem 0;
+  color: var(--color-text-muted);
+}
+
+.root a {
+  @include mixin.control;
+  @include mixin.controlSecondary;
+  margin: 0 0.75rem 0.75rem 0;
+}

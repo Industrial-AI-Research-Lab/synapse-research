@@ -6,7 +6,7 @@ interface ILoader {
 }
 
 const Loader = ({
-  label = "Поднимаем данные из пласта…",
+  label = "Загружаем данные…",
   variant = "inline",
 }: ILoader) => (
   <div
@@ -14,17 +14,17 @@ const Loader = ({
     role="status"
     aria-live="polite"
   >
-    <div className={scss.pumpJack} aria-hidden="true">
-      <span className={scss.tower} />
-      <span className={scss.beam}>
-        <span className={scss.horsehead} />
+    <div className={scss.synthesis} aria-hidden="true">
+      <span className={scss.fragment} />
+      <span className={`${scss.fragment} ${scss.fragmentMiddle}`} />
+      <span className={`${scss.fragment} ${scss.fragmentLast}`} />
+      <span className={scss.channel} />
+      <span className={scss.answer}>
+        <span />
+        <span />
+        <span />
+        <span />
       </span>
-      <span className={scss.pivot} />
-      <span className={scss.rod} />
-      <span className={scss.well}>
-        <span className={scss.oilDrop} />
-      </span>
-      <span className={scss.ground} />
     </div>
     <p>{label}</p>
   </div>

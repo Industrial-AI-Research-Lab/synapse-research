@@ -1,15 +1,19 @@
 .root {
   display: grid;
-  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
   place-content: center;
   place-items: center;
+  min-width: 0;
   color: var(--color-text-muted);
   text-align: center;
 }
 
 .root p {
+  max-width: 36ch;
   margin: 0;
-  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-text-s);
 }
 
 .page {
@@ -31,157 +35,147 @@
   backdrop-filter: blur(0.375rem);
 }
 
-.pumpJack {
+.synthesis {
   position: relative;
-  width: 10rem;
-  height: 6.5rem;
+  width: 13.5rem;
+  max-width: 100%;
+  height: 7rem;
   color: var(--color-accent);
 }
 
-.tower {
+.fragment {
   position: absolute;
-  bottom: 0.8125rem;
-  left: 2rem;
-  width: 3rem;
-  height: 4rem;
-  border: 0.25rem solid currentColor;
-  border-bottom: 0;
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  opacity: 0.8;
+  top: 0.5rem;
+  left: 2%;
+  width: 22%;
+  height: 1.625rem;
+  padding: 0.4375rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.1875rem;
+  background: var(--color-sidebar);
 }
 
-.tower::after {
-  position: absolute;
-  top: 1.9rem;
-  left: -0.25rem;
-  width: 3rem;
-  height: 0.25rem;
+.fragment::before,
+.fragment::after {
+  display: block;
+  height: 0.125rem;
+  margin-bottom: 0.25rem;
   background: currentColor;
   content: "";
+  opacity: 0.6;
 }
 
-.beam {
-  position: absolute;
-  top: 1.125rem;
-  left: 2.875rem;
-  width: 5.875rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: currentColor;
-  transform-origin: 0.875rem 50%;
-  animation: pumpBeam 1.65s ease-in-out infinite;
+.fragment::after {
+  width: 65%;
 }
 
-.horsehead {
-  position: absolute;
-  top: -0.1875rem;
-  right: -0.125rem;
-  width: 0.75rem;
-  height: 1.125rem;
-  border: 0.25rem solid currentColor;
-  border-left: 0;
-  border-radius: 0 0.75rem 0.75rem 0;
-}
-
-.pivot {
-  position: absolute;
-  top: 0.75rem;
-  left: 3.5rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 0.25rem solid var(--color-surface);
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.rod {
-  position: absolute;
-  top: 1.875rem;
-  right: 1.375rem;
-  width: 0.1875rem;
-  height: 3.75rem;
-  border-radius: 999px;
-  background: currentColor;
-  transform-origin: top;
-  animation: pumpRod 1.65s ease-in-out infinite;
-}
-
-.well {
-  position: absolute;
-  right: 0.875rem;
-  bottom: 0.8125rem;
-  width: 1.1875rem;
-  height: 0.5rem;
-  border: 0.1875rem solid currentColor;
-  border-radius: 0.375rem 0.375rem 0 0;
-  border-bottom: 0;
-}
-
-.oilDrop {
-  position: absolute;
-  right: 0.25rem;
-  bottom: -0.6875rem;
-  width: 0.375rem;
-  height: 0.5625rem;
-  border-radius: 60% 40% 60% 40%;
-  background: var(--color-warning);
-  transform: rotate(45deg);
-  animation: oilDrop 1.65s ease-in infinite;
-}
-
-.ground {
-  position: absolute;
-  right: 0;
-  bottom: 0;
+.fragmentMiddle {
+  top: 2.6875rem;
   left: 0;
+}
+
+.fragmentLast {
+  top: 4.875rem;
+}
+
+.channel {
+  position: absolute;
+  top: 3.5rem;
+  left: 24%;
+  width: 29%;
+  height: 1px;
+  overflow: hidden;
+  background: var(--color-border);
+}
+
+.channel::after {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: scaleX(0.16);
+  transform-origin: left;
+  animation: transferFragment 3.2s ease-in-out infinite;
+}
+
+.answer {
+  position: absolute;
+  top: 0.375rem;
+  right: 4%;
+  width: 41%;
+  height: 6.25rem;
+  padding: 1.125rem 0.75rem;
+  border: 1px solid currentColor;
+  border-radius: 0.1875rem;
+  background: var(--color-surface);
+}
+
+.answer span {
+  display: block;
   height: 0.1875rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-accent) 52%, transparent);
+  margin-bottom: 0.625rem;
+  border-radius: 0.125rem;
+  background: currentColor;
+  transform-origin: left;
+  animation: composeAnswer 3.2s ease-in-out infinite;
 }
 
-@keyframes pumpBeam {
-  0%,
-  100% {
-    transform: rotate(7deg);
-  }
-
-  50% {
-    transform: rotate(-10deg);
-  }
+.answer span:nth-child(2) {
+  width: 76%;
+  animation-delay: -0.3s;
 }
 
-@keyframes pumpRod {
-  0%,
-  100% {
-    transform: translateY(0.375rem);
-  }
-
-  50% {
-    transform: translateY(-0.5rem);
-  }
+.answer span:nth-child(3) {
+  width: 90%;
+  animation-delay: -0.6s;
 }
 
-@keyframes oilDrop {
+.answer span:nth-child(4) {
+  width: 55%;
+  animation-delay: -0.9s;
+}
+
+@keyframes transferFragment {
   0%,
-  35% {
+  12% {
     opacity: 0;
-    transform: translateY(-0.25rem) rotate(45deg) scale(0.6);
+    transform: translateX(0) scaleX(0.16);
   }
 
-  60% {
+  26%,
+  68% {
     opacity: 1;
   }
 
+  82%,
   100% {
     opacity: 0;
-    transform: translateY(0.625rem) rotate(45deg) scale(0.9);
+    transform: translateX(84%) scaleX(0.16);
+  }
+}
+
+@keyframes composeAnswer {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scaleX(0.55);
+  }
+
+  45%,
+  65% {
+    opacity: 0.85;
+    transform: scaleX(1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .beam,
-  .rod,
-  .oilDrop {
+  .answer span {
+    animation: none;
+  }
+
+  .channel::after {
+    display: none;
     animation: none;
   }
 }

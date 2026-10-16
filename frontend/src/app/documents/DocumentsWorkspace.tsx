@@ -11,6 +11,7 @@ import type { ChangeEvent, FormEvent } from "react";
 
 import {
   deleteDocument,
+  DocumentApiError,
   getDocumentAccessCode,
   getDocumentAccessCodeAvailability,
   getDocumentFile,
@@ -33,6 +34,9 @@ import Input from "../../components/ui/Input/Input";
 import Loader from "../../components/ui/Loader/Loader";
 import Textarea from "../../components/ui/Textarea/Textarea";
 import Toast from "../../components/ui/Toast/Toast";
+import ToastViewport from "../../components/ui/Toast/ToastViewport";
+import Spinner from "../../components/ui/Spinner/Spinner";
+import Tooltip from "../../components/ui/Tooltip/Tooltip";
 import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 
 const SEARCH_LIMIT = 10;
@@ -102,23 +106,6 @@ const formatDocumentStatus = (status: DocumentMetadata["status"]) => {
   return status;
 };
 
-const formatDocumentCount = (count: number) => {
-  const lastTwoDigits = count % 100;
-  const lastDigit = count % 10;
-
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-    return `${count} документов`;
-  }
-
-  if (lastDigit === 1) return `${count} документ`;
-
-  if (lastDigit >= 2 && lastDigit <= 4) {
-    return `${count} документа`;
-  }
-
-  return `${count} документов`;
-};
-
 const getDocumentExtension = (filename: string) => {
   const dotIndex = filename.lastIndexOf(".");
 
@@ -172,6 +159,11 @@ const DocumentsWorkspace = () => {
   const isUploadInFlightRef = useRef(false);
   const documentSelectionPanelRef = useRef<HTMLElement>(null);
   const documentListRef = useRef<HTMLUListElement>(null);
+  const documentListScrollTopRef = useRef(0);
+  const shouldRestoreDocumentListScrollRef = useRef(false);
+  const sourcesCollapseButtonRef = useRef<HTMLButtonElement>(null);
+  const sourcesExpandButtonRef = useRef<HTMLButtonElement>(null);
+  const shouldFocusSourcesToggleRef = useRef(false);
   const questionPanelRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchResultsRef = useRef<HTMLElement>(null);
@@ -181,6 +173,7 @@ const DocumentsWorkspace = () => {
   const documentsRef = useRef<DocumentMetadata[]>([]);
   const [documents, setDocuments] = useState<DocumentMetadata[]>();
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
+  const [isSourcesCollapsed, setIsSourcesCollapsed] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadNotification, setUploadNotification] =
@@ -217,7 +210,12 @@ const DocumentsWorkspace = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isResearchStarting, setIsResearchStarting] = useState(false);
   const [isResearchRefreshing, setIsResearchRefreshing] = useState(false);
-  const [isOpeningSource, setIsOpeningSource] = useState(false);
+  const [openingSourceUrl, setOpeningSourceUrl] = useState("");
+  const isOpeningSource = Boolean(openingSourceUrl);
+  const [isResearchStartUncertain, setIsResearchStartUncertain] =
+    useState(false);
+  const [feedbackNotification, setFeedbackNotification] =
+    useState<UploadNotification>();
   const [isDeletingDocument, setIsDeletingDocument] = useState(false);
   const [documentDeleteError, setDocumentDeleteError] = useState<string>();
   const hasSearchOutput =
@@ -309,9 +307,18 @@ const DocumentsWorkspace = () => {
     const list = documentListRef.current;
     const questionPanel = questionPanelRef.current;
 
-    if (!workspace || !panel || !list || !list.children.length) return;
+    if (
+      isSourcesCollapsed ||
+      !workspace ||
+      !panel ||
+      !list ||
+      !list.children.length
+    ) {
+      return;
+    }
 
     const updateListHeight = () => {
+      const screen = workspace.parentElement!;
       const firstItem = list.children[0];
       const lastVisibleItem =
         list.children[
@@ -321,20 +328,24 @@ const DocumentsWorkspace = () => {
         lastVisibleItem.getBoundingClientRect().bottom -
         firstItem.getBoundingClientRect().top;
       const listBounds = list.getBoundingClientRect();
-      const controlsHeight =
-        panel.getBoundingClientRect().bottom - listBounds.bottom;
       const workspacePadding = parseFloat(
         getComputedStyle(workspace).paddingBottom,
       );
-      const questionPanelHeight = questionPanel
-        ? questionPanel.getBoundingClientRect().height +
-          parseFloat(getComputedStyle(questionPanel.parentElement!).rowGap)
-        : 0;
+      const isQuestionBelow = questionPanel
+        ? questionPanel.getBoundingClientRect().left <
+          panel.getBoundingClientRect().right - 1
+        : false;
+      const questionPanelHeight =
+        questionPanel && isQuestionBelow
+          ? questionPanel.getBoundingClientRect().height +
+            parseFloat(getComputedStyle(questionPanel.parentElement!).rowGap)
+          : 0;
       const availableHeight =
-        workspace.getBoundingClientRect().bottom -
+        screen.clientHeight -
+        (listBounds.top -
+          screen.getBoundingClientRect().top +
+          screen.scrollTop) -
         workspacePadding -
-        listBounds.top -
-        controlsHeight -
         questionPanelHeight;
 
       list.style.setProperty(
@@ -349,6 +360,10 @@ const DocumentsWorkspace = () => {
     observer.observe(list);
     if (questionPanel) observer.observe(questionPanel);
     updateListHeight();
+    if (shouldRestoreDocumentListScrollRef.current) {
+      list.scrollTop = documentListScrollTopRef.current;
+      shouldRestoreDocumentListScrollRef.current = false;
+    }
 
     return () => observer.disconnect();
   }, [
@@ -357,7 +372,18 @@ const DocumentsWorkspace = () => {
     hasSearchOutput,
     questionEditorState,
     isUploading,
+    isSourcesCollapsed,
   ]);
+
+  useLayoutEffect(() => {
+    if (!shouldFocusSourcesToggleRef.current) return;
+
+    shouldFocusSourcesToggleRef.current = false;
+    const button = isSourcesCollapsed
+      ? sourcesExpandButtonRef.current
+      : sourcesCollapseButtonRef.current;
+    button?.focus({ preventScroll: true });
+  }, [isSourcesCollapsed]);
 
   useLayoutEffect(() => {
     const dialog = uploadDialogRef.current;
@@ -485,6 +511,7 @@ const DocumentsWorkspace = () => {
     setUploadSuccess(undefined);
 
     if (!selectedFiles.length) {
+      fileInputRef.current?.focus();
       setUploadError({
         title: "Файл не выбран",
         description: "Выберите хотя бы один файл для загрузки.",
@@ -574,14 +601,14 @@ const DocumentsWorkspace = () => {
         title: uploadedDocuments.length
           ? `Добавлено файлов: ${uploadedDocuments.length} из ${selectedFiles.length}`
           : errorMessage.title,
-        description: `${errorMessage.description}\nНеудачные файлы сохранены в очереди. Повторите загрузку.`,
+        description: `${failedFiles.length === 1 ? errorMessage.description : `Не удалось добавить файлов: ${failedFiles.length}. Подробности — в окне загрузки.`}\nНеудачные файлы сохранены в очереди. Повторите загрузку.`,
         variant: uploadedDocuments.length ? "warning" : "error",
         documentIds: uploadedDocumentIds,
       });
     } else {
       setIsUploadDialogOpen(false);
       setUploadNotification({
-        title: "Документы загружены",
+        title: "Документы добавлены",
         description: successMessage,
         variant: "success",
         documentIds: uploadedDocumentIds,
@@ -592,6 +619,17 @@ const DocumentsWorkspace = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
     isUploadInFlightRef.current = false;
     setIsUploading(false);
+  };
+
+  const handleSourcesToggle = () => {
+    if (!isSourcesCollapsed) {
+      documentListScrollTopRef.current =
+        documentListRef.current?.scrollTop ?? 0;
+    } else {
+      shouldRestoreDocumentListScrollRef.current = true;
+    }
+    shouldFocusSourcesToggleRef.current = true;
+    setIsSourcesCollapsed((current) => !current);
   };
 
   const handleDocumentSelectionChange = (
@@ -645,7 +683,7 @@ const DocumentsWorkspace = () => {
   };
 
   const handleDocumentDelete = async () => {
-    if (!documentToDelete) return;
+    if (!documentToDelete || isDeletingDocument) return;
 
     setDocumentDeleteError(undefined);
     setIsDeletingDocument(true);
@@ -675,12 +713,14 @@ const DocumentsWorkspace = () => {
   };
 
   const handleLocalSearch = async () => {
+    if (isSearching || isResearchStarting) return;
     const normalizedQuestion = question.trim();
     setQuestionError(undefined);
     setSearchError(undefined);
 
     if (normalizedQuestion.length < 3) {
       setQuestionError("Сформулируйте вопрос минимум из трёх символов.");
+      questionInputRef.current?.focus();
       return;
     }
 
@@ -721,12 +761,14 @@ const DocumentsWorkspace = () => {
 
   const handleSynapseResearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSearching || isResearchStarting || isResearchStartUncertain) return;
     const normalizedQuestion = question.trim();
     setQuestionError(undefined);
     setResearchError(undefined);
 
     if (normalizedQuestion.length < 3) {
       setQuestionError("Сформулируйте вопрос минимум из трёх символов.");
+      questionInputRef.current?.focus();
       return;
     }
 
@@ -762,6 +804,19 @@ const DocumentsWorkspace = () => {
       setQuestion(normalizedQuestion);
       setQuestionEditorState("collapsed");
     } catch (error) {
+      const isUncertain =
+        !(error instanceof DocumentApiError) ||
+        error.status >= 500 ||
+        error.status === 408;
+      setIsResearchStartUncertain(isUncertain);
+      if (isUncertain) {
+        setFeedbackNotification({
+          title: "Результат запуска пока неизвестен",
+          description:
+            "Synapse мог принять запрос. Проверьте историю исследований перед повторным запуском.",
+          variant: "warning",
+        });
+      }
       setResearchError(
         error instanceof Error
           ? error.message
@@ -780,6 +835,7 @@ const DocumentsWorkspace = () => {
   };
 
   const handleAccessCodeCopy = async () => {
+    if (isAccessCodeCopying) return;
     setAccessCodeCopyStatus("");
     setIsAccessCodeCopying(true);
 
@@ -788,6 +844,11 @@ const DocumentsWorkspace = () => {
       await copyText(accessCode);
       setAccessToken(accessCode);
       setAccessCodeCopyStatus("Код скопирован. Открываем документы…");
+      setFeedbackNotification({
+        title: "Код скопирован",
+        description: "Код команды скопирован в буфер обмена.",
+        variant: "success",
+      });
       await loadDocuments(accessCode);
     } catch (error) {
       setAccessCodeCopyStatus(
@@ -831,12 +892,15 @@ const DocumentsWorkspace = () => {
     setQuestionEditorState("top");
   };
 
-  const handleOpenSource = async (citation: DocumentCitation) => {
+  const handleOpenSource = async (
+    citation: Pick<DocumentCitation, "document" | "url">,
+  ) => {
+    if (isOpeningSource) return;
     setSourceError(undefined);
     const isPdf = isPdfFilename(citation.document);
     const sourceWindow = isPdf ? window.open("", "_blank") : undefined;
 
-    setIsOpeningSource(true);
+    setOpeningSourceUrl(citation.url);
     try {
       const file = await getDocumentFile(citation.url, accessToken);
       const fileUrl = URL.createObjectURL(file);
@@ -853,6 +917,13 @@ const DocumentsWorkspace = () => {
         link.remove();
       }
 
+      if (!sourceWindow) {
+        setFeedbackNotification({
+          title: "Файл передан браузеру",
+          description: `«${citation.document}»`,
+          variant: "success",
+        });
+      }
       window.setTimeout(() => URL.revokeObjectURL(fileUrl), 60_000);
     } catch (error) {
       sourceWindow?.close();
@@ -862,7 +933,7 @@ const DocumentsWorkspace = () => {
           : "Не удалось открыть или скачать исходный файл.",
       );
     } finally {
-      setIsOpeningSource(false);
+      setOpeningSourceUrl("");
     }
   };
 
@@ -874,6 +945,7 @@ const DocumentsWorkspace = () => {
       onSubmit={handleSynapseResearch}
     >
       <Field
+        className={scss.questionField}
         label="Вопрос по выбранным документам"
         htmlFor="document-question"
         error={questionError}
@@ -884,16 +956,25 @@ const DocumentsWorkspace = () => {
           ref={questionInputRef}
           id="document-question"
           value={question}
-          onChange={(event) => setQuestion(event.target.value)}
+          onChange={(event) => {
+            setQuestion(event.target.value);
+            setQuestionError(undefined);
+          }}
           placeholder="Сформулируйте вопрос для исследования по выбранным документам"
           rows={4}
           disabled={isSearching || isResearchStarting}
         />
       </Field>
-      <p className={scss.questionContext} aria-live="polite">
+      <p
+        id="document-selection-hint"
+        className={scss.questionContext}
+        aria-live="polite"
+      >
         {selectedDocumentIds.length
-          ? `Выбрано документов для запроса: ${selectedDocumentIds.length}`
-          : "Выберите хотя бы один документ в списке выше, чтобы запустить исследование или найти фрагменты."}
+          ? `Выбрано ${selectedDocumentIds.length} из ${documents?.length ?? 0}`
+          : isSourcesCollapsed
+            ? "Разверните источники и выберите хотя бы один документ, чтобы запустить исследование или найти фрагменты."
+            : "Выберите хотя бы один документ в списке источников, чтобы запустить исследование или найти фрагменты."}
       </p>
       {searchError && (
         <p className={scss.selectionError} role="alert">
@@ -909,37 +990,52 @@ const DocumentsWorkspace = () => {
         <Button
           className={scss.synapseButton}
           type="submit"
-          aria-describedby="document-research-hint"
+          aria-describedby="document-research-hint document-selection-hint"
+          isLoading={isResearchStarting}
+          loadingLabel="Передаём в Synapse…"
           disabled={
-            isSearching || isResearchStarting || !selectedDocumentIds.length
+            isSearching ||
+            isResearchStarting ||
+            isResearchStartUncertain ||
+            !selectedDocumentIds.length
           }
         >
-          {isResearchStarting
-            ? "Передаём исследование в Synapse…"
-            : "Запустить исследование"}
+          Запустить исследование
           <span className={scss.synapseButtonIcon} aria-hidden="true">
-            <IconRenderer icon="synapseResearch" />
+            <IconRenderer icon="arrowRight" />
           </span>
         </Button>
         <Button
           type="button"
           variant="secondary"
-          aria-describedby="document-fragments-hint"
+          aria-describedby="document-fragments-hint document-selection-hint"
+          isLoading={isSearching}
+          loadingLabel="Ищем фрагменты…"
           onClick={() => void handleLocalSearch()}
           disabled={
             isSearching || isResearchStarting || !selectedDocumentIds.length
           }
         >
-          {isSearching ? "Ищем фрагменты…" : "Найти фрагменты"}
+          Найти фрагменты
         </Button>
       </div>
+      {isResearchStartUncertain && (
+        <p className={scss.uncertainStart}>
+          Synapse мог принять запрос.{" "}
+          <a href="/researches">Проверить состояние</a> перед повторным
+          запуском.
+        </p>
+      )}
       <p className={scss.questionActionHint}>
         <span id="document-research-hint">
-          Исследование — ответ в Synapse по выбранным источникам.
+          Исследование подготовит ответ по выбранным источникам.
         </span>{" "}
         <span id="document-fragments-hint">
-          Поиск — до {SEARCH_LIMIT} фрагментов из документов.
+          Поиск покажет до {SEARCH_LIMIT} фрагментов документов.
         </span>
+      </p>
+      <p className={scss.resultNote}>
+        Результат и материалы сохранятся в разделе «Исследования».
       </p>
     </form>
   );
@@ -952,21 +1048,16 @@ const DocumentsWorkspace = () => {
   const uploadToast = uploadNotification && (
     <Toast
       title={uploadNotification.title}
-      description={`${uploadNotification.description}${unselectedUploadedCount ? `\nНе выбрано для поиска: ${unselectedUploadedCount}. Можно выбрать до ${MAX_SELECTED_DOCUMENTS} документов.` : ""}`}
+      description={`${isUploading ? `Обработано файлов: ${uploadProgress.completed} из ${uploadProgress.total}. Можно продолжить работу.` : uploadNotification.description}${unselectedUploadedCount ? `\nНе выбрано для поиска: ${unselectedUploadedCount}. Можно выбрать до ${MAX_SELECTED_DOCUMENTS} документов.` : ""}`}
       variant={uploadNotification.variant}
+      isLoading={isUploading}
+      progress={isUploading ? uploadProgress : undefined}
       autoClose={
-        isUploading ||
-        uploadNotification.variant === "error" ||
-        uploadNotification.variant === "warning"
-          ? false
-          : 5_000
+        uploadNotification.variant === "success" && !isUploading ? 5_000 : false
       }
       onClose={() => setUploadNotification(undefined)}
       action={
-        !isUploadDialogOpen &&
-        (uploadNotification.variant === "error" ||
-          uploadNotification.variant === "warning") &&
-        selectedFiles.length ? (
+        !isUploadDialogOpen && selectedFiles.length ? (
           <Button
             type="button"
             variant="secondary"
@@ -979,10 +1070,26 @@ const DocumentsWorkspace = () => {
     />
   );
 
+  const feedbackToast = feedbackNotification && (
+    <Toast
+      title={feedbackNotification.title}
+      description={feedbackNotification.description}
+      variant={feedbackNotification.variant}
+      onClose={() => setFeedbackNotification(undefined)}
+      action={
+        feedbackNotification.variant === "warning" &&
+        isResearchStartUncertain ? (
+          <a href="/researches">Проверить состояние</a>
+        ) : undefined
+      }
+    />
+  );
+
   if (isDocumentsLoading && !documents) {
     return (
       <main className={scss.root}>
         <Loader variant="page" label="Загружаем документы…" />
+        <ToastViewport>{feedbackToast}</ToastViewport>
       </main>
     );
   }
@@ -991,7 +1098,7 @@ const DocumentsWorkspace = () => {
     return (
       <main className={scss.root}>
         <section className={scss.panel} aria-labelledby="documents-load-error">
-          <p className={scss.eyebrow}>Документы</p>
+          <ToastViewport>{feedbackToast}</ToastViewport>
           <h1 id="documents-load-error">Документы пока недоступны</h1>
           <p className={scss.muted}>{documentsError}</p>
           <form className={scss.accessForm} onSubmit={handleAccessSubmit}>
@@ -1005,14 +1112,16 @@ const DocumentsWorkspace = () => {
                     type="button"
                     variant="secondary"
                     onClick={() => void handleAccessCodeCopy()}
-                    disabled={isDocumentsLoading || isAccessCodeCopying}
+                    disabled={isDocumentsLoading}
+                    isLoading={isAccessCodeCopying}
+                    loadingLabel="Копируем…"
                     aria-describedby="document-access-copy-status"
                   >
                     <IconRenderer
                       className={scss.copyAccessCodeIcon}
                       icon="copy"
                     />
-                    {isAccessCodeCopying ? "Копируем…" : "Скопировать код"}
+                    Скопировать код
                   </Button>
                 ) : undefined
               }
@@ -1036,7 +1145,8 @@ const DocumentsWorkspace = () => {
             <Button
               type="submit"
               variant="secondary"
-              disabled={isDocumentsLoading}
+              isLoading={isDocumentsLoading}
+              loadingLabel="Загружаем…"
             >
               Повторить попытку
             </Button>
@@ -1049,14 +1159,15 @@ const DocumentsWorkspace = () => {
   return (
     <main ref={workspaceRef} className={scss.root}>
       <header className={scss.header}>
-        <h1>Поиск по документам</h1>
+        <h1>Исследование по документам</h1>
         <p className={scss.lead}>
           Выберите источники и задайте исследовательский вопрос.
         </p>
       </header>
 
-      <div className={scss.toastStack}>
+      <ToastViewport>
         {!isUploadDialogOpen && uploadToast}
+        {!isUploadDialogOpen && feedbackToast}
         {deletionNotification && (
           <Toast
             title="Документ удалён"
@@ -1064,7 +1175,7 @@ const DocumentsWorkspace = () => {
             onClose={() => setDeletionNotification(undefined)}
           />
         )}
-      </div>
+      </ToastViewport>
 
       <div className={contentClassNames}>
         {documentsError && (
@@ -1074,14 +1185,52 @@ const DocumentsWorkspace = () => {
               type="button"
               variant="secondary"
               onClick={() => void loadDocuments(accessToken)}
-              disabled={isDocumentsLoading || isUploading}
+              disabled={isUploading}
+              isLoading={isDocumentsLoading}
+              loadingLabel="Загружаем…"
             >
               Повторить
             </Button>
           </section>
         )}
 
-        <section className={scss.searchWorkspace} aria-label="Поиск">
+        <section
+          className={`${scss.searchWorkspace} ${isSourcesCollapsed ? scss.sourcesCollapsed : ""}`}
+          aria-label="Поиск"
+        >
+          {documents?.length ? (
+            <div className={scss.sourcesSummary} hidden={!isSourcesCollapsed}>
+              <div className={scss.sourcesSummaryText}>
+                <h2>Источники</h2>
+                <span>
+                  Выбрано {selectedDocumentIds.length} из {documents.length}
+                </span>
+              </div>
+              <button
+                ref={sourcesExpandButtonRef}
+                type="button"
+                className={scss.sourcesExpandButton}
+                onClick={handleSourcesToggle}
+                aria-label="Развернуть источники"
+                aria-expanded={false}
+                aria-controls="document-sources-panel"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 3v18m5-12 3 3-3 3" />
+                </svg>
+                Развернуть
+              </button>
+            </div>
+          ) : null}
           {isUploading && (
             <div className={scss.uploadStatus}>
               <p role="status">Загружаем документы. {uploadProgressLabel}</p>
@@ -1096,24 +1245,62 @@ const DocumentsWorkspace = () => {
           )}
           {documents?.length ? (
             <>
-              <article ref={documentSelectionPanelRef} className={scss.panel}>
+              <article
+                ref={documentSelectionPanelRef}
+                id="document-sources-panel"
+                className={scss.documentPanel}
+                hidden={isSourcesCollapsed}
+              >
                 <div className={scss.sectionHeading}>
                   <div>
                     <h2>Источники</h2>
-                    <p className={scss.selectionSummary} aria-live="polite">
-                      Выбрано {selectedDocumentIds.length} из{" "}
-                      {formatDocumentCount(documents.length)}
-                    </p>
                   </div>
                   <div className={scss.selectionActions}>
+                    <button
+                      ref={sourcesCollapseButtonRef}
+                      type="button"
+                      className={scss.sourcesCollapseButton}
+                      onClick={handleSourcesToggle}
+                      aria-label="Свернуть источники"
+                      aria-expanded={true}
+                      aria-controls="document-sources-panel"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M9 3v18m7-12-3 3 3 3" />
+                      </svg>
+                      Свернуть
+                    </button>
                     <Button
                       type="button"
                       className={scss.uploadButton}
+                      variant="secondary"
                       id="add-documents"
+                      data-toast-focus-return
+                      aria-label="Добавить документы"
                       onClick={handleUploadDialogOpen}
                     >
-                      <IconRenderer className={scss.uploadIcon} icon="download" />
-                      Добавить документы
+                      <IconRenderer
+                        className={scss.uploadIcon}
+                        icon="download"
+                      />
+                      <span className={scss.uploadLabelFull} aria-hidden="true">
+                        Добавить документы
+                      </span>
+                      <span
+                        className={scss.uploadLabelShort}
+                        aria-hidden="true"
+                      >
+                        Добавить
+                      </span>
                     </Button>
                   </div>
                 </div>
@@ -1123,7 +1310,13 @@ const DocumentsWorkspace = () => {
                     Документы для этого запроса
                   </legend>
                   <div className={scss.selectionToolbar}>
-                    <span>До {MAX_SELECTED_DOCUMENTS} файлов на запрос</span>
+                    <span
+                      className={scss.selectionSummary}
+                      aria-live="polite"
+                      title={`До ${MAX_SELECTED_DOCUMENTS} файлов на запрос`}
+                    >
+                      Выбрано {selectedDocumentIds.length} из {documents.length}
+                    </span>
                     <div className={scss.bulkSelectionActions}>
                       <button
                         className={scss.selectionButton}
@@ -1175,48 +1368,118 @@ const DocumentsWorkspace = () => {
                               )
                             }
                           />
+                          <Tooltip
+                            target={
+                              <span
+                                className={scss.fileType}
+                                tabIndex={0}
+                                aria-label={`Сведения о документе «${document.filename}»`}
+                                data-format={getDocumentExtension(
+                                  document.filename,
+                                )}
+                              >
+                                <svg
+                                  viewBox="0 0 28 32"
+                                  aria-hidden="true"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                >
+                                  <path d="M5 2h12l6 6v22H5zM17 2v7h6" />
+                                  <text
+                                    x="14"
+                                    y="24"
+                                    textAnchor="middle"
+                                    fill="currentColor"
+                                    stroke="none"
+                                    fontSize="7"
+                                    fontFamily="sans-serif"
+                                  >
+                                    {getDocumentExtension(document.filename)
+                                      .slice(1, 4)
+                                      .toUpperCase()}
+                                  </text>
+                                </svg>
+                              </span>
+                            }
+                          >
+                            {document.textPageCount} страниц или записей с
+                            текстом · {document.chunkCount} фрагментов ·{" "}
+                            {formatDocumentStatus(document.status)}. Добавлен:{" "}
+                            {formatDate(document.uploadedAt)}
+                          </Tooltip>
                           <div className={scss.documentContent}>
                             <label
                               className={scss.documentLabel}
                               htmlFor={checkboxId}
                             >
                               <span className={scss.documentTopLine}>
-                                <strong>{document.filename}</strong>
+                                <strong title={document.filename}>
+                                  {document.filename}
+                                </strong>
                               </span>
                               <span className={scss.documentMeta}>
                                 <span>
-                                  {formatFileSize(document.sizeBytes)}
+                                  {getDocumentExtension(document.filename)
+                                    .slice(1)
+                                    .toUpperCase()}
                                 </span>
                                 <span>{formatDocumentUnits(document)}</span>
-                                <span>{document.textPageCount} с текстом</span>
-                                <span>{document.chunkCount} фрагментов</span>
-                                <span className={scss.documentDate}>
-                                  Добавлен: {formatDate(document.uploadedAt)}
+                                <span>
+                                  {formatFileSize(document.sizeBytes)}
                                 </span>
-                              </span>
-                              <span className={scss.status}>
-                                <span
-                                  className={scss.statusIndicator}
-                                  aria-hidden="true"
-                                >
-                                  <IconRenderer icon="check" />
-                                </span>
-                                {formatDocumentStatus(document.status)}
                               </span>
                             </label>
-                            <button
-                              className={scss.documentDeleteButton}
-                              type="button"
-                              onClick={() =>
-                                handleDocumentDeleteRequest(document)
+                            <Tooltip
+                              target={
+                                <button
+                                  className={scss.documentOpenButton}
+                                  type="button"
+                                  aria-label={`${openingSourceUrl === `/api/documents/${encodeURIComponent(document.id)}/file` ? "Открываем" : "Открыть"} исходный документ «${document.filename}»`}
+                                  aria-busy={
+                                    openingSourceUrl ===
+                                      `/api/documents/${encodeURIComponent(document.id)}/file` ||
+                                    undefined
+                                  }
+                                  title="Открыть исходный документ"
+                                  disabled={isOpeningSource}
+                                  onClick={() =>
+                                    void handleOpenSource({
+                                      document: document.filename,
+                                      url: `/api/documents/${encodeURIComponent(document.id)}/file`,
+                                    })
+                                  }
+                                >
+                                  {openingSourceUrl ===
+                                  `/api/documents/${encodeURIComponent(document.id)}/file` ? (
+                                    <Spinner />
+                                  ) : (
+                                    <IconRenderer icon="externalLink" />
+                                  )}
+                                </button>
                               }
-                              aria-label={`Удалить документ «${document.filename}»`}
-                              title="Удалить документ"
                             >
-                              <span aria-hidden="true">
-                                <IconRenderer icon="remove" />
-                              </span>
-                            </button>
+                              Открыть исходный документ
+                            </Tooltip>
+                            <Tooltip
+                              target={
+                                <button
+                                  className={scss.documentDeleteButton}
+                                  type="button"
+                                  onClick={() =>
+                                    handleDocumentDeleteRequest(document)
+                                  }
+                                  aria-label={`Удалить документ «${document.filename}»`}
+                                  title="Удалить документ"
+                                >
+                                  <span aria-hidden="true">
+                                    <IconRenderer icon="remove" />
+                                  </span>
+                                </button>
+                              }
+                            >
+                              Удалить документ
+                            </Tooltip>
                           </div>
                         </li>
                       );
@@ -1234,7 +1497,7 @@ const DocumentsWorkspace = () => {
                 >
                   <div className={scss.sectionHeading}>
                     <div>
-                      <h2 id="search-question">Что хотите исследовать?</h2>
+                      <h2 id="search-question">Исследовательский вопрос</h2>
                     </div>
                   </div>
                   {renderQuestionForm()}
@@ -1251,7 +1514,9 @@ const DocumentsWorkspace = () => {
               <Button
                 type="button"
                 className={scss.uploadButton}
+                variant="secondary"
                 id="add-documents"
+                data-toast-focus-return
                 onClick={handleUploadDialogOpen}
               >
                 <IconRenderer className={scss.uploadIcon} icon="download" />
@@ -1260,6 +1525,12 @@ const DocumentsWorkspace = () => {
             </section>
           )}
         </section>
+
+        {sourceError && (
+          <p className={scss.sourceError} role="alert">
+            {sourceError}
+          </p>
+        )}
 
         {isSearching && (
           <section className={scss.searchLoading} aria-live="polite">
@@ -1278,7 +1549,6 @@ const DocumentsWorkspace = () => {
           >
             <div className={scss.resultsHeading}>
               <div>
-                <p className={scss.eyebrow}>Исследование в Synapse</p>
                 <h2 id="synapse-research-title">{synapseProject.title}</h2>
                 <p className={scss.muted}>«{question}»</p>
               </div>
@@ -1347,9 +1617,10 @@ const DocumentsWorkspace = () => {
                 onClick={() =>
                   void refreshDocumentResearch(synapseProject.projectId, true)
                 }
-                disabled={isResearchRefreshing}
+                isLoading={isResearchRefreshing}
+                loadingLabel="Обновляем…"
               >
-                {isResearchRefreshing ? "Обновляем…" : "Обновить статус"}
+                Обновить статус
               </Button>
               {questionEditorState === "collapsed" && (
                 <Button
@@ -1372,7 +1643,6 @@ const DocumentsWorkspace = () => {
           >
             <div className={scss.resultsHeading}>
               <div>
-                <p className={scss.eyebrow}>Кандидаты на доказательства</p>
                 <h2>Фрагменты по вопросу</h2>
                 <p className={scss.muted}>«{searchResult.query}»</p>
               </div>
@@ -1407,27 +1677,24 @@ const DocumentsWorkspace = () => {
                             {item.citation.location}
                           </p>
                         </div>
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
                           className={scss.sourceLink}
+                          isLoading={openingSourceUrl === item.citation.url}
+                          loadingLabel="Открываем…"
                           aria-label={`Открыть источник: ${item.citation.document}, ${item.citation.location}`}
                           onClick={() => void handleOpenSource(item.citation)}
                           disabled={isOpeningSource}
                         >
-                          {isOpeningSource ? (
-                            "Открываем…"
-                          ) : (
-                            <>
-                              Открыть источник
-                              <span
-                                className={scss.sourceLinkIcon}
-                                aria-hidden="true"
-                              >
-                                <IconRenderer icon="externalLink" />
-                              </span>
-                            </>
-                          )}
-                        </button>
+                          Открыть источник
+                          <span
+                            className={scss.sourceLinkIcon}
+                            aria-hidden="true"
+                          >
+                            <IconRenderer icon="externalLink" />
+                          </span>
+                        </Button>
                       </div>
                       <blockquote>{item.excerpt}</blockquote>
                       <p className={scss.relevance}>
@@ -1452,16 +1719,10 @@ const DocumentsWorkspace = () => {
             <aside className={scss.retrievalNotice}>
               <strong>Это этап поиска, а не готовый научный вывод.</strong>
               <p>
-                Найденные фрагменты нужно сверить с методикой и условиями опыта,
-                а затем подтвердить как факты в{" "}
-                <a href="/">доказательной базе</a>.
+                Сверьте найденные фрагменты с первоисточниками и учитывайте
+                ограничения документов при подготовке выводов.
               </p>
             </aside>
-            {sourceError && (
-              <p className={scss.sourceError} role="alert">
-                {sourceError}
-              </p>
-            )}
           </section>
         )}
 
@@ -1513,7 +1774,12 @@ const DocumentsWorkspace = () => {
                 type="button"
                 className={scss.dialogCloseButton}
                 onClick={handleUploadDialogClose}
-                aria-label="Закрыть загрузку документов"
+                aria-label={
+                  isUploading
+                    ? "Продолжить загрузку в фоне и закрыть окно"
+                    : "Закрыть загрузку документов"
+                }
+                title={isUploading ? "Загрузка продолжится в фоне" : "Закрыть"}
               >
                 <IconRenderer icon="close" />
               </button>
@@ -1605,16 +1871,17 @@ const DocumentsWorkspace = () => {
                 <Button
                   className={scss.uploadButton}
                   type="submit"
-                  disabled={isUploading || isDocumentsLoading}
+                  disabled={isDocumentsLoading}
+                  isLoading={isUploading}
+                  loadingLabel="Добавляем файлы…"
                 >
                   <IconRenderer className={scss.uploadIcon} icon="download" />
-                  {isUploading
-                    ? "Добавляем файлы…"
-                    : `Загрузить файлы${selectedFiles.length > 1 ? ` (${selectedFiles.length})` : ""}`}
+                  {`Загрузить файлы${selectedFiles.length > 1 ? ` (${selectedFiles.length})` : ""}`}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
+                  className={scss.uploadCloseButton}
                   onClick={handleUploadDialogClose}
                 >
                   {isUploading ? "Продолжить в фоне" : "Закрыть"}
@@ -1665,12 +1932,14 @@ const DocumentsWorkspace = () => {
                   Отмена
                 </Button>
                 <Button
-                  className={scss.confirmDeleteButton}
+                  variant="danger"
+                  isLoading={isDeletingDocument}
+                  loadingLabel="Удаляем…"
                   type="button"
                   onClick={() => void handleDocumentDelete()}
                   disabled={isDeletingDocument}
                 >
-                  {isDeletingDocument ? "Удаляем…" : "Удалить"}
+                  Удалить
                 </Button>
               </div>
             </section>

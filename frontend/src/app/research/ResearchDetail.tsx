@@ -12,14 +12,17 @@ import { getDocumentFile } from "../../api/documents";
 import type { Research, ResearchFile } from "../../assets/types/research";
 import Button from "../../components/ui/Button/Button";
 import Field from "../../components/ui/Field/Field";
+import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
+import Toast from "../../components/ui/Toast/Toast";
+import ToastViewport from "../../components/ui/Toast/ToastViewport";
 import Textarea from "../../components/ui/Textarea/Textarea";
 import ResearchAccess from "./ResearchAccess";
+import ResearchStatus from "./ResearchStatus";
 import {
   formatResearchDate,
   formatResearchPhase,
   formatResearchResultHint,
-  formatResearchStatus,
   isResearchFinal,
 } from "./researchPresentation";
 
@@ -50,6 +53,13 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
   const [hasAccessError, setHasAccessError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [resolvingId, setResolvingId] = useState("");
+  const [resolvingDecision, setResolvingDecision] = useState<boolean>();
+  const [notification, setNotification] = useState<{
+    title: string;
+    description: string;
+    variant: "success" | "error";
+  }>();
+  const isDownloadingRef = useRef(false);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [fileError, setFileError] = useState("");
   const [downloadingId, setDownloadingId] = useState("");
@@ -160,6 +170,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
       return;
     }
     setResolvingId(approvalId);
+    setResolvingDecision(approved);
     setDecisionError("");
     try {
       const updated = await resolveResearchApproval(
@@ -173,6 +184,12 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
       if (isMountedRef.current) {
         setResearch(updated);
         setFeedback((current) => ({ ...current, [approvalId]: "" }));
+        setNotification({
+          title: approved ? "Решение подтверждено" : "Запрос отклонён",
+          description:
+            "Решение передано в Synapse. Состояние исследования обновлено.",
+          variant: "success",
+        });
       }
     } catch (failure) {
       if (isMountedRef.current)
@@ -187,20 +204,35 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
   };
 
   const handleDownload = async (file: ResearchFile) => {
+    if (isDownloadingRef.current) return;
+    isDownloadingRef.current = true;
     setDownloadingId(file.id);
     setFileError("");
     try {
       downloadBlob(await getResearchFile(researchId, file.id), file.filename);
+      setNotification({
+        title: "Файл передан браузеру",
+        description: `«${file.filename}»`,
+        variant: "success",
+      });
     } catch (failure) {
-      setFileError(
-        failure instanceof Error ? failure.message : "Не удалось скачать файл.",
-      );
+      const message =
+        failure instanceof Error ? failure.message : "Не удалось скачать файл.";
+      setFileError(message);
+      setNotification({
+        title: "Не удалось скачать файл",
+        description: message,
+        variant: "error",
+      });
     } finally {
+      isDownloadingRef.current = false;
       setDownloadingId("");
     }
   };
 
   const handleSourceDownload = async (id: string, filename: string) => {
+    if (isDownloadingRef.current) return;
+    isDownloadingRef.current = true;
     setDownloadingId(id);
     setFileError("");
     try {
@@ -208,20 +240,45 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
         await getDocumentFile(`/api/documents/${encodeURIComponent(id)}/file`),
         filename,
       );
+      setNotification({
+        title: "Файл передан браузеру",
+        description: `«${filename}»`,
+        variant: "success",
+      });
     } catch (failure) {
-      setFileError(
+      const message =
         failure instanceof Error
           ? failure.message
-          : "Исходный документ больше недоступен.",
-      );
+          : "Исходный документ больше недоступен.";
+      setFileError(message);
+      setNotification({
+        title: "Не удалось скачать документ",
+        description: message,
+        variant: "error",
+      });
     } finally {
+      isDownloadingRef.current = false;
       setDownloadingId("");
     }
   };
 
   return (
     <main className={scss.root}>
-      <a className={scss.backLink} href="/researches">
+      <ToastViewport>
+        {notification && (
+          <Toast
+            title={notification.title}
+            description={notification.description}
+            variant={notification.variant}
+            onClose={() => setNotification(undefined)}
+          />
+        )}
+      </ToastViewport>
+      <a
+        className={scss.backLink}
+        href={`/researches${window.location.search}`}
+        data-toast-focus-return
+      >
         К истории исследований
       </a>
       {hasAccessError ? (
@@ -269,13 +326,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                       : "По опытам"}
                   </p>
                 </div>
-                <span
-                  className={scss.status}
-                  data-status={research.status}
-                  role="status"
-                >
-                  {formatResearchStatus(research.status)}
-                </span>
+                <ResearchStatus status={research.status} />
               </header>
               <div className={scss.stateBar}>
                 <div>
@@ -290,12 +341,14 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                 </div>
                 <Button
                   variant="secondary"
+                  isLoading={isRefreshing}
+                  loadingLabel="Проверяем состояние…"
                   disabled={
                     isRefreshing || Boolean(resolvingId) || !research.projectId
                   }
                   onClick={() => void handleRefresh()}
                 >
-                  {isRefreshing ? "Проверяем состояние…" : "Обновить состояние"}
+                  Обновить состояние
                 </Button>
               </div>
               {research.syncError && (
@@ -322,18 +375,35 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                   {research.sources.map((source) => (
                     <li key={source.id}>
                       {research.kind === "documents" ? (
-                        <Button
-                          variant="secondary"
-                          disabled={Boolean(downloadingId)}
-                          onClick={() =>
-                            void handleSourceDownload(
-                              source.id,
-                              source.filename,
-                            )
-                          }
-                        >
-                          {source.filename}
-                        </Button>
+                        <div className={scss.sourceFile}>
+                          <span className={scss.sourceFilename}>
+                            {source.filename}
+                          </span>
+                          <Button
+                            className={scss.sourceDownload}
+                            type="button"
+                            variant="icon"
+                            isLoading={downloadingId === source.id}
+                            aria-label={
+                              downloadingId === source.id
+                                ? `Скачиваем ${source.filename}`
+                                : `Скачать ${source.filename}`
+                            }
+                            title={`Скачать ${source.filename}`}
+                            aria-busy={downloadingId === source.id}
+                            disabled={Boolean(downloadingId)}
+                            onClick={() =>
+                              void handleSourceDownload(
+                                source.id,
+                                source.filename,
+                              )
+                            }
+                          >
+                            <span aria-hidden="true">
+                              <IconRenderer icon="download" />
+                            </span>
+                          </Button>
+                        </div>
                       ) : (
                         <a href={`/source/${encodeURIComponent(source.id)}`}>
                           {source.id} · {source.filename}
@@ -382,6 +452,11 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                   </Field>
                   <div className={scss.actions}>
                     <Button
+                      isLoading={
+                        resolvingId === approval.id &&
+                        resolvingDecision === true
+                      }
+                      loadingLabel="Передаём решение…"
                       disabled={
                         Boolean(resolvingId) ||
                         isRefreshing ||
@@ -389,12 +464,15 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                       }
                       onClick={() => void handleDecision(approval.id, true)}
                     >
-                      {resolvingId === approval.id
-                        ? "Передаём решение…"
-                        : "Подтвердить"}
+                      Подтвердить
                     </Button>
                     <Button
                       variant="secondary"
+                      isLoading={
+                        resolvingId === approval.id &&
+                        resolvingDecision === false
+                      }
+                      loadingLabel="Передаём решение…"
                       disabled={
                         Boolean(resolvingId) ||
                         isRefreshing ||
@@ -483,9 +561,11 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                         <Button
                           variant="secondary"
                           disabled={Boolean(downloadingId)}
+                          isLoading={downloadingId === file.id}
+                          loadingLabel="Скачиваем…"
                           onClick={() => void handleDownload(file)}
                         >
-                          {downloadingId === file.id ? "Скачиваем…" : "Скачать"}
+                          Скачать
                         </Button>
                       </li>
                     ))}

@@ -1,12 +1,29 @@
+@use "./media";
+@use "./typography";
+
 :root {
-  --content-width: 80rem;
-  --page-gutter: clamp(1.5rem, 4vw, 3rem);
+  @include typography.scale;
+  --content-width: 90rem;
+  --page-gutter: clamp(1.5rem, 3vw, 2.5rem);
+  --font-display: "Lora", Georgia, serif;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
-  --radius-control: 0.75rem;
-  --shadow-panel: 0 1rem 2.5rem rgba(0, 0, 0, 0.16);
+  --radius-control: 999px;
+  --shadow-panel: 0 1rem 2.5rem rgba(24, 32, 31, 0.08);
   --z-header: 900;
   --z-status: 950;
   --z-tooltip: 1000;
   --z-modal: 1100;
+}
+
+@include media.wide {
+  :root {
+    --content-width: 104rem;
+  }
+}
+
+@include media.ultrawide {
+  :root {
+    --content-width: 112rem;
+  }
 }

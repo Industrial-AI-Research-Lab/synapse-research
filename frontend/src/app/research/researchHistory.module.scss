@@ -1,4 +1,6 @@
+@use "../../styles/typography";
 @use "../../styles/media";
+@use "../../styles/mixin";
 
 .root {
   width: min(var(--content-width), 100%);
@@ -15,7 +17,7 @@
 }
 
 .header h1 {
-  font-size: 2rem;
+  @include typography.headerM;
   line-height: 1.2;
 }
 
@@ -26,15 +28,42 @@
   line-height: 1.6;
 }
 
+.refreshButton {
+  flex-shrink: 0;
+}
+
+.refreshIcon {
+  display: inline-flex;
+  flex: 0 0 1rem;
+  width: 1rem;
+  height: 1rem;
+}
+
 .filters {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
+.kindFilter,
+.statusFilter {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.kindFilter {
+  width: 13em;
+}
+
+.statusFilter {
+  width: 20em;
+}
+
 .filters select {
-  min-width: 13rem;
+  width: 100%;
+  min-width: 0;
   min-height: 2.75rem;
   padding: 0.75rem;
   color: var(--color-text);
@@ -44,22 +73,36 @@
   font: inherit;
 }
 
-.count {
-  padding: 0.75rem 0;
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
+.pageSizeFilter {
+  flex: 0 0 6rem;
+  max-width: 100%;
+  margin-left: auto;
 }
 
 .list {
+  display: grid;
+  grid-auto-rows: 1fr;
   border-top: 1px solid var(--color-border);
 }
 
 .row {
+  @include mixin.transition(background-color);
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 16rem;
-  gap: 2rem;
-  padding: 1.5rem 0;
+  grid-template-columns: minmax(0, 1fr) fit-content(17rem);
+  align-items: center;
+  align-content: center;
+  gap: 1rem;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--color-border);
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition-duration: 0.3s;
+  }
+}
+
+.row:hover {
+  background: var(--color-control-hover);
 }
 
 .rowMain {
@@ -67,19 +110,43 @@
 }
 
 .row h2 {
-  margin: 0.5rem 0 0.75rem;
-  font-size: 1.125rem;
-  line-height: 1.6;
+  margin: 0;
+  @include typography.textM;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.root .titleLink {
+  display: block;
+  min-height: 0;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.titleLink::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.titleLink:focus-visible::after {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -4px;
+}
+
+.titleText {
+  display: -webkit-box;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
-.row h2 a {
-  color: var(--color-text);
-}
-
-.row h2 a:hover {
-  color: var(--color-text);
-  text-decoration-thickness: 0.125rem;
+.root .titleLink:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
 }
 
 .root a {
@@ -102,45 +169,27 @@
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.25rem;
   color: var(--color-text-muted);
-  font-size: 0.875rem;
-}
-
-.sources {
-  overflow-wrap: anywhere;
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.6;
+  @include typography.textS;
 }
 
 .rowState {
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  justify-items: end;
+  gap: 0.25rem;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
   color: var(--color-text-muted);
-  font-size: 0.875rem;
+  @include typography.textS;
 }
 
-.status {
-  color: var(--color-text);
-  font-weight: 700;
-}
-
-.status[data-status="completed"],
-.status[data-status="done"] {
-  color: var(--color-success);
-}
-
-.status[data-status="awaiting_approval"],
 .warning {
   color: var(--color-warning);
 }
 
-.status[data-status="failed"],
-.status[data-status="start_failed"],
-.status[data-status="start_unknown"],
 .error {
   color: var(--color-danger);
 }
@@ -159,6 +208,12 @@
   margin: 1rem 0;
   color: var(--color-text-muted);
   line-height: 1.6;
+}
+
+.empty h2 {
+  font-family: var(--font-display);
+  @include typography.headerS;
+  font-weight: 400;
 }
 
 .links {
@@ -183,11 +238,13 @@
 
   .row {
     grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
+    gap: 0.5rem 0.75rem;
   }
 
   .rowState {
-    gap: 0.75rem;
+    grid-column: 1;
+    justify-items: start;
+    text-align: left;
   }
 }
 
@@ -198,8 +255,14 @@
     gap: 1rem;
   }
 
-  .filters select {
+  .kindFilter,
+  .statusFilter,
+  .pageSizeFilter {
     width: 100%;
-    min-width: 0;
+  }
+
+  .pageSizeFilter {
+    flex-basis: auto;
+    margin-left: 0;
   }
 }

@@ -4,6 +4,8 @@ import ArrowLeftIcon from "./icons/ArrowLeft";
 import ArrowRightIcon from "./icons/ArrowRight";
 import AnalyticsReportIcon from "./icons/AnalyticsReport";
 import CheckIcon from "./icons/Check";
+import ChevronLeftIcon from "./icons/ChevronLeft";
+import ChevronRightIcon from "./icons/ChevronRight";
 import CloseIcon from "./icons/Close";
 import CopyIcon from "./icons/Copy";
 import DownloadIcon from "./icons/Download";
@@ -23,6 +25,8 @@ export type IIconRendererTypes =
   | "arrowLeft"
   | "arrowRight"
   | "check"
+  | "chevronLeft"
+  | "chevronRight"
   | "close"
   | "copy"
   | "download"
@@ -45,6 +49,8 @@ export const ICONS_ENUM: Record<
   arrowLeft: ArrowLeftIcon,
   arrowRight: ArrowRightIcon,
   check: CheckIcon,
+  chevronLeft: ChevronLeftIcon,
+  chevronRight: ChevronRightIcon,
   close: CloseIcon,
   copy: CopyIcon,
   download: DownloadIcon,

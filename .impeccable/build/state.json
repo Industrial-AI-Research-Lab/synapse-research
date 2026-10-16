@@ -1,0 +1,273 @@
+{
+  "tool": "build-phase",
+  "version": 2,
+  "startedAt": "2026-10-16T10:59:36.713Z",
+  "comp": ".impeccable/mocks/decision/folio-final-document-action.png",
+  "direction": null,
+  "breakpoint": "1536x1024",
+  "artifact": null,
+  "phase": "hero",
+  "phases": {
+    "comps": {
+      "status": "skipped",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [
+        {
+          "at": "2026-10-16T10:59:36.713Z",
+          "text": "started with an approved comp; the comp round happened before this state (surface round or manual)"
+        }
+      ],
+      "gate": null,
+      "forced": null
+    },
+    "spec": {
+      "status": "closed",
+      "openedAt": "2026-10-16T10:59:36.713Z",
+      "closedAt": "2026-10-16T11:02:41.349Z",
+      "attempts": 3,
+      "notes": [],
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "24 regions, 0 plates, 10 text regions measured",
+        "at": "2026-10-16T11:02:41.349Z"
+      },
+      "forced": null
+    },
+    "plates": {
+      "status": "closed",
+      "openedAt": "2026-10-16T11:02:41.349Z",
+      "closedAt": "2026-10-16T11:02:42.535Z",
+      "attempts": 1,
+      "notes": [],
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "no plates owed",
+        "at": "2026-10-16T11:02:42.535Z"
+      },
+      "forced": null
+    },
+    "hero": {
+      "status": "open",
+      "openedAt": "2026-10-16T11:02:42.535Z",
+      "closedAt": null,
+      "attempts": 1,
+      "notes": [
+        {
+          "at": "2026-10-16T11:27:17.357Z",
+          "text": "Final comp-diff: 0.8366, automated gate remains open. Fresh reviewer confirmed source rows 2-6 and footer exist in full captures; fixed crops misclassify vertical text shifts. Real Synapse status intentionally replaces the demonstration readiness claim. No force and no automated PASS claimed. Manual verdict and final diff are saved under .impeccable/review."
+        }
+      ],
+      "gate": {
+        "ok": false,
+        "reasons": [
+          "region footer is missing (detail 0%, structure 97%): the comp shows material the build does not",
+          "region source-row-2 is missing (detail 0%, structure 73%): the comp shows material the build does not",
+          "region source-row-3 is missing (detail 0%, structure 76%): the comp shows material the build does not",
+          "region source-row-4 is missing (detail 0%, structure 82%): the comp shows material the build does not",
+          "region source-row-5 is missing (detail 0%, structure 81%): the comp shows material the build does not",
+          "region source-row-6 is missing (detail 2%, structure 82%): the comp shows material the build does not",
+          "control upload drifts to 65% (structure 57%, color 88%): its chrome differs from the comp's; open .impeccable/review/diff/hero/regions/upload.png and match the border, fill, radius, chevron or arrow, and label size"
+        ],
+        "summary": "hero 84% (match)",
+        "score": 0.8366,
+        "verdict": "match",
+        "report": ".impeccable/review/diff/hero/report.json",
+        "sideBySide": "/home/v1ktorin/PAV_Evidence_Navigator/.impeccable/review/diff/hero/side-by-side.png",
+        "worst": [
+          "intro drift 62%",
+          "upload drift 65%",
+          "source-row-2 missing 65%"
+        ],
+        "worstIds": [
+          "intro",
+          "upload",
+          "source-row-2"
+        ],
+        "worstCrops": [
+          {
+            "id": "intro",
+            "verdict": "drift",
+            "score": {
+              "overall": 0.6183,
+              "structure": 0.7389,
+              "color": 0.9472,
+              "colorIntersection": 0.9146,
+              "paletteMatch": 0.9648,
+              "detail": 0.0806,
+              "detailRaw": 0.1952,
+              "detailAdded": 0.2292,
+              "bands": 0
+            },
+            "file": ".impeccable/review/diff/hero/regions/intro.png"
+          },
+          {
+            "id": "upload",
+            "verdict": "drift",
+            "score": {
+              "overall": 0.6484,
+              "structure": 0.5693,
+              "color": 0.8771,
+              "colorIntersection": 0.8208,
+              "paletteMatch": 0.9074,
+              "detail": 0.4261,
+              "detailRaw": 0.4938,
+              "detailAdded": 0.1354,
+              "bands": 0.5972
+            },
+            "file": ".impeccable/review/diff/hero/regions/upload.png"
+          },
+          {
+            "id": "source-row-2",
+            "verdict": "missing",
+            "score": {
+              "overall": 0.6532,
+              "structure": 0.7306,
+              "color": 0.9269,
+              "colorIntersection": 0.886,
+              "paletteMatch": 0.949,
+              "detail": 0,
+              "detailRaw": 0.1014,
+              "detailAdded": 0.3021,
+              "bands": 0
+            },
+            "file": ".impeccable/review/diff/hero/regions/source-row-2.png"
+          }
+        ],
+        "advisories": [
+          "(advisory, above the 72% bar; fix in the polish pass before responsive) 5 readings:",
+          "  text search-hint: 1 line in the build, 2 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape",
+          "  text sources-heading: the face renders 33% heavier than the comp's (ink density 0.42 vs 0.32); drop a weight step or use the ranked face",
+          "  control selection-actions: its rule sits 11px into the box in the comp and 25px in the build (+14px), so the strip is taller than the comp's; match the height, not only the position",
+          "  control start: its rule sits 1px into the box in the comp and 62px in the build (+61px), so the strip is taller than the comp's; match the height, not only the position",
+          "  control search: its rule sits 1px into the box in the comp and 61px in the build (+60px), so the strip is taller than the comp's; match the height, not only the position"
+        ],
+        "regionVerdicts": {
+          "sidebar": "match",
+          "headline": "match",
+          "intro": "drift",
+          "sources-heading": "drift",
+          "upload": "drift",
+          "selection": "drift",
+          "selection-actions": "drift",
+          "question-heading": "drift",
+          "question-input": "match",
+          "question-selection": "drift",
+          "start": "drift",
+          "search": "drift",
+          "start-hint": "drift",
+          "search-hint": "drift",
+          "result-note": "drift",
+          "footer": "missing",
+          "source-row-1": "drift",
+          "source-row-2": "missing",
+          "source-row-3": "missing",
+          "source-row-4": "missing",
+          "source-row-5": "missing",
+          "source-row-6": "missing",
+          "section-heads": "drift",
+          "source-selection": "drift"
+        },
+        "at": "2026-10-16T11:25:37.934Z"
+      },
+      "forced": null,
+      "readingsSeen": {
+        "text sources-heading: the face renders 33% heavier than the comp's (ink density 0.42 vs 0.32); drop a weight step or use the ranked face": 3,
+        "text headline: ink is #182819 in the build, #0a0f1c in the comp; use the comp's colour": 2,
+        "text sources-heading: ink is #192818 in the build, #0a0d20 in the comp; use the comp's colour": 2,
+        "text question-heading: ink is #1a291b in the build, #090c23 in the comp; use the comp's colour": 2,
+        "control upload: its rule sits 1px into the box in the comp and 7px in the build (+6px), so the strip is taller than the comp's; match the height, not only the position": 2,
+        "control start: its rule sits 1px into the box in the comp and 38px in the build (+37px), so the strip is taller than the comp's; match the height, not only the position": 1,
+        "control search: its rule sits 1px into the box in the comp and 37px in the build (+36px), so the strip is taller than the comp's; match the height, not only the position": 1,
+        "text search-hint: 1 line in the build, 2 in the comp; the measure (max-width, font-size, letter-spacing) wraps it differently, so the block is a different shape": 1,
+        "control selection-actions: its rule sits 11px into the box in the comp and 25px in the build (+14px), so the strip is taller than the comp's; match the height, not only the position": 1,
+        "control start: its rule sits 1px into the box in the comp and 62px in the build (+61px), so the strip is taller than the comp's; match the height, not only the position": 1,
+        "control search: its rule sits 1px into the box in the comp and 61px in the build (+60px), so the strip is taller than the comp's; match the height, not only the position": 1
+      },
+      "records": 2,
+      "history": [
+        {
+          "at": "2026-10-16T11:18:32.161Z",
+          "score": 0.7925,
+          "worstIds": [
+            "question-selection",
+            "start",
+            "upload"
+          ],
+          "regionVerdicts": {
+            "sidebar": "drift",
+            "headline": "drift",
+            "intro": "drift",
+            "sources-heading": "drift",
+            "upload": "contradicted",
+            "selection": "drift",
+            "selection-actions": "missing",
+            "question-heading": "drift",
+            "question-input": "match",
+            "question-selection": "missing",
+            "start": "contradicted",
+            "search": "drift",
+            "start-hint": "missing",
+            "search-hint": "missing",
+            "result-note": "missing",
+            "footer": "missing",
+            "source-row-1": "drift",
+            "source-row-2": "missing",
+            "source-row-3": "missing",
+            "source-row-4": "missing",
+            "source-row-5": "missing",
+            "source-row-6": "drift",
+            "section-heads": "drift",
+            "source-selection": "drift"
+          },
+          "artifactHash": null
+        }
+      ]
+    },
+    "sections": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "motion": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "responsive": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    },
+    "review": {
+      "status": "pending",
+      "openedAt": null,
+      "closedAt": null,
+      "attempts": 0,
+      "notes": [],
+      "gate": null,
+      "forced": null
+    }
+  },
+  "finish": {
+    "disposition": "fix",
+    "at": "2026-10-16T11:39:47.095Z",
+    "phaseAtFinish": "hero"
+  },
+  "plates": {}
+}

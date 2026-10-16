@@ -1,6 +1,8 @@
 import scss from "./synapseStatus.module.scss";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import Button from "../ui/Button/Button";
+import IconRenderer from "../ui/IconRenderer/IconRenderer";
 
 import type { SynapseConfig } from "../../assets/types/evidence";
 
@@ -12,9 +14,9 @@ interface ISynapseStatus {
 }
 
 const getApprovalModeLabel = (approvalMode: string) => {
-  if (approvalMode === "human") return "с подтверждением оператора";
-  if (approvalMode === "auto") return "автоматический";
-  return approvalMode;
+  if (approvalMode === "human") return "С подтверждением оператора";
+  if (approvalMode === "auto") return "Автоматический режим";
+  return approvalMode || "Режим запуска не указан";
 };
 
 const SynapseStatus = ({
@@ -24,6 +26,10 @@ const SynapseStatus = ({
   onRefresh,
 }: ISynapseStatus) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const rootRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const detailsId = useId();
+  const headingId = useId();
   const isConfigured = Boolean(config?.configured);
   const state = isLoading
     ? "loading"
@@ -44,77 +50,111 @@ const SynapseStatus = ({
     : hasError
       ? "Не удалось получить состояние интеграции."
       : isConfigured
-        ? "Внешнее исследование можно запустить после выбора опытов."
+        ? "Выберите документы, задайте вопрос и запустите исследование."
         : "Внешнее исследование пока недоступно.";
+  const detailsTitle =
+    state === "ready"
+      ? getApprovalModeLabel(config?.approval_mode ?? "")
+      : title;
+  const detailsDescription =
+    state === "ready" && config?.approval_mode === "human"
+      ? "Если исследованию потребуется подтверждение, запрос появится в разделе «Исследования». Там можно посмотреть детали и принять решение."
+      : state === "ready" && config?.approval_mode === "auto"
+        ? "Исследование выполняется автоматически. Результат и материалы появятся в разделе «Исследования»."
+        : state === "warning"
+          ? "Для подключения Synapse обратитесь к администратору команды."
+          : description;
+
+  const handleClose = () => {
+    setIsExpanded(false);
+    triggerRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    const handleOutside = (event: PointerEvent | FocusEvent) => {
+      if (
+        event.target instanceof Node &&
+        !rootRef.current?.contains(event.target)
+      ) {
+        setIsExpanded(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        setIsExpanded(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutside);
+    document.addEventListener("focusin", handleOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutside);
+      document.removeEventListener("focusin", handleOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isExpanded]);
 
   return (
     <aside
-      className={`${scss.root} ${scss[state]} ${
-        isExpanded ? scss.expanded : ""
-      }`}
+      ref={rootRef}
+      className={`${scss.root} ${scss[state]}`}
       aria-label="Статус интеграции Synapse"
     >
+      <div className={scss.summary}>
+        <span className={scss.statusTitle}>
+          <span className={scss.indicator} aria-hidden="true" />
+          {title}
+        </span>
+        <span className={scss.description}>
+          {state === "ready"
+            ? getApprovalModeLabel(config?.approval_mode ?? "")
+            : description}
+        </span>
+      </div>
       <button
+        ref={triggerRef}
         className={scss.trigger}
         type="button"
         aria-expanded={isExpanded}
-        aria-controls="synapse-status-details"
+        aria-controls={detailsId}
         onClick={() => setIsExpanded((current) => !current)}
       >
-        <span className={scss.triggerContent}>
-          <span className={scss.indicator} aria-hidden="true" />
-          <span className={scss.summary}>
-            <strong>{title}</strong>
-            <span>
-              {isConfigured && !isLoading && !hasError
-                ? `Режим: ${getApprovalModeLabel(
-                    config?.approval_mode ?? "",
-                  )}`
-                : description}
-            </span>
-          </span>
-          <span className={scss.expandIcon} aria-hidden="true" />
-        </span>
+        {state === "ready" ? "Как это работает?" : "Подробнее"}
       </button>
-      <div
+      <section
         className={scss.details}
-        id="synapse-status-details"
-        aria-hidden={!isExpanded}
+        id={detailsId}
+        aria-labelledby={headingId}
+        hidden={!isExpanded}
       >
-        <div className={scss.detailsContent}>
-          <div className={scss.detailsBody}>
-            <p>{description}</p>
-            {isConfigured && !isLoading && !hasError && (
-              <dl>
-                <div>
-                  <dt>Режим запуска</dt>
-                  <dd>{getApprovalModeLabel(config?.approval_mode ?? "")}</dd>
-                </div>
-                <div>
-                  <dt>Действие</dt>
-                  <dd>Выберите опыты и перейдите к анализу.</dd>
-                </div>
-              </dl>
-            )}
-            {!isConfigured && !isLoading && !hasError && (
-              <p className={scss.setupHint}>
-                Для подключения заполните параметры Synapse в <code>.env</code>{" "}
-                на сервере и перезапустите backend.
-              </p>
-            )}
-            {hasError && (
-              <button
-                className={scss.refreshButton}
-                type="button"
-                onClick={onRefresh}
-                disabled={isLoading}
-              >
-                Проверить ещё раз
-              </button>
-            )}
-          </div>
+        <div className={scss.detailsHeader}>
+          <h2 id={headingId}>{detailsTitle}</h2>
+          <Button
+            variant="icon"
+            type="button"
+            aria-label="Закрыть пояснение"
+            onClick={handleClose}
+          >
+            <IconRenderer icon="close" />
+          </Button>
         </div>
-      </div>
+        <p>{detailsDescription}</p>
+        {hasError && !isLoading && (
+          <Button
+            variant="secondary"
+            className={scss.refreshButton}
+            type="button"
+            onClick={onRefresh}
+          >
+            Проверить ещё раз
+          </Button>
+        )}
+      </section>
     </aside>
   );
 };

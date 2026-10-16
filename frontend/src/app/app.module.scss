@@ -1,15 +1,54 @@
+@use "../styles/media";
+
 .root {
-  --synapse-status-height: 4.5rem;
+  --sidebar-width: 5.5rem;
 
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   height: 100dvh;
-  padding-bottom: var(--synapse-status-height);
+  transition: grid-template-columns 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.expanded {
+  --sidebar-width: 18rem;
 }
 
 .screen {
+  container: workspace / inline-size;
+  min-width: 0;
   min-height: 0;
-  padding-bottom: 1.5rem;
-  margin-bottom: 1rem;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+@include media.tablet {
+  .root {
+    --sidebar-width: 4.5rem;
+  }
+
+  .expanded {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .expanded > aside:first-child {
+    grid-row: 1;
+    max-height: 40dvh;
+  }
+
+  .expanded .screen {
+    grid-row: 2;
+  }
+
+  .expanded > aside:last-child {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
 }
