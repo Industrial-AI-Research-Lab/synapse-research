@@ -229,23 +229,33 @@
 }
 
 .documentOpenButton {
-  @include mixin.control;
-  @include mixin.controlIcon;
   align-self: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0.75rem;
-  color: var(--color-text);
-  background: transparent;
+  padding: 0.5rem 0.75rem;
+  color: var(--color-action);
+  white-space: nowrap;
 }
 
-.documentOpenButton:hover:not(:disabled) {
-  background: var(--color-control-hover);
+.documentOpenButton,
+.sourceLink {
+  justify-content: flex-start;
+  width: 11rem;
+}
+
+.documentOpenButton > span,
+.sourceLink > span {
+  justify-items: start;
+}
+
+.documentOpenButton:hover:not(:disabled),
+.sourceLink:hover:not(:disabled) {
+  background: transparent;
+  text-decoration: none;
 }
 
 .documentOpenButton svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
 }
 
 .selectionSummary {
@@ -1165,6 +1175,7 @@
 .sourceLink {
   @include typography.textS;
   flex: 0 0 auto;
+  color: var(--color-action);
   text-align: left;
 }
 
@@ -1316,13 +1327,17 @@
   }
 }
 
-@container documentSources (max-width: 22rem) {
+@container documentSources (max-width: 30rem) {
   .documentContent {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .documentLabel {
     grid-column: 1 / -1;
+  }
+
+  .documentOpenButton {
+    justify-self: start;
   }
 }
 

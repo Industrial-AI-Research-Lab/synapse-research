@@ -226,7 +226,9 @@ const ResearchHistory = () => {
                   >
                     <option value="">Все исследования</option>
                     <option value="documents">По документам</option>
-                    <option value="evidence">По опытам</option>
+                    <option value="evidence" disabled>
+                      По опытам
+                    </option>
                   </select>
                 </Field>
                 <Field

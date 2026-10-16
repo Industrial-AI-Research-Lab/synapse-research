@@ -35,7 +35,6 @@ import Loader from "../../components/ui/Loader/Loader";
 import Textarea from "../../components/ui/Textarea/Textarea";
 import Toast from "../../components/ui/Toast/Toast";
 import ToastViewport from "../../components/ui/Toast/ToastViewport";
-import Spinner from "../../components/ui/Spinner/Spinner";
 import Tooltip from "../../components/ui/Tooltip/Tooltip";
 import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 
@@ -114,6 +113,26 @@ const getDocumentExtension = (filename: string) => {
 
 const isPdfFilename = (filename: string) =>
   getDocumentExtension(filename) === ".pdf";
+
+const getDocumentFileAction = (filename: string) => {
+  if (isPdfFilename(filename)) {
+    return {
+      label: "Открыть PDF",
+      loadingLabel: "Открываем…",
+      icon: "externalLink" as const,
+      description: "Открыть PDF в новой вкладке",
+    };
+  }
+
+  const format = getDocumentExtension(filename).slice(1).toUpperCase();
+
+  return {
+    label: format ? `Скачать ${format}` : "Скачать файл",
+    loadingLabel: "Скачиваем…",
+    icon: "download" as const,
+    description: "Скачать исходный файл на устройство",
+  };
+};
 
 const formatDocumentUnits = (document: DocumentMetadata) => {
   const extension = getDocumentExtension(document.filename);
@@ -930,7 +949,9 @@ const DocumentsWorkspace = () => {
       setSourceError(
         error instanceof Error
           ? error.message
-          : "Не удалось открыть или скачать исходный файл.",
+          : isPdf
+            ? "Не удалось открыть PDF. Попробуйте ещё раз."
+            : "Не удалось скачать файл. Попробуйте ещё раз.",
       );
     } finally {
       setOpeningSourceUrl("");
@@ -1350,6 +1371,9 @@ const DocumentsWorkspace = () => {
                   <ul ref={documentListRef} className={scss.documentList}>
                     {documents.map((document) => {
                       const checkboxId = `document-${document.id}`;
+                      const fileAction = getDocumentFileAction(
+                        document.filename,
+                      );
                       const isSelected = selectedDocumentIds.includes(
                         document.id,
                       );
@@ -1430,37 +1454,28 @@ const DocumentsWorkspace = () => {
                                 </span>
                               </span>
                             </label>
-                            <Tooltip
-                              target={
-                                <button
-                                  className={scss.documentOpenButton}
-                                  type="button"
-                                  aria-label={`${openingSourceUrl === `/api/documents/${encodeURIComponent(document.id)}/file` ? "Открываем" : "Открыть"} исходный документ «${document.filename}»`}
-                                  aria-busy={
-                                    openingSourceUrl ===
-                                      `/api/documents/${encodeURIComponent(document.id)}/file` ||
-                                    undefined
-                                  }
-                                  title="Открыть исходный документ"
-                                  disabled={isOpeningSource}
-                                  onClick={() =>
-                                    void handleOpenSource({
-                                      document: document.filename,
-                                      url: `/api/documents/${encodeURIComponent(document.id)}/file`,
-                                    })
-                                  }
-                                >
-                                  {openingSourceUrl ===
-                                  `/api/documents/${encodeURIComponent(document.id)}/file` ? (
-                                    <Spinner />
-                                  ) : (
-                                    <IconRenderer icon="externalLink" />
-                                  )}
-                                </button>
+                            <Button
+                              className={scss.documentOpenButton}
+                              type="button"
+                              variant="text"
+                              isLoading={
+                                openingSourceUrl ===
+                                `/api/documents/${encodeURIComponent(document.id)}/file`
+                              }
+                              loadingLabel={fileAction.loadingLabel}
+                              aria-label={`${fileAction.label}: ${document.filename}`}
+                              title={fileAction.description}
+                              disabled={isOpeningSource}
+                              onClick={() =>
+                                void handleOpenSource({
+                                  document: document.filename,
+                                  url: `/api/documents/${encodeURIComponent(document.id)}/file`,
+                                })
                               }
                             >
-                              Открыть исходный документ
-                            </Tooltip>
+                              <IconRenderer icon={fileAction.icon} />
+                              {fileAction.label}
+                            </Button>
                             <Tooltip
                               target={
                                 <button
@@ -1665,47 +1680,54 @@ const DocumentsWorkspace = () => {
 
             {searchResult.items.length ? (
               <ol className={scss.resultList}>
-                {searchResult.items.map((item) => (
-                  <li key={item.chunkId} className={scss.resultItem}>
-                    <article>
-                      <div className={scss.citationHeading}>
-                        <div>
-                          <p className={scss.citationDocument}>
-                            {item.documentName}
-                          </p>
-                          <p className={scss.citationLocation}>
-                            {item.citation.location}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="text"
-                          className={scss.sourceLink}
-                          isLoading={openingSourceUrl === item.citation.url}
-                          loadingLabel="Открываем…"
-                          aria-label={`Открыть источник: ${item.citation.document}, ${item.citation.location}`}
-                          onClick={() => void handleOpenSource(item.citation)}
-                          disabled={isOpeningSource}
-                        >
-                          Открыть источник
-                          <span
-                            className={scss.sourceLinkIcon}
-                            aria-hidden="true"
+                {searchResult.items.map((item) => {
+                  const fileAction = getDocumentFileAction(
+                    item.citation.document,
+                  );
+
+                  return (
+                    <li key={item.chunkId} className={scss.resultItem}>
+                      <article>
+                        <div className={scss.citationHeading}>
+                          <div>
+                            <p className={scss.citationDocument}>
+                              {item.documentName}
+                            </p>
+                            <p className={scss.citationLocation}>
+                              {item.citation.location}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="text"
+                            className={scss.sourceLink}
+                            isLoading={openingSourceUrl === item.citation.url}
+                            loadingLabel={fileAction.loadingLabel}
+                            aria-label={`${fileAction.label}: ${item.citation.document}, ${item.citation.location}`}
+                            title={fileAction.description}
+                            onClick={() => void handleOpenSource(item.citation)}
+                            disabled={isOpeningSource}
                           >
-                            <IconRenderer icon="externalLink" />
-                          </span>
-                        </Button>
-                      </div>
-                      <blockquote>{item.excerpt}</blockquote>
-                      <p className={scss.relevance}>
-                        Соответствие запросу:{" "}
-                        {item.score.toLocaleString("ru-RU", {
-                          maximumFractionDigits: 2,
-                        })}
-                      </p>
-                    </article>
-                  </li>
-                ))}
+                            <span
+                              className={scss.sourceLinkIcon}
+                              aria-hidden="true"
+                            >
+                              <IconRenderer icon={fileAction.icon} />
+                            </span>
+                            {fileAction.label}
+                          </Button>
+                        </div>
+                        <blockquote>{item.excerpt}</blockquote>
+                        <p className={scss.relevance}>
+                          Соответствие запросу:{" "}
+                          {item.score.toLocaleString("ru-RU", {
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </article>
+                    </li>
+                  );
+                })}
               </ol>
             ) : (
               <div className={scss.emptyState}>
