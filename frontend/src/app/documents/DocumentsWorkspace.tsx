@@ -891,7 +891,9 @@ const DocumentsWorkspace = () => {
         />
       </Field>
       <p className={scss.questionContext} aria-live="polite">
-        Выбрано документов для запроса: {selectedDocumentIds.length}
+        {selectedDocumentIds.length
+          ? `Выбрано документов для запроса: ${selectedDocumentIds.length}`
+          : "Выберите хотя бы один документ в списке выше, чтобы запустить исследование или найти фрагменты."}
       </p>
       {searchError && (
         <p className={scss.selectionError} role="alert">
@@ -904,37 +906,41 @@ const DocumentsWorkspace = () => {
         </p>
       )}
       <div className={scss.questionActions}>
-        <div className={scss.questionAction}>
-          <Button
-            className={scss.synapseButton}
-            type="submit"
-            disabled={
-              isSearching || isResearchStarting || !selectedDocumentIds.length
-            }
-          >
-            {isResearchStarting
-              ? "Передаём исследование в Synapse…"
-              : "Запустить исследование"}
-            <span className={scss.synapseButtonIcon} aria-hidden="true">
-              <IconRenderer icon="synapseResearch" />
-            </span>
-          </Button>
-          <p>Исследование в Synapse по выбранным источникам</p>
-        </div>
-        <div className={scss.questionAction}>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => void handleLocalSearch()}
-            disabled={
-              isSearching || isResearchStarting || !selectedDocumentIds.length
-            }
-          >
-            {isSearching ? "Ищем фрагменты…" : "Найти фрагменты"}
-          </Button>
-          <p>Локальный поиск · до {SEARCH_LIMIT} фрагментов</p>
-        </div>
+        <Button
+          className={scss.synapseButton}
+          type="submit"
+          aria-describedby="document-research-hint"
+          disabled={
+            isSearching || isResearchStarting || !selectedDocumentIds.length
+          }
+        >
+          {isResearchStarting
+            ? "Передаём исследование в Synapse…"
+            : "Запустить исследование"}
+          <span className={scss.synapseButtonIcon} aria-hidden="true">
+            <IconRenderer icon="synapseResearch" />
+          </span>
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          aria-describedby="document-fragments-hint"
+          onClick={() => void handleLocalSearch()}
+          disabled={
+            isSearching || isResearchStarting || !selectedDocumentIds.length
+          }
+        >
+          {isSearching ? "Ищем фрагменты…" : "Найти фрагменты"}
+        </Button>
       </div>
+      <p className={scss.questionActionHint}>
+        <span id="document-research-hint">
+          Исследование — ответ в Synapse по выбранным источникам.
+        </span>{" "}
+        <span id="document-fragments-hint">
+          Поиск — до {SEARCH_LIMIT} фрагментов из документов.
+        </span>
+      </p>
     </form>
   );
 
@@ -1102,10 +1108,11 @@ const DocumentsWorkspace = () => {
                   <div className={scss.selectionActions}>
                     <Button
                       type="button"
-                      variant="secondary"
+                      className={scss.uploadButton}
                       id="add-documents"
                       onClick={handleUploadDialogOpen}
                     >
+                      <IconRenderer className={scss.uploadIcon} icon="download" />
                       Добавить документы
                     </Button>
                   </div>
@@ -1175,15 +1182,6 @@ const DocumentsWorkspace = () => {
                             >
                               <span className={scss.documentTopLine}>
                                 <strong>{document.filename}</strong>
-                                <span className={scss.status}>
-                                  <span
-                                    className={scss.statusIndicator}
-                                    aria-hidden="true"
-                                  >
-                                    <IconRenderer icon="check" />
-                                  </span>
-                                  {formatDocumentStatus(document.status)}
-                                </span>
                               </span>
                               <span className={scss.documentMeta}>
                                 <span>
@@ -1195,6 +1193,15 @@ const DocumentsWorkspace = () => {
                                 <span className={scss.documentDate}>
                                   Добавлен: {formatDate(document.uploadedAt)}
                                 </span>
+                              </span>
+                              <span className={scss.status}>
+                                <span
+                                  className={scss.statusIndicator}
+                                  aria-hidden="true"
+                                >
+                                  <IconRenderer icon="check" />
+                                </span>
+                                {formatDocumentStatus(document.status)}
                               </span>
                             </label>
                             <button
@@ -1243,9 +1250,11 @@ const DocumentsWorkspace = () => {
               </p>
               <Button
                 type="button"
+                className={scss.uploadButton}
                 id="add-documents"
                 onClick={handleUploadDialogOpen}
               >
+                <IconRenderer className={scss.uploadIcon} icon="download" />
                 Добавить документы
               </Button>
             </section>
