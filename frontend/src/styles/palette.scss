@@ -4,12 +4,13 @@
   --color-surface-raised: #16394a;
   --color-text: #f5f9f7;
   --color-text-muted: #b4c4c6;
-  --color-accent: #4ad0a0;
-  --color-accent-hover: #69e5b8;
+  --color-accent: var(--color-action);
+  --color-accent-hover: var(--color-action-hover);
   --color-border: #31505b;
   --color-warning: #f0ba58;
   --color-danger: #ee7d76;
   --color-success: #4ad0a0;
+  --color-info: #96c7ee;
   --color-action: #f0ba58;
   --color-action-hover: #f7ca7a;
   --color-action-pressed: #d9a344;

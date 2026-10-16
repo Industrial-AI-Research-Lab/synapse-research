@@ -3,7 +3,7 @@
 
 .root {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   width: min(
     var(--content-width),
     calc(100% - var(--page-gutter) - var(--page-gutter))
@@ -16,7 +16,7 @@
 
 .header {
   margin-bottom: 1.5rem;
-  text-align: center;
+  text-align: left;
 }
 
 .header h1,
@@ -42,51 +42,12 @@
   color: var(--color-text-muted);
 }
 
-.viewSwitcher {
-  display: flex;
-  gap: 0.25rem;
-  width: fit-content;
-  margin: 0 auto 1.5rem;
-  padding: 0.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: 1rem;
-  background: var(--color-bg);
-}
-
-.viewButton {
-  @include mixin.control;
-  min-height: 2.75rem;
-  padding: 0.5rem 1rem;
-  color: var(--color-text-muted);
-  background: transparent;
-}
-
-.viewButton[aria-pressed="true"] {
-  color: var(--color-text);
-  border-color: var(--color-control-border);
-  background: var(--color-control-hover);
-}
-
-.viewButton:hover:not(:disabled):not([aria-pressed="true"]) {
-  color: var(--color-text);
-  background: var(--color-surface-raised);
-}
-
-.viewButton:focus-visible {
-  outline: 0.125rem solid var(--color-accent);
-  outline-offset: 0.125rem;
-}
-
-.viewButton:disabled {
-  cursor: not-allowed;
-}
-
 .muted {
   color: var(--color-text-muted);
 }
 
 .content {
-  --document-item-min-height: 6.5rem;
+  --document-item-min-height: 4.5rem;
   --document-list-min-height: calc(
     3 * var(--document-item-min-height) + 2 * 0.75rem
   );
@@ -108,6 +69,21 @@
   gap: 1.5rem;
   align-content: start;
   min-height: 0;
+}
+
+.questionPanel {
+  min-width: 0;
+  padding: 0 1.5rem;
+}
+
+.questionPanel h2 {
+  margin-top: 0;
+}
+
+.selectionSummary {
+  margin-top: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 
 .panel,
@@ -195,7 +171,7 @@
 .fileInput:focus-visible {
   outline: 0;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 0.1875rem rgba(74, 208, 160, 0.28);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-action) 28%, transparent);
 }
 
 .fileInput::file-selector-button {
@@ -226,9 +202,17 @@
   font-size: 0.875rem;
 }
 
-.selectedFilesHeading span {
+.clearSelectedFilesButton {
+  @include mixin.control;
+  padding: 0.5rem;
   color: var(--color-text-muted);
-  font-size: 0.75rem;
+  background: transparent;
+  font-size: 0.8125rem;
+}
+
+.clearSelectedFilesButton:hover:not(:disabled) {
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
 .selectedFilesList {
@@ -270,20 +254,26 @@
 
 .removeSelectedFileButton {
   @include mixin.control;
-  min-height: 2rem;
-  padding: 0.25rem 0.625rem;
-  color: var(--color-danger);
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.75rem;
+  color: var(--color-text-muted);
   background: transparent;
-  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
-  font-size: 0.8125rem;
+}
+
+.removeSelectedFileButton span {
+  display: block;
+  width: 1rem;
+  height: 1rem;
 }
 
 .removeSelectedFileButton:hover:not(:disabled) {
+  color: var(--color-danger);
   background: color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
 .removeSelectedFileButton:focus-visible {
-  outline: 2px solid var(--color-danger);
+  outline: 1px solid var(--color-danger);
   outline-offset: 2px;
 }
 
@@ -297,6 +287,40 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+}
+
+.questionActions {
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.questionAction {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  min-width: 0;
+}
+
+.questionAction p,
+.questionContext {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.questionContext {
+  margin-top: -0.25rem;
+}
+
+.questionInput {
+  padding: 1rem;
+  border-color: var(--color-control-disabled);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  font-size: 1rem;
+}
+
+.questionInput::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
 }
 
 .uploadActions {
@@ -461,7 +485,7 @@
 }
 
 .dialogCloseButton:focus-visible {
-  outline: 0.125rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.125rem;
 }
 
@@ -506,6 +530,45 @@
   font-weight: 700;
 }
 
+.documentSelection .selectionLegend {
+  margin-bottom: 0;
+  font-weight: 400;
+}
+
+.selectionToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.bulkSelectionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selectionButton {
+  @include mixin.control;
+  min-height: 2.75rem;
+  padding: 0.5rem;
+  color: var(--color-text);
+  background: transparent;
+  font-size: 0.8125rem;
+}
+
+.selectionButton:hover:not(:disabled) {
+  background: var(--color-control-hover);
+}
+
+.selectionButton:disabled {
+  background: transparent;
+  border-color: transparent;
+}
+
 .selectionError {
   margin-top: 0.75rem;
   color: var(--color-danger);
@@ -522,13 +585,15 @@
 }
 
 .documentList {
+  gap: 0;
   align-content: start;
   grid-auto-rows: max-content;
   grid-template-columns: minmax(0, 1fr);
-  max-height: var(--list-max-height, none);
+  max-height: min(var(--list-max-height, 20rem), 20rem);
   padding-right: 0.5rem;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  scrollbar-color: var(--color-border) var(--color-surface);
 }
 
 .documentItem {
@@ -537,13 +602,16 @@
   gap: 0.75rem;
   min-height: var(--document-item-min-height);
   padding: 0.875rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border);
+  background: transparent;
 }
 
 .documentItem:has(.documentCheckbox:checked) {
-  border-color: var(--color-accent);
+  background: color-mix(
+    in srgb,
+    var(--color-surface-raised) 55%,
+    var(--color-surface)
+  );
 }
 
 .documentCheckbox {
@@ -569,11 +637,17 @@
 }
 
 .documentTopLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
   min-width: 0;
 }
 
 .documentTopLine strong {
   display: block;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -583,14 +657,12 @@
   align-items: center;
   color: var(--color-success);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .statusIndicator {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 50%;
-  background: currentColor;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .documentMeta {
@@ -623,7 +695,7 @@
 }
 
 .documentDeleteButton:focus-visible {
-  outline: 0.125rem solid var(--color-danger);
+  outline: 1px solid var(--color-danger);
   outline-offset: 0.125rem;
 }
 
@@ -764,7 +836,7 @@
 }
 
 .researchLink:focus-visible {
-  outline: 0.125rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.1875rem;
 }
 
@@ -862,11 +934,11 @@
 }
 
 .sourceLink:hover {
-  color: var(--color-accent-hover);
+  color: var(--color-action-hover);
 }
 
 .sourceLink:focus-visible {
-  outline: 0.125rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.1875rem;
   border-radius: 0.125rem;
 }
@@ -958,6 +1030,17 @@
 }
 
 @include media.mobile {
+  .questionPanel {
+    padding: 0 1rem;
+  }
+
+  .questionAction {
+    width: 100%;
+  }
+
+  .questionAction button {
+    width: 100%;
+  }
   .root {
     padding-top: 1rem;
   }

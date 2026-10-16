@@ -43,7 +43,7 @@
 }
 
 .termInfoButton:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.125rem;
 }
 
@@ -160,7 +160,7 @@
 }
 
 .reloadButton:focus-visible {
-  outline: 0.1875rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.125rem;
 }
 
@@ -195,7 +195,7 @@
 }
 
 .list:focus-visible {
-  outline: 0.1875rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.25rem;
   border-radius: var(--radius-sm);
 }
@@ -300,7 +300,7 @@
 
 .sourceLink:focus-visible,
 .extractionLink:focus-visible {
-  outline: 0.1875rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.125rem;
 }
 

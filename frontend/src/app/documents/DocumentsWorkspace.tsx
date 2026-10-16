@@ -47,7 +47,7 @@ type QuestionEditorState = "top" | "collapsed";
 interface UploadNotification {
   title: string;
   description: string;
-  variant: "success" | "error" | "info";
+  variant: "success" | "error" | "info" | "warning";
   documentIds?: string[];
 }
 
@@ -464,6 +464,20 @@ const DocumentsWorkspace = () => {
     }
   };
 
+  const handleSelectedFilesClear = () => {
+    if (isUploadInFlightRef.current) return;
+
+    setSelectedFiles([]);
+    setUploadError(undefined);
+    setUploadSuccess(undefined);
+    setUploadNotification(undefined);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.focus({ preventScroll: true });
+    }
+  };
+
   const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isUploadInFlightRef.current) return;
@@ -561,7 +575,7 @@ const DocumentsWorkspace = () => {
           ? `Добавлено файлов: ${uploadedDocuments.length} из ${selectedFiles.length}`
           : errorMessage.title,
         description: `${errorMessage.description}\nНеудачные файлы сохранены в очереди. Повторите загрузку.`,
-        variant: "error",
+        variant: uploadedDocuments.length ? "warning" : "error",
         documentIds: uploadedDocumentIds,
       });
     } else {
@@ -601,6 +615,20 @@ const DocumentsWorkspace = () => {
 
       return [...current, documentId];
     });
+  };
+
+  const handleSelectAllDocuments = () => {
+    setSelectionError(undefined);
+    setSelectedDocumentIds(
+      documentsRef.current
+        .slice(0, MAX_SELECTED_DOCUMENTS)
+        .map((document) => document.id),
+    );
+  };
+
+  const handleClearDocumentSelection = () => {
+    setSelectionError(undefined);
+    setSelectedDocumentIds([]);
   };
 
   const handleDocumentDeleteRequest = (document: DocumentMetadata) => {
@@ -846,13 +874,13 @@ const DocumentsWorkspace = () => {
       onSubmit={handleSynapseResearch}
     >
       <Field
-        label="Какой исследовательский вопрос нужно разобрать?"
+        label="Вопрос по выбранным документам"
         htmlFor="document-question"
-        hint="Вопрос и выбранные файлы будут переданы в Synapse для исследовательского workflow."
         error={questionError}
         required
       >
         <Textarea
+          className={scss.questionInput}
           ref={questionInputRef}
           id="document-question"
           value={question}
@@ -862,6 +890,9 @@ const DocumentsWorkspace = () => {
           disabled={isSearching || isResearchStarting}
         />
       </Field>
+      <p className={scss.questionContext} aria-live="polite">
+        Выбрано документов для запроса: {selectedDocumentIds.length}
+      </p>
       {searchError && (
         <p className={scss.selectionError} role="alert">
           {searchError}
@@ -873,34 +904,36 @@ const DocumentsWorkspace = () => {
         </p>
       )}
       <div className={scss.questionActions}>
-        <Button
-          className={scss.synapseButton}
-          type="submit"
-          disabled={
-            isSearching || isResearchStarting || !selectedDocumentIds.length
-          }
-        >
-          {isResearchStarting
-            ? "Передаём исследование в Synapse…"
-            : "Запустить исследование в Synapse"}
-          <span className={scss.synapseButtonIcon} aria-hidden="true">
-            <IconRenderer icon="synapseResearch" />
-          </span>
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => void handleLocalSearch()}
-          disabled={
-            isSearching || isResearchStarting || !selectedDocumentIds.length
-          }
-        >
-          {isSearching ? "Ищем фрагменты…" : "Найти фрагменты локально"}
-        </Button>
-        <span>
-          В Synapse уйдут {selectedDocumentIds.length} выбранных файлов.
-          Локальный поиск покажет до {SEARCH_LIMIT} фрагментов.
-        </span>
+        <div className={scss.questionAction}>
+          <Button
+            className={scss.synapseButton}
+            type="submit"
+            disabled={
+              isSearching || isResearchStarting || !selectedDocumentIds.length
+            }
+          >
+            {isResearchStarting
+              ? "Передаём исследование в Synapse…"
+              : "Запустить исследование"}
+            <span className={scss.synapseButtonIcon} aria-hidden="true">
+              <IconRenderer icon="synapseResearch" />
+            </span>
+          </Button>
+          <p>Исследование в Synapse по выбранным источникам</p>
+        </div>
+        <div className={scss.questionAction}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void handleLocalSearch()}
+            disabled={
+              isSearching || isResearchStarting || !selectedDocumentIds.length
+            }
+          >
+            {isSearching ? "Ищем фрагменты…" : "Найти фрагменты"}
+          </Button>
+          <p>Локальный поиск · до {SEARCH_LIMIT} фрагментов</p>
+        </div>
       </div>
     </form>
   );
@@ -916,12 +949,17 @@ const DocumentsWorkspace = () => {
       description={`${uploadNotification.description}${unselectedUploadedCount ? `\nНе выбрано для поиска: ${unselectedUploadedCount}. Можно выбрать до ${MAX_SELECTED_DOCUMENTS} документов.` : ""}`}
       variant={uploadNotification.variant}
       autoClose={
-        isUploading || uploadNotification.variant === "error" ? false : 5_000
+        isUploading ||
+        uploadNotification.variant === "error" ||
+        uploadNotification.variant === "warning"
+          ? false
+          : 5_000
       }
       onClose={() => setUploadNotification(undefined)}
       action={
         !isUploadDialogOpen &&
-        uploadNotification.variant === "error" &&
+        (uploadNotification.variant === "error" ||
+          uploadNotification.variant === "warning") &&
         selectedFiles.length ? (
           <Button
             type="button"
@@ -1007,8 +1045,7 @@ const DocumentsWorkspace = () => {
       <header className={scss.header}>
         <h1>Поиск по документам</h1>
         <p className={scss.lead}>
-          Загрузите документы, выберите, где искать, и задайте вопрос. Сервис
-          найдёт подходящие фрагменты из первоисточников.
+          Выберите источники и задайте исследовательский вопрос.
         </p>
       </header>
 
@@ -1022,23 +1059,6 @@ const DocumentsWorkspace = () => {
           />
         )}
       </div>
-
-      <nav
-        className={scss.viewSwitcher}
-        aria-label="Разделы работы с документами"
-      >
-        <button
-          className={scss.viewButton}
-          type="button"
-          aria-pressed={false}
-          disabled
-        >
-          Документы
-        </button>
-        <button className={scss.viewButton} type="button" aria-pressed={true}>
-          Поиск
-        </button>
-      </nav>
 
       <div className={contentClassNames}>
         {documentsError && (
@@ -1073,12 +1093,13 @@ const DocumentsWorkspace = () => {
               <article ref={documentSelectionPanelRef} className={scss.panel}>
                 <div className={scss.sectionHeading}>
                   <div>
-                    <h2>Выберите документы для поиска</h2>
+                    <h2>Источники</h2>
+                    <p className={scss.selectionSummary} aria-live="polite">
+                      Выбрано {selectedDocumentIds.length} из{" "}
+                      {formatDocumentCount(documents.length)}
+                    </p>
                   </div>
                   <div className={scss.selectionActions}>
-                    <span className={scss.count}>
-                      {formatDocumentCount(documents.length)}
-                    </span>
                     <Button
                       type="button"
                       variant="secondary"
@@ -1091,13 +1112,36 @@ const DocumentsWorkspace = () => {
                 </div>
 
                 <fieldset className={scss.documentSelection}>
-                  <legend>
-                    Выбрано {selectedDocumentIds.length} из {documents.length}
+                  <legend className={scss.selectionLegend}>
+                    Документы для этого запроса
                   </legend>
-                  <p className={scss.muted}>
-                    В поиск попадут отмеченные документы. За один запрос можно
-                    выбрать до {MAX_SELECTED_DOCUMENTS} файлов.
-                  </p>
+                  <div className={scss.selectionToolbar}>
+                    <span>До {MAX_SELECTED_DOCUMENTS} файлов на запрос</span>
+                    <div className={scss.bulkSelectionActions}>
+                      <button
+                        className={scss.selectionButton}
+                        type="button"
+                        onClick={handleSelectAllDocuments}
+                        disabled={documents
+                          .slice(0, MAX_SELECTED_DOCUMENTS)
+                          .every((document) =>
+                            selectedDocumentIds.includes(document.id),
+                          )}
+                      >
+                        {documents.length > MAX_SELECTED_DOCUMENTS
+                          ? `Выбрать первые ${MAX_SELECTED_DOCUMENTS}`
+                          : "Выбрать все"}
+                      </button>
+                      <button
+                        className={scss.selectionButton}
+                        type="button"
+                        onClick={handleClearDocumentSelection}
+                        disabled={!selectedDocumentIds.length}
+                      >
+                        Снять выбор
+                      </button>
+                    </div>
+                  </div>
                   {selectionError && (
                     <p className={scss.selectionError} role="alert">
                       {selectionError}
@@ -1131,6 +1175,15 @@ const DocumentsWorkspace = () => {
                             >
                               <span className={scss.documentTopLine}>
                                 <strong>{document.filename}</strong>
+                                <span className={scss.status}>
+                                  <span
+                                    className={scss.statusIndicator}
+                                    aria-hidden="true"
+                                  >
+                                    <IconRenderer icon="check" />
+                                  </span>
+                                  {formatDocumentStatus(document.status)}
+                                </span>
                               </span>
                               <span className={scss.documentMeta}>
                                 <span>
@@ -1139,16 +1192,9 @@ const DocumentsWorkspace = () => {
                                 <span>{formatDocumentUnits(document)}</span>
                                 <span>{document.textPageCount} с текстом</span>
                                 <span>{document.chunkCount} фрагментов</span>
-                                <span className={scss.status}>
-                                  <span
-                                    className={scss.statusIndicator}
-                                    aria-hidden="true"
-                                  />
-                                  {formatDocumentStatus(document.status)}
+                                <span className={scss.documentDate}>
+                                  Добавлен: {formatDate(document.uploadedAt)}
                                 </span>
-                              </span>
-                              <span className={scss.documentDate}>
-                                Добавлен: {formatDate(document.uploadedAt)}
                               </span>
                             </label>
                             <button
@@ -1176,12 +1222,12 @@ const DocumentsWorkspace = () => {
                 questionEditorState === "top") && (
                 <section
                   ref={questionPanelRef}
-                  className={scss.panel}
+                  className={scss.questionPanel}
                   aria-labelledby="search-question"
                 >
                   <div className={scss.sectionHeading}>
                     <div>
-                      <h2 id="search-question">Задайте вопрос</h2>
+                      <h2 id="search-question">Что хотите исследовать?</h2>
                     </div>
                   </div>
                   {renderQuestionForm()}
@@ -1492,6 +1538,15 @@ const DocumentsWorkspace = () => {
                 >
                   <div className={scss.selectedFilesHeading}>
                     <strong>Выбрано файлов: {selectedFiles.length}</strong>
+                    <button
+                      className={scss.clearSelectedFilesButton}
+                      type="button"
+                      onClick={handleSelectedFilesClear}
+                      disabled={isUploading}
+                      aria-label="Очистить все выбранные файлы из очереди загрузки"
+                    >
+                      Очистить всё
+                    </button>
                   </div>
                   <ul className={scss.selectedFilesList}>
                     {selectedFiles.map((file, index) => (
@@ -1514,8 +1569,9 @@ const DocumentsWorkspace = () => {
                           onClick={() => handleSelectedFileRemove(index)}
                           disabled={isUploading}
                           aria-label={`Убрать файл «${file.name}» из очереди загрузки`}
+                          title="Убрать файл"
                         >
-                          Убрать
+                          <IconRenderer icon="close" />
                         </button>
                       </li>
                     ))}

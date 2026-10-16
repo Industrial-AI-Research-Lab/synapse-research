@@ -19,7 +19,7 @@
 
 .root:focus-within {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 0.1875rem rgba(74, 208, 160, 0.28);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-action) 28%, transparent);
 }
 
 .root[data-disabled] {
@@ -73,7 +73,7 @@
 }
 
 .control:focus-visible {
-  outline: 0.125rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: -0.125rem;
 }
 

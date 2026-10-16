@@ -13,7 +13,7 @@
 }
 
 .eyebrow {
-  color: var(--color-accent);
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -71,7 +71,7 @@
 }
 
 .sourceLink:focus-visible {
-  outline: 0.1875rem solid var(--color-accent);
+  outline: 1px solid var(--color-accent);
   outline-offset: 0.25rem;
 }
 
@@ -99,7 +99,7 @@
 
 .form legend {
   margin-bottom: 0.75rem;
-  color: var(--color-accent);
+  color: var(--color-text);
   font-size: 0.875rem;
   font-weight: 800;
 }

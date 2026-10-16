@@ -16,6 +16,7 @@ import ReloadIcon from "./icons/Reload";
 import RemoveIcon from "./icons/Remove";
 import SynapseResearchIcon from "./icons/SynapseResearch";
 import UploadIcon from "./icons/Upload";
+import WarningIcon from "./icons/Warning";
 
 export type IIconRendererTypes =
   | "analyticsReport"
@@ -33,7 +34,8 @@ export type IIconRendererTypes =
   | "reload"
   | "remove"
   | "synapseResearch"
-  | "upload";
+  | "upload"
+  | "warning";
 
 export const ICONS_ENUM: Record<
   IIconRendererTypes,
@@ -55,6 +57,7 @@ export const ICONS_ENUM: Record<
   remove: RemoveIcon,
   synapseResearch: SynapseResearchIcon,
   upload: UploadIcon,
+  warning: WarningIcon,
 } as const;
 
 const IconRenderer: FC<{

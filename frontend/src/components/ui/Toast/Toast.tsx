@@ -8,7 +8,7 @@ import IconRenderer from "../IconRenderer/IconRenderer";
 interface IToast {
   title: string;
   description: string;
-  variant?: "success" | "error" | "info";
+  variant?: "success" | "error" | "info" | "warning";
   action?: ReactNode;
   autoClose?: number | false;
   showProgress?: boolean;
@@ -110,15 +110,7 @@ const Toast = ({
       }}
     >
       <span className={scss.statusIcon} aria-hidden="true">
-        <IconRenderer
-          icon={
-            variant === "error"
-              ? "error"
-              : variant === "info"
-                ? "info"
-                : "check"
-          }
-        />
+        <IconRenderer icon={variant === "success" ? "check" : variant} />
       </span>
       <div className={scss.content}>
         <p className={scss.title}>{title}</p>
