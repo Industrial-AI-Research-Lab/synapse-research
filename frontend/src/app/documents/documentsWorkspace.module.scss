@@ -547,9 +547,10 @@
 }
 
 .documentCheckbox {
+  align-self: center;
   width: 1.125rem;
   height: 1.125rem;
-  margin-top: 0.25rem;
+  margin: 0;
   accent-color: var(--color-accent);
 }
 
@@ -608,7 +609,7 @@
 .documentDeleteButton {
   @include mixin.control;
   flex: 0 0 auto;
-  align-self: start;
+  align-self: center;
   width: 2.75rem;
   height: 2.75rem;
   padding: 0.875rem;
