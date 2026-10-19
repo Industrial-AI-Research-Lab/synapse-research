@@ -5,7 +5,7 @@
 .root {
   width: min(var(--content-width), 100%);
   margin: 0 auto;
-  padding: 2rem var(--page-gutter);
+  padding: 2rem var(--page-gutter) 0.5rem;
 }
 
 .root a {
@@ -350,12 +350,13 @@
 }
 
 .root > .actions {
+  justify-content: flex-end;
   margin-top: 0.5rem;
 }
 
 .root .synapseLink {
   gap: 0.5rem;
-  color: var(--color-text-muted);
+  color: var(--color-action);
   @include typography.textXs;
   text-decoration: none;
 }
