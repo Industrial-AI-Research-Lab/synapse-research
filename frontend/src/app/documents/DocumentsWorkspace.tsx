@@ -560,10 +560,6 @@ const DocumentsWorkspace = () => {
 
     if (!selectedFiles.length) {
       fileInputRef.current?.focus();
-      setUploadError({
-        title: "Файл не выбран",
-        description: "Выберите хотя бы один файл для загрузки.",
-      });
       setUploadNotification({
         title: "Файл не выбран",
         description: "Выберите хотя бы один файл для загрузки.",
