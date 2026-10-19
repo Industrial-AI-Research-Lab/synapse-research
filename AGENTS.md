@@ -8,3 +8,5 @@ Repository contains two independently runnable applications.
 Do not restore server-rendered static UI in the backend. The only shared contract is the versionless REST API under `/api`.
 
 Toast notifications default to the top-right corner through the shared `ToastViewport`. Preserve safe-area offsets and responsive sizing; do not add page-specific placement overrides.
+
+Сохранять единый стиль кнопок: использовать общий `Button`, существующие токены и состояния hover/active/focus. Текстовые кнопки — капсулы с `--radius-control`; компактные кнопки только с иконкой — круглые, как скачивание источника (32 px, на сенсорных устройствах 44 px). Перед изменением кнопки сравнить её с аналогичными действиями на той же странице; не вводить отдельное локальное скругление или оформление для уже существующего типа действия.

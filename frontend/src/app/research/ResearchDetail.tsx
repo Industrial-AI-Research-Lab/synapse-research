@@ -370,16 +370,36 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                     </p>
                     <div className={scss.stateControls}>
                       <div className={scss.freshness}>
-                        <span>
-                          {research.checkedAt
-                            ? `Проверено ${formatResearchDate(research.checkedAt)}`
-                            : "Статус ещё не проверялся"}
-                        </span>
+                        {research.checkedAt ? (
+                          <time
+                            dateTime={research.checkedAt}
+                            title={formatResearchDate(research.checkedAt)}
+                          >
+                            Проверено в{" "}
+                            {new Intl.DateTimeFormat("ru-RU", {
+                              timeStyle: "short",
+                            }).format(new Date(research.checkedAt))}
+                          </time>
+                        ) : (
+                          <span>Статус ещё не проверялся</span>
+                        )}
                       </div>
                       <div className={scss.refreshGroup}>
+                        {research.projectId &&
+                          !isResearchFinal(research.status) && (
+                            <span className={scss.autoRefresh}>
+                              Автопроверка каждые 10 секунд
+                            </span>
+                          )}
                         <Button
                           className={scss.refreshButton}
-                          variant="text"
+                          variant="icon"
+                          aria-label={
+                            isRefreshing
+                              ? "Проверяем статус"
+                              : "Проверить статус вручную"
+                          }
+                          title="Проверить статус вручную"
                           aria-busy={isRefreshing}
                           disabled={
                             isRefreshing ||
@@ -391,14 +411,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                           <span className={scss.refreshIcon} aria-hidden="true">
                             <IconRenderer icon="reload" />
                           </span>
-                          {isRefreshing ? "Проверяем…" : "Проверить статус"}
                         </Button>
-                        {research.projectId &&
-                          !isResearchFinal(research.status) && (
-                            <span className={scss.autoRefresh}>
-                              Обновляется автоматически каждые 10 секунд
-                            </span>
-                          )}
                       </div>
                     </div>
                   </div>

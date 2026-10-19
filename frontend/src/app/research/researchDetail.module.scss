@@ -95,44 +95,42 @@
 .stateControls {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.5rem 2rem;
+  align-items: center;
+  gap: 0.5rem 1rem;
   margin-top: 0.75rem;
 }
 
 .freshness {
   min-width: 0;
-  padding-top: 0.25rem;
   color: var(--color-text-muted);
   @include typography.textXs;
   overflow-wrap: anywhere;
 }
 
 .refreshGroup {
-  display: grid;
-  justify-items: start;
-  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
   max-width: 100%;
 }
 
 .autoRefresh {
-  padding-left: 1.5rem;
+  min-width: 0;
   color: var(--color-text-muted);
   @include typography.textXs;
   overflow-wrap: anywhere;
 }
 
 .stateSummary .refreshButton {
-  justify-content: flex-start;
-  gap: 0.375rem;
-  width: 11em;
-  max-width: 100%;
-  min-height: 1.75rem;
-  padding: 0.25rem;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem;
   color: var(--color-action);
   border: 0;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-control);
   @include typography.textXs;
   text-decoration: none;
 }
@@ -184,11 +182,9 @@
 }
 
 @media (pointer: coarse) {
-  .freshness {
-    padding-top: 0.75rem;
-  }
-
   .stateSummary .refreshButton {
+    width: 2.75rem;
+    height: 2.75rem;
     min-height: 2.75rem;
   }
 }
