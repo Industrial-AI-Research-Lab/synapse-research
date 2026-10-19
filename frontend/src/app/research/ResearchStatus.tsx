@@ -91,13 +91,27 @@ const getStatusAppearance = (status: string): StatusAppearance => {
   }
 };
 
-const ResearchStatus = ({ status }: { status: string }) => {
+const ResearchStatus = ({
+  status,
+  variant = "badge",
+}: {
+  status: string;
+  variant?: "badge" | "summary";
+}) => {
   const { tone, symbol } = getStatusAppearance(status);
+  const isSummary = variant === "summary";
+  const isFailed = status === "failed" || status === "error";
+  const statusSymbol = isSummary && isFailed ? "error" : symbol;
 
   return (
-    <span className={scss.root} data-status={status} data-tone={tone} role="status">
+    <span
+      className={[scss.root, isSummary && scss.summary].filter(Boolean).join(" ")}
+      data-status={status}
+      data-tone={tone}
+      role="status"
+    >
       <span className={scss.symbol} key={status} aria-hidden="true">
-        {symbol === "dot" ? (
+        {statusSymbol === "dot" ? (
           <span className={scss.dot} />
         ) : (
           <svg
@@ -109,11 +123,15 @@ const ResearchStatus = ({ status }: { status: string }) => {
             strokeLinejoin="round"
             focusable="false"
           >
-            {SYMBOLS[symbol]}
+            {SYMBOLS[statusSymbol]}
           </svg>
         )}
       </span>
-      <span className={scss.label}>{formatResearchStatus(status)}</span>
+      <span className={scss.label}>
+        {isSummary && isFailed
+          ? "Исследование завершилось с ошибкой"
+          : formatResearchStatus(status)}
+      </span>
     </span>
   );
 };

@@ -74,6 +74,33 @@
   overflow-wrap: anywhere;
 }
 
+.summary {
+  gap: 0.75rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  @include typography.textM;
+}
+
+.summary .symbol {
+  position: relative;
+  flex-basis: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.summary[data-status="failed"] .symbol::after,
+.summary[data-status="error"] .symbol::after {
+  position: absolute;
+  inset: -0.25rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0;
+  content: "";
+  animation: statusPulse 1.5s ease-out 2;
+}
+
 @keyframes statusPulse {
   from {
     opacity: 0.7;
@@ -87,7 +114,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot::after {
+  .dot::after,
+  .summary[data-status] .symbol::after {
     animation: none;
   }
 }

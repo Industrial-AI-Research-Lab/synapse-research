@@ -279,7 +279,10 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
         href={`/researches${window.location.search}`}
         data-toast-focus-return
       >
-        К истории исследований
+        <span aria-hidden="true">
+          <IconRenderer icon="arrowLeft" />
+        </span>
+        Все исследования
       </a>
       {hasAccessError ? (
         <ResearchAccess
@@ -326,47 +329,69 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                       : "По опытам"}
                   </p>
                 </div>
-                <ResearchStatus status={research.status} />
               </header>
-              <div className={scss.stateBar}>
-                <div>
-                  <p>
+              <section
+                className={scss.statePanel}
+                data-status={research.status}
+                aria-label="Состояние исследования"
+              >
+                <div className={scss.stateSummary}>
+                  <ResearchStatus status={research.status} variant="summary" />
+                  <p className={scss.phase}>
+                    {isResearchFinal(research.status)
+                      ? "Последний этап: "
+                      : "Текущий этап: "}
                     {formatResearchPhase(research.phase) ||
                       "Подготовка запуска"}
                   </p>
-                  <span>
-                    Состояние проверено:{" "}
-                    {formatResearchDate(research.checkedAt)}
-                  </span>
+                  <div className={scss.stateControls}>
+                    <div className={scss.freshness}>
+                      <span>
+                        {research.checkedAt
+                          ? `Проверено ${formatResearchDate(research.checkedAt)}`
+                          : "Статус ещё не проверялся"}
+                      </span>
+                      {research.projectId &&
+                        !isResearchFinal(research.status) && (
+                          <span className={scss.autoRefresh}>
+                            Обновляется автоматически каждые 10 секунд
+                          </span>
+                        )}
+                    </div>
+                    <Button
+                      className={scss.refreshButton}
+                      variant="text"
+                      aria-busy={isRefreshing}
+                      disabled={
+                        isRefreshing || Boolean(resolvingId) || !research.projectId
+                      }
+                      onClick={() => void handleRefresh()}
+                    >
+                      <span className={scss.refreshIcon} aria-hidden="true">
+                        <IconRenderer icon="reload" />
+                      </span>
+                      {isRefreshing ? "Проверяем…" : "Проверить статус"}
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="secondary"
-                  isLoading={isRefreshing}
-                  loadingLabel="Проверяем состояние…"
-                  disabled={
-                    isRefreshing || Boolean(resolvingId) || !research.projectId
-                  }
-                  onClick={() => void handleRefresh()}
-                >
-                  Обновить состояние
-                </Button>
-              </div>
-              {research.syncError && (
-                <div className={scss.warning} role="alert">
-                  <p>{research.syncError}</p>
-                  <p>
-                    {research.status === "start_unknown"
-                      ? "Synapse мог принять запрос. Не запускайте его повторно, пока не проверите историю в Synapse."
-                      : "Сохранённые данные остаются доступны. Повторите обновление состояния."}
-                  </p>
-                </div>
-              )}
-              {research.failureReason && (
-                <div className={scss.warning} role="alert">
-                  <strong>Причина остановки</strong>
-                  <p>{research.failureReason}</p>
-                </div>
-              )}
+                {research.syncError && (
+                  <div className={scss.syncWarning} role="alert">
+                    <strong>Не удалось проверить статус</strong>
+                    <p>{research.syncError}</p>
+                    <p>
+                      {research.status === "start_unknown"
+                        ? "Synapse мог принять запрос. Не запускайте его повторно, пока не проверите историю в Synapse."
+                        : "Показываем сохранённые данные. Повторите проверку статуса."}
+                    </p>
+                  </div>
+                )}
+                {research.failureReason && (
+                  <div className={scss.failureReason} role="alert">
+                    <strong>Причина остановки</strong>
+                    <p>{research.failureReason}</p>
+                  </div>
+                )}
+              </section>
               <section className={scss.section}>
                 <h2>Вопрос исследования</h2>
                 <p className={scss.question}>{research.question}</p>
