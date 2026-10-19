@@ -5,7 +5,7 @@
 .root {
   width: min(var(--content-width), 100%);
   margin: 0 auto;
-  padding: 2.5rem var(--page-gutter) 4rem;
+  padding: 2.5rem var(--page-gutter) 1rem;
 }
 
 .header {
@@ -22,7 +22,6 @@
 }
 
 .header p {
-  max-width: 65ch;
   margin-top: 0.75rem;
   color: var(--color-text-muted);
   line-height: 1.6;

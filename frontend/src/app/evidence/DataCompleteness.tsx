@@ -187,7 +187,7 @@ const DataCompleteness = () => {
         error instanceof ResearchApiError && error.status === 401,
       );
       setResult({
-        title: "Synapse недоступен",
+        title: "Ошибка запроса к Synapse",
         value: error instanceof Error ? error.message : "Неизвестная ошибка.",
         kind: "generic",
       });

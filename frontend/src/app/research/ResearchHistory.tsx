@@ -12,6 +12,8 @@ import Button from "../../components/ui/Button/Button";
 import Field from "../../components/ui/Field/Field";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
+import Toast from "../../components/ui/Toast/Toast";
+import ToastViewport from "../../components/ui/Toast/ToastViewport";
 import ResearchAccess from "./ResearchAccess";
 import ResearchStatus from "./ResearchStatus";
 import ResearchPagination from "./ResearchPagination";
@@ -75,14 +77,20 @@ const ResearchHistory = () => {
   const [error, setError] = useState("");
   const [hasAccessError, setHasAccessError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notification, setNotification] = useState<{
+    title: string;
+    description: string;
+    variant: "success" | "warning" | "error";
+  }>();
   const isLoadingRef = useRef(false);
   const isMountedRef = useRef(true);
 
-  const loadResearches = useCallback(async () => {
+  const loadResearches = useCallback(async (isManual = false) => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
     setIsRefreshing(true);
     setError("");
+    if (isManual) setNotification(undefined);
     try {
       const records = await getResearches();
       if (!isMountedRef.current) return;
@@ -91,6 +99,7 @@ const ResearchHistory = () => {
       const active = records.filter(
         (record) => record.projectId && !isResearchFinal(record.status),
       );
+      let hasRefreshError = false;
       for (let index = 0; index < active.length; index += 4) {
         const outcomes = await Promise.allSettled(
           active
@@ -98,6 +107,10 @@ const ResearchHistory = () => {
             .map((record) => refreshResearch(record.id)),
         );
         if (!isMountedRef.current) return;
+        hasRefreshError ||= outcomes.some(
+          (outcome) =>
+            outcome.status === "rejected" || Boolean(outcome.value.syncError),
+        );
         const updated = outcomes.flatMap((outcome) =>
           outcome.status === "fulfilled" ? [outcome.value] : [],
         );
@@ -107,8 +120,34 @@ const ResearchHistory = () => {
           ),
         );
       }
+      if (isManual) {
+        setNotification(
+          hasRefreshError
+            ? {
+                title: "Список обновлён частично",
+                description:
+                  "Не удалось проверить состояние некоторых исследований. Попробуйте обновить список ещё раз.",
+                variant: "warning",
+              }
+            : {
+                title: "Список обновлён",
+                description: "Показаны актуальные данные исследований.",
+                variant: "success",
+              },
+        );
+      }
     } catch (failure) {
       if (isMountedRef.current) {
+        if (isManual) {
+          setNotification({
+            title: "Не удалось обновить список",
+            description:
+              failure instanceof ResearchApiError && failure.status === 401
+                ? "Введите код команды, чтобы получить доступ к исследованиям."
+                : "Попробуйте обновить список ещё раз.",
+            variant: "error",
+          });
+        }
         setHasAccessError(
           failure instanceof ResearchApiError && failure.status === 401,
         );
@@ -165,6 +204,16 @@ const ResearchHistory = () => {
 
   return (
     <main className={scss.root}>
+      <ToastViewport>
+        {notification && (
+          <Toast
+            title={notification.title}
+            description={notification.description}
+            variant={notification.variant}
+            onClose={() => setNotification(undefined)}
+          />
+        )}
+      </ToastViewport>
       <header className={scss.header}>
         <div>
           <h1>Исследования</h1>
@@ -179,12 +228,13 @@ const ResearchHistory = () => {
           disabled={isRefreshing}
           isLoading={isRefreshing}
           loadingLabel="Обновляем…"
-          onClick={() => void loadResearches()}
+          onClick={() => void loadResearches(true)}
+          data-toast-focus-return
         >
           <span className={scss.refreshIcon} aria-hidden="true">
             <IconRenderer icon="reload" />
           </span>
-          Обновить историю
+          Обновить список
         </Button>
       </header>
       {hasAccessError ? (
