@@ -376,13 +376,22 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                 </div>
                 {research.syncError && (
                   <div className={scss.syncWarning} role="alert">
-                    <strong>Не удалось проверить статус</strong>
+                    <strong>
+                      {research.status === "start_failed"
+                        ? "Ошибка запуска"
+                        : research.status === "start_unknown"
+                          ? "Статус запуска неизвестен"
+                          : "Ошибка обмена с Synapse"}
+                    </strong>
                     <p>{research.syncError}</p>
-                    <p>
-                      {research.status === "start_unknown"
-                        ? "Synapse мог принять запрос. Не запускайте его повторно, пока не проверите историю в Synapse."
-                        : "Показываем сохранённые данные. Повторите проверку статуса."}
-                    </p>
+                    {research.status === "start_unknown" ? (
+                      <p>
+                        Synapse мог принять запрос. Не запускайте его повторно,
+                        пока не проверите историю в Synapse.
+                      </p>
+                    ) : research.projectId ? (
+                      <p>Показываем сохранённые данные.</p>
+                    ) : null}
                   </div>
                 )}
                 {research.failureReason && (
@@ -392,7 +401,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                   </div>
                 )}
               </section>
-              <section className={scss.section}>
+              <section className={`${scss.section} ${scss.sourcesSection}`}>
                 <h2>Вопрос исследования</h2>
                 <p className={scss.question}>{research.question}</p>
                 <h3 id="selected-sources-heading">Выбранные источники</h3>

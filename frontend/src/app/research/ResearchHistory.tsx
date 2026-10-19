@@ -295,7 +295,7 @@ const ResearchHistory = () => {
                       )}
                       {record.syncError && (
                         <span className={scss.warning}>
-                          Не удалось обновить состояние
+                          {record.syncError}
                         </span>
                       )}
                     </div>
