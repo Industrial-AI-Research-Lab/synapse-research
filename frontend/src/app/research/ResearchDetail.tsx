@@ -19,6 +19,8 @@ import ToastViewport from "../../components/ui/Toast/ToastViewport";
 import Textarea from "../../components/ui/Textarea/Textarea";
 import ResearchAccess from "./ResearchAccess";
 import ApprovalDetails from "./ApprovalDetails";
+import ApprovalSummary from "./ApprovalSummary";
+import { getApprovalPresentation } from "./approvalPresentation";
 import ResearchStatus from "./ResearchStatus";
 import ResearchError from "./ResearchError";
 import errorScss from "./researchError.module.scss";
@@ -172,9 +174,16 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
 
   const handleDecision = async (approvalId: string, approved: boolean) => {
     if (resolvingId) return;
+    const approval = research?.approvals.find((item) => item.id === approvalId);
+    if (!approval) return;
+    const view = getApprovalPresentation(approval);
     const comment = feedback[approvalId]?.trim() ?? "";
     if (!approved && !comment) {
-      setDecisionError("Укажите причину отклонения в комментарии.");
+      setDecisionError(
+        view.returnsForRevision
+          ? "Укажите в комментарии, что нужно доработать."
+          : "Укажите причину отклонения в комментарии.",
+      );
       return;
     }
     setResolvingId(approvalId);
@@ -186,14 +195,17 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
         approvalId,
         approved,
         comment,
-        research?.approvals.find((approval) => approval.id === approvalId)
-          ?.expectedData,
+        approval.expectedData,
       );
       if (isMountedRef.current) {
         setResearch(updated);
         setFeedback((current) => ({ ...current, [approvalId]: "" }));
         setNotification({
-          title: approved ? "Решение подтверждено" : "Запрос отклонён",
+          title: approved
+            ? "Решение подтверждено"
+            : view.returnsForRevision
+              ? "Отправлено на доработку"
+              : "Запрос отклонён",
           description:
             "Решение передано в Synapse. Состояние исследования обновлено.",
           variant: "success",
@@ -531,78 +543,98 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                   </ul>
                 </div>
               </section>
-              {research.approvals.map((approval) => (
-                <section
-                  className={scss.section}
-                  key={approval.id}
-                  aria-labelledby={`approval-${approval.id}`}
-                >
-                  <h2 id={`approval-${approval.id}`}>{approval.title}</h2>
-                  {approval.content && (
-                    <p className={scss.prose}>{approval.content}</p>
-                  )}
-                  {approval.details != null && (
-                    <details
-                      className={`${scss.details} ${scss.approvalDetails}`}
-                      open
-                    >
-                      <summary>Данные для решения</summary>
-                      <ApprovalDetails details={approval.details} />
-                    </details>
-                  )}
-                  <Field
-                    label="Комментарий к решению"
-                    htmlFor={`feedback-${approval.id}`}
-                    hint="При отклонении укажите, что нужно исправить."
+              {research.approvals.map((approval) => {
+                const view = getApprovalPresentation(approval);
+                const details = approval.details ?? approval.expectedData;
+                return (
+                  <section
+                    className={scss.section}
+                    key={approval.id}
+                    aria-labelledby={`approval-${approval.id}`}
                   >
-                    <Textarea
-                      id={`feedback-${approval.id}`}
-                      value={feedback[approval.id] ?? ""}
-                      onChange={(event) =>
-                        setFeedback((current) => ({
-                          ...current,
-                          [approval.id]: event.target.value,
-                        }))
-                      }
-                      maxLength={5000}
+                    <h2 id={`approval-${approval.id}`}>{view.title}</h2>
+                    <p className={scss.approvalIntro}>{view.description}</p>
+                    <ApprovalSummary
+                      approval={approval}
+                      research={research}
+                      hasReport={Boolean(reportHtml || research.resultText)}
                     />
-                  </Field>
-                  <div className={scss.actions}>
-                    <Button
-                      isLoading={
-                        resolvingId === approval.id &&
-                        resolvingDecision === true
-                      }
-                      loadingLabel="Передаём решение…"
-                      disabled={
-                        Boolean(resolvingId) ||
-                        isRefreshing ||
-                        Boolean(research.syncError)
-                      }
-                      onClick={() => void handleDecision(approval.id, true)}
-                    >
-                      Подтвердить
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      isLoading={
-                        resolvingId === approval.id &&
-                        resolvingDecision === false
-                      }
-                      loadingLabel="Передаём решение…"
-                      disabled={
-                        Boolean(resolvingId) ||
-                        isRefreshing ||
-                        Boolean(research.syncError)
-                      }
-                      onClick={() => void handleDecision(approval.id, false)}
-                    >
-                      Отклонить
-                    </Button>
-                  </div>
-                </section>
-              ))}
-              <section className={scss.section}>
+                    {details != null && (
+                      <details
+                        className={`${scss.details} ${scss.approvalDetails}`}
+                        open
+                      >
+                        <summary>Данные для решения</summary>
+                        <ApprovalDetails details={details} />
+                      </details>
+                    )}
+                    <div className={scss.approvalDecision}>
+                      <Field
+                        label="Комментарий к решению"
+                        htmlFor={`feedback-${approval.id}`}
+                        hint={
+                          view.returnsForRevision
+                            ? "Для отправки на доработку укажите, что нужно изменить."
+                            : "При отклонении укажите, что нужно исправить."
+                        }
+                      >
+                        <Textarea
+                          id={`feedback-${approval.id}`}
+                          value={feedback[approval.id] ?? ""}
+                          placeholder={
+                            view.returnsForRevision
+                              ? "Что нужно уточнить или изменить?"
+                              : "Добавьте пояснение при необходимости"
+                          }
+                          onChange={(event) =>
+                            setFeedback((current) => ({
+                              ...current,
+                              [approval.id]: event.target.value,
+                            }))
+                          }
+                          maxLength={5000}
+                        />
+                      </Field>
+                      <div className={scss.actions}>
+                        <Button
+                          isLoading={
+                            resolvingId === approval.id &&
+                            resolvingDecision === true
+                          }
+                          loadingLabel="Передаём решение…"
+                          disabled={
+                            Boolean(resolvingId) ||
+                            isRefreshing ||
+                            Boolean(research.syncError)
+                          }
+                          onClick={() => void handleDecision(approval.id, true)}
+                        >
+                          {view.confirmLabel}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          isLoading={
+                            resolvingId === approval.id &&
+                            resolvingDecision === false
+                          }
+                          loadingLabel="Передаём решение…"
+                          disabled={
+                            Boolean(resolvingId) ||
+                            isRefreshing ||
+                            Boolean(research.syncError)
+                          }
+                          onClick={() =>
+                            void handleDecision(approval.id, false)
+                          }
+                        >
+                          {view.rejectLabel}
+                        </Button>
+                      </div>
+                    </div>
+                  </section>
+                );
+              })}
+              <section className={scss.section} id="research-result">
                 <h2>Результат исследования</h2>
                 {reportError && (
                   <div>
@@ -665,7 +697,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                 )}
               </section>
               {research.files.length > 0 && (
-                <section className={scss.section}>
+                <section className={scss.section} id="research-materials">
                   <h2>Созданные материалы</h2>
                   <ul className={scss.files}>
                     {research.files.map((file) => (
@@ -713,11 +745,15 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
               <footer className={scss.actions}>
                 {safeLink(research.synapseUrl) && (
                   <a
+                    className={scss.synapseLink}
                     href={safeLink(research.synapseUrl)}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Открыть подробности в Synapse
+                    <span className={scss.synapseLinkIcon} aria-hidden="true">
+                      <IconRenderer icon="externalLink" />
+                    </span>
+                    Открыть в Synapse
                   </a>
                 )}
                 {safeLink(research.resultUrl) && (
