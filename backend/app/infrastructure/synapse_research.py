@@ -81,7 +81,16 @@ def full_text(value: Any) -> str:
 
 
 def failure_reason(messages: list[Any]) -> str:
-    for content in reversed(messages):
+    for message in reversed(messages):
+        if not isinstance(message, dict) or message.get("type") not in ("assistant", "system"):
+            continue
+        if message.get("subtype") == "error":
+            reason = full_text(message.get("data") or message.get("content"))
+            if reason:
+                return reason
+        if message.get("type") != "assistant":
+            continue
+        content = message.get("content")
         if isinstance(content, str):
             content = content.strip()
             if content.startswith("```json") and content.endswith("```"):
@@ -95,11 +104,5 @@ def failure_reason(messages: list[Any]) -> str:
         report = content.get("task_report")
         if not isinstance(report, dict) or report.get("outcome") != "failed":
             continue
-        if report.get("code") == "FACT_BATCHES_MIN_ITEMS_CONFLICT":
-            return "В выбранном сценарии Synapse требуется минимум два пакета извлечённых фактов. По документу получен один пакет, поэтому проверка остановила исследование."
-        if report.get("code") == "workflow_not_approved":
-            return "Synapse не получил подтверждение состава документов. Построение индекса и обработка документов не запускались."
-        message = report.get("message")
-        if isinstance(message, str) and message.strip():
-            return message.strip()
+        return full_text(report)
     return ""

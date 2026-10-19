@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import ExitStack
+import json
 import logging
 from time import perf_counter
 from typing import Any
@@ -19,6 +20,22 @@ logger = logging.getLogger(__name__)
 
 class SynapseError(ResearchGatewayError):
     pass
+
+
+def _response_error(response: httpx.Response, method: str, path: str, *, secrets: tuple[str, ...]) -> str:
+    context = f"Synapse {method} {path}: HTTP {response.status_code}."
+    try:
+        payload = response.json()
+    except ValueError:
+        detail = response.text.strip()
+    else:
+        if isinstance(payload, dict) and set(payload) == {"detail"}:
+            payload = payload["detail"]
+        detail = payload.strip() if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False)
+    for secret in secrets:
+        if secret:
+            detail = detail.replace(json.dumps(secret, ensure_ascii=False)[1:-1], "[REDACTED]").replace(secret, "[REDACTED]")
+    return f"{context}\n{detail}" if detail else context
 
 
 def normalize_url(value: str) -> str:
@@ -89,7 +106,10 @@ class SynapseClient:
                             (perf_counter() - login_started_at) * 1000,
                         )
                     if login.status_code != 200:
-                        raise SynapseError(f"Вход в Synapse не выполнен: HTTP {login.status_code}.", status_code=login.status_code, outcome_unknown=False)
+                        raise SynapseError(
+                            _response_error(login, "POST", "/api/auth/login", secrets=(self.config.synapse_password, self.config.synapse_user)),
+                            status_code=login.status_code, outcome_unknown=False,
+                        )
                     self._access_token = login.json().get("access_token")
                     if not self._access_token:
                         raise SynapseError("Synapse не вернул access_token.", outcome_unknown=False)
@@ -144,7 +164,10 @@ class SynapseClient:
                     response.status_code,
                     (perf_counter() - started_at) * 1000,
                 )
-            raise SynapseError(f"Synapse {method} {path}: HTTP {response.status_code}.", status_code=response.status_code)
+            raise SynapseError(
+                _response_error(response, method, path, secrets=(self.config.synapse_password, self.config.synapse_user, self._access_token or "")),
+                status_code=response.status_code,
+            )
         if trace_enabled:
             logger.info(
                 "pav.synapse.request.completed request_id=%s destination=%s method=%s path=%s status_code=%s duration_ms=%.1f",
@@ -227,7 +250,7 @@ class SynapseClient:
                 ]
                 report_ids = report_attachment_ids(contents)
                 if project.get("status") in ("failed", "error"):
-                    result_failure = failure_reason(contents)
+                    result_failure = failure_reason(rows)
             files: list[dict[str, Any]] = []
             skip = 0
             while True:
@@ -274,7 +297,7 @@ class SynapseClient:
             self._request("POST", path, json=payload)
         except SynapseError as exc:
             if exc.status_code == 409:
-                raise ResearchConflictError("Запрос изменился или уже обработан в Synapse. Обновите карточку перед принятием решения.") from exc
+                raise ResearchConflictError(str(exc)) from exc
             raise
 
     def download_research_file(self, project_id: str, file_id: str) -> bytes:

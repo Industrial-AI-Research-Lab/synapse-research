@@ -132,7 +132,7 @@ class ResearchService:
         with self._repository.locked(research_id):
             record = self.refresh(research_id)
             if record["sync_error"]:
-                raise ResearchConflictError("Не удалось проверить актуальность запроса. Обновите состояние перед принятием решения.")
+                raise ResearchConflictError(record["sync_error"])
             approval = next((item for item in record["approvals"] if item["id"] == approval_id), None)
             if approval is None:
                 raise ResearchConflictError("Запрос уже обработан или больше не ожидает решения. Обновите состояние.")

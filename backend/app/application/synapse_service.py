@@ -88,6 +88,7 @@ class SynapseService:
         return {
             "research_id": record["id"], "project_id": record["project_id"],
             "title": record["title"], "status": record["status"], "phase": record["phase"],
+            "sync_error": record["sync_error"],
             "awaiting_approval": bool(record["approvals"]),
             "result_preview": record["result_text"][:1200],
             "result_url": record["result_url"], "synapse_url": record["synapse_url"],
