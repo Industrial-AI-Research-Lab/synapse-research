@@ -7,7 +7,8 @@ const PATHS: Record<SidebarIconName, ReactNode> = {
   document: <path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6" />,
   research: (
     <>
-      <path d="M9 3h6M10 3v6.3L4.3 19a1.3 1.3 0 0 0 1.1 2h13.2a1.3 1.3 0 0 0 1.1-2L14 9.3V3M8 13h8" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4Z" />
     </>
   ),
   database: (

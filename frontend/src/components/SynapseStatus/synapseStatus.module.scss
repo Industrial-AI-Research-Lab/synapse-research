@@ -42,11 +42,17 @@
 .trigger {
   @include mixin.control;
   @include mixin.controlText;
+  @include typography.textXs;
   flex: 0 1 auto;
+  min-height: 2.25rem;
   margin-left: auto;
+  padding: 0.375rem 0.75rem;
   color: var(--color-action);
-  text-decoration: underline;
-  text-underline-offset: 0.25em;
+  text-decoration: none;
+}
+
+.trigger:hover:not(:disabled) {
+  text-decoration: none;
 }
 
 .indicator {
@@ -91,9 +97,20 @@
 
 .detailsHeader > button {
   position: absolute;
-  top: -0.75rem;
+  top: -0.25rem;
   right: -0.5rem;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
   margin: 0;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 50%;
+}
+
+.detailsHeader > button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .details p {
@@ -129,6 +146,23 @@
 
   .trigger {
     margin-left: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .trigger {
+    min-height: 2.75rem;
+  }
+
+  .detailsHeader {
+    padding-right: 2.75rem;
+  }
+
+  .detailsHeader > button {
+    top: -0.625rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
   }
 }
 

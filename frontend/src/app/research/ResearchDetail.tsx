@@ -19,6 +19,9 @@ import ToastViewport from "../../components/ui/Toast/ToastViewport";
 import Textarea from "../../components/ui/Textarea/Textarea";
 import ResearchAccess from "./ResearchAccess";
 import ResearchStatus from "./ResearchStatus";
+import ResearchError from "./ResearchError";
+import errorScss from "./researchError.module.scss";
+import { parseSynapseError } from "./researchError";
 import {
   formatResearchDate,
   formatResearchPhase,
@@ -129,6 +132,10 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
   }, [researchId, loadRevision, handleRefresh]);
 
   const researchStatus = research?.status;
+  const hasStartupError =
+    Boolean(research) &&
+    !research?.projectId &&
+    ["start_failed", "start_unknown"].includes(researchStatus ?? "");
   useEffect(() => {
     if (!researchStatus || isResearchFinal(researchStatus)) return;
     const interval = window.setInterval(() => void handleRefresh(), 10_000);
@@ -291,14 +298,26 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
       ) : (
         <>
           {error && (
-            <p className={scss.error} role="alert">
-              {error}
-            </p>
+            <ResearchError
+              key={`refresh:${error}`}
+              error={error}
+              title={
+                research
+                  ? "Не удалось обновить состояние"
+                  : "Не удалось открыть исследование"
+              }
+              researchId={researchId}
+              projectId={research?.projectId}
+            />
           )}
           {decisionError && (
-            <p className={scss.error} role="alert">
-              {decisionError}
-            </p>
+            <ResearchError
+              key={`decision:${decisionError}`}
+              error={decisionError}
+              title="Не удалось передать решение"
+              researchId={researchId}
+              projectId={research?.projectId}
+            />
           )}
           {!research && !error && (
             <Loader variant="page" label="Открываем исследование…" />
@@ -323,84 +342,117 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                       : research.title}
                   </h1>
                   <p>
-                    Запущено {formatResearchDate(research.createdAt)} ·{" "}
+                    {formatResearchDate(research.createdAt)} ·{" "}
                     {research.kind === "documents"
                       ? "По документам"
                       : "По опытам"}
                   </p>
                 </div>
               </header>
-              <section
-                className={scss.statePanel}
-                data-status={research.status}
-                aria-label="Состояние исследования"
-              >
-                <div className={scss.stateSummary}>
-                  <ResearchStatus status={research.status} variant="summary" />
-                  <p className={scss.phase}>
-                    {isResearchFinal(research.status)
-                      ? "Последний этап: "
-                      : "Текущий этап: "}
-                    {formatResearchPhase(research.phase) ||
-                      "Подготовка запуска"}
-                  </p>
-                  <div className={scss.stateControls}>
-                    <div className={scss.freshness}>
-                      <span>
-                        {research.checkedAt
-                          ? `Проверено ${formatResearchDate(research.checkedAt)}`
-                          : "Статус ещё не проверялся"}
-                      </span>
-                      {research.projectId &&
-                        !isResearchFinal(research.status) && (
-                          <span className={scss.autoRefresh}>
-                            Обновляется автоматически каждые 10 секунд
-                          </span>
-                        )}
+              {!hasStartupError && (
+                <section
+                  className={scss.statePanel}
+                  data-status={research.status}
+                  aria-label="Состояние исследования"
+                >
+                  <div className={scss.stateSummary}>
+                    <ResearchStatus
+                      status={research.status}
+                      variant="summary"
+                    />
+                    <p className={scss.phase}>
+                      {isResearchFinal(research.status)
+                        ? "Последний этап: "
+                        : "Текущий этап: "}
+                      {formatResearchPhase(research.phase) ||
+                        "Подготовка запуска"}
+                    </p>
+                    <div className={scss.stateControls}>
+                      <div className={scss.freshness}>
+                        <span>
+                          {research.checkedAt
+                            ? `Проверено ${formatResearchDate(research.checkedAt)}`
+                            : "Статус ещё не проверялся"}
+                        </span>
+                        {research.projectId &&
+                          !isResearchFinal(research.status) && (
+                            <span className={scss.autoRefresh}>
+                              Обновляется автоматически каждые 10 секунд
+                            </span>
+                          )}
+                      </div>
+                      <Button
+                        className={scss.refreshButton}
+                        variant="text"
+                        aria-busy={isRefreshing}
+                        disabled={
+                          isRefreshing ||
+                          Boolean(resolvingId) ||
+                          !research.projectId
+                        }
+                        onClick={() => void handleRefresh()}
+                      >
+                        <span className={scss.refreshIcon} aria-hidden="true">
+                          <IconRenderer icon="reload" />
+                        </span>
+                        {isRefreshing ? "Проверяем…" : "Проверить статус"}
+                      </Button>
                     </div>
-                    <Button
-                      className={scss.refreshButton}
-                      variant="text"
-                      aria-busy={isRefreshing}
-                      disabled={
-                        isRefreshing || Boolean(resolvingId) || !research.projectId
+                  </div>
+                </section>
+              )}
+              {(hasStartupError ||
+                research.syncError ||
+                research.failureReason) && (
+                <div
+                  className={scss.stateErrors}
+                  data-startup={hasStartupError}
+                >
+                  {(hasStartupError || research.syncError) && (
+                    <ResearchError
+                      key={`sync:${research.syncError}`}
+                      error={research.syncError}
+                      title={
+                        research.status === "start_unknown"
+                          ? "Не удалось подтвердить запуск"
+                          : hasStartupError
+                            ? parseSynapseError(research.syncError).httpStatus
+                              ? "Synapse отклонил запуск"
+                              : "Не удалось запустить исследование"
+                            : "Не удалось обновить состояние"
                       }
-                      onClick={() => void handleRefresh()}
+                      description={
+                        research.status === "start_unknown"
+                          ? "Synapse мог создать проект. Проверьте его историю перед новым запуском."
+                          : hasStartupError
+                            ? "Проект не создан. Исследование не запущено."
+                            : undefined
+                      }
+                      researchId={research.id}
+                      projectId={research.projectId}
                     >
-                      <span className={scss.refreshIcon} aria-hidden="true">
-                        <IconRenderer icon="reload" />
-                      </span>
-                      {isRefreshing ? "Проверяем…" : "Проверить статус"}
-                    </Button>
-                  </div>
+                      <a
+                        className={errorScss.documentsLink}
+                        href="#selected-sources-heading"
+                      >
+                        {research.kind === "documents"
+                          ? "Документы исследования"
+                          : "Источники исследования"}
+                      </a>
+                    </ResearchError>
+                  )}
+                  {research.failureReason && (
+                    <ResearchError
+                      key={`failure:${research.failureReason}`}
+                      error={research.failureReason}
+                      title="Исследование завершилось с ошибкой"
+                      researchId={research.id}
+                      projectId={research.projectId}
+                      isSynapseError
+                    />
+                  )}
                 </div>
-                {research.syncError && (
-                  <div className={scss.syncWarning} role="alert">
-                    <strong>
-                      {research.status === "start_failed"
-                        ? "Ошибка запуска"
-                        : research.status === "start_unknown"
-                          ? "Статус запуска неизвестен"
-                          : "Ошибка обмена с Synapse"}
-                    </strong>
-                    <p>{research.syncError}</p>
-                    {research.status === "start_unknown" ? (
-                      <p>
-                        Synapse мог принять запрос. Не запускайте его повторно,
-                        пока не проверите историю в Synapse.
-                      </p>
-                    ) : research.projectId ? (
-                      <p>Показываем сохранённые данные.</p>
-                    ) : null}
-                  </div>
-                )}
-                {research.failureReason && (
-                  <div className={scss.failureReason} role="alert">
-                    <strong>Причина остановки</strong>
-                    <p>{research.failureReason}</p>
-                  </div>
-                )}
-              </section>
+              )}
               <section className={`${scss.section} ${scss.sourcesSection}`}>
                 <h2>Вопрос исследования</h2>
                 <p className={scss.question}>{research.question}</p>
@@ -444,7 +496,10 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                                 )
                               }
                             >
-                              <IconRenderer icon="download" aria-hidden="true" />
+                              <IconRenderer
+                                icon="download"
+                                aria-hidden="true"
+                              />
                             </Button>
                           </div>
                         ) : (
@@ -536,9 +591,13 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                 <h2>Результат исследования</h2>
                 {reportError && (
                   <div>
-                    <p className={scss.error} role="alert">
-                      {reportError}
-                    </p>
+                    <ResearchError
+                      key={`report:${reportError}`}
+                      error={reportError}
+                      title="Не удалось открыть отчёт"
+                      researchId={researchId}
+                      projectId={research.projectId}
+                    />
                     <Button
                       variant="secondary"
                       onClick={() => setReportRevision((value) => value + 1)}
@@ -614,7 +673,10 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                           loadingLabel="Скачиваем…"
                           onClick={() => void handleDownload(file)}
                         >
-                          <span className={scss.downloadIcon} aria-hidden="true">
+                          <span
+                            className={scss.downloadIcon}
+                            aria-hidden="true"
+                          >
                             <IconRenderer icon="download" />
                           </span>
                           Скачать
@@ -625,9 +687,13 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                 </section>
               )}
               {fileError && (
-                <p className={scss.error} role="alert">
-                  {fileError}
-                </p>
+                <ResearchError
+                  key={`download:${fileError}`}
+                  error={fileError}
+                  title="Не удалось скачать файл"
+                  researchId={researchId}
+                  projectId={research.projectId}
+                />
               )}
               <footer className={scss.actions}>
                 {safeLink(research.synapseUrl) && (

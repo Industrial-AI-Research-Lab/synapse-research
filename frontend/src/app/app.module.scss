@@ -22,6 +22,12 @@
   scrollbar-gutter: stable;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .screen:has([id="selected-sources-heading"]) {
+    scroll-behavior: smooth;
+  }
+}
+
 @include media.tablet {
   .root {
     --sidebar-width: 4.5rem;

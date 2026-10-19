@@ -135,30 +135,14 @@
   text-decoration: none;
 }
 
-.failureReason,
-.syncWarning {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  @include typography.textS;
-  overflow-wrap: anywhere;
+.stateErrors {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.statePanel[data-status="failed"] .failureReason,
-.statePanel[data-status="error"] .failureReason {
-  background: var(--color-research-error-bg);
-}
-
-.failureReason strong,
-.syncWarning strong {
-  font-weight: 500;
-}
-
-.failureReason p,
-.syncWarning p {
-  max-width: 76ch;
-  margin-top: 0.25rem;
-  white-space: pre-wrap;
+.stateErrors[data-startup="true"] {
+  margin-top: 0;
 }
 
 @keyframes statusCheckSpin {
@@ -426,9 +410,7 @@
 }
 
 @include media.mobile {
-  .stateSummary,
-  .failureReason,
-  .syncWarning {
+  .stateSummary {
     padding: 1rem;
   }
 
