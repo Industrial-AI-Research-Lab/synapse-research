@@ -11,6 +11,7 @@ interface IToast {
   description: string;
   variant?: "success" | "error" | "info" | "warning";
   action?: ReactNode;
+  layout?: "default" | "actionFooter";
   autoClose?: number | false;
   showProgress?: boolean;
   isLoading?: boolean;
@@ -75,6 +76,7 @@ const Toast = ({
   description,
   variant = "success",
   action,
+  layout = "default",
   autoClose,
   showProgress = true,
   isLoading = false,
@@ -153,7 +155,7 @@ const Toast = ({
   return (
     <section
       ref={rootRef}
-      className={`${scss.root} ${scss[variant]} ${isClosing ? scss.closing : ""}`}
+      className={`${scss.root} ${scss[variant]} ${layout === "actionFooter" ? scss.actionFooter : ""} ${isClosing ? scss.closing : ""}`}
       role={variant === "error" ? "alert" : "status"}
       aria-atomic="true"
       onMouseEnter={() => setIsHovered(true)}
@@ -185,7 +187,9 @@ const Toast = ({
       <div className={scss.content}>
         <p className={scss.title}>{title}</p>
         <p className={scss.description}>{description}</p>
-        {action && <div className={scss.action}>{action}</div>}
+        {action && layout === "default" && (
+          <div className={scss.action}>{action}</div>
+        )}
         {progress && progress.total > 0 && (
           <div className={scss.uploadProgress} aria-hidden="true">
             <span
@@ -196,6 +200,9 @@ const Toast = ({
           </div>
         )}
       </div>
+      {action && layout === "actionFooter" && (
+        <div className={scss.footerAction}>{action}</div>
+      )}
       <button
         className={scss.closeButton}
         type="button"

@@ -53,6 +53,7 @@ interface UploadNotification {
   description: string;
   variant: "success" | "error" | "info" | "warning";
   documentIds?: string[];
+  layout?: "actionFooter";
 }
 
 const isFinalResearchStatus = (status: string) =>
@@ -926,6 +927,7 @@ const DocumentsWorkspace = () => {
     } else if (selectedFiles.length && !uploadError) {
       setUploadNotification({
         title: "Файлы сохранены в очереди",
+        layout: "actionFooter",
         description:
           "Откройте «Добавить документы», чтобы продолжить загрузку.",
         variant: "info",
@@ -1104,6 +1106,7 @@ const DocumentsWorkspace = () => {
       title={uploadNotification.title}
       description={`${isUploading ? `Обработано файлов: ${uploadProgress.completed} из ${uploadProgress.total}. Можно продолжить работу.` : uploadNotification.description}${unselectedUploadedCount ? `\nНе выбрано для поиска: ${unselectedUploadedCount}. Можно выбрать до ${MAX_SELECTED_DOCUMENTS} документов.` : ""}`}
       variant={uploadNotification.variant}
+      layout={uploadNotification.layout}
       isLoading={isUploading}
       progress={isUploading ? uploadProgress : undefined}
       autoClose={
@@ -1115,6 +1118,11 @@ const DocumentsWorkspace = () => {
           <Button
             type="button"
             variant="secondary"
+            className={
+              uploadNotification.layout === "actionFooter"
+                ? scss.queueToastButton
+                : undefined
+            }
             onClick={handleUploadDialogOpen}
           >
             Открыть загрузку
@@ -1550,7 +1558,10 @@ const DocumentsWorkspace = () => {
               )}
             </>
           ) : (
-            <section className={scss.emptyState} aria-labelledby="search-empty">
+            <section
+              className={`${scss.emptyState} ${scss.emptyDocuments}`}
+              aria-labelledby="search-empty"
+            >
               <h2 id="search-empty">Сначала загрузите документы</h2>
               <p>
                 Добавьте статью, выгрузку библиографической базы или техническую
