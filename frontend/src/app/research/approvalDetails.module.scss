@@ -86,6 +86,11 @@
   color: var(--color-text);
 }
 
+.root .code:focus-visible {
+  border-radius: var(--radius-sm);
+  outline-offset: -0.1875rem;
+}
+
 .value {
   color: var(--color-action);
 }

@@ -457,7 +457,7 @@
 
 .removeSelectedFileButton:focus-visible {
   outline: 2px solid var(--color-action);
-  outline-offset: 2px;
+  outline-offset: 0.1875rem;
 }
 
 .removeSelectedFileButton:disabled {
@@ -530,7 +530,7 @@
   &:focus-visible {
     box-shadow: none;
     outline: 2px solid var(--color-danger);
-    outline-offset: 2px;
+    outline-offset: 0.1875rem;
   }
 }
 
@@ -763,7 +763,7 @@
   color: var(--color-text-muted);
   cursor: pointer;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: transparent;
 }
 
@@ -774,7 +774,7 @@
 
 .dialogCloseButton:focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 0.125rem;
+  outline-offset: 0.1875rem;
 }
 
 .uploadError {
@@ -945,7 +945,7 @@
 
 .documentCheckbox:focus-visible {
   outline: 2px solid var(--color-action);
-  outline-offset: 2px;
+  outline-offset: 0.1875rem;
 }
 
 @media (forced-colors: active) {
@@ -1084,7 +1084,7 @@
 
 .root .documentDeleteButton:focus-visible {
   outline: 2px solid var(--color-danger);
-  outline-offset: 0.125rem;
+  outline-offset: 0.1875rem;
 }
 
 .root .documentDeleteButton:active:not(:disabled) {

@@ -168,8 +168,12 @@
 }
 
 .titleLink:focus-visible::after {
-  outline: 1px solid var(--color-accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: -4px;
+}
+
+.root .titleLink:focus-visible {
+  outline: 0;
 }
 
 .titleText {
@@ -196,11 +200,6 @@
 
 .root a:hover {
   color: var(--color-accent-hover);
-}
-
-.root :focus-visible {
-  outline: 1px solid var(--color-accent);
-  outline-offset: 4px;
 }
 
 .meta {

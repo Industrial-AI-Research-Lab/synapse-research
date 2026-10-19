@@ -96,15 +96,14 @@ textarea {
     (background-color, border-color, color, box-shadow)
   );
   outline: 2px solid transparent;
+  outline-offset: 0.1875rem;
 }
 
-:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-  outline-color: var(--color-accent);
+:where(a, summary, [tabindex]) {
+  border-radius: var(--radius-sm);
 }
 
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
+:where(:focus-visible) {
   outline: 2px solid var(--color-accent);
-  outline-offset: 0.125rem;
+  outline-offset: 0.1875rem;
 }

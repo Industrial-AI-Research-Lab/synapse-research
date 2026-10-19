@@ -26,8 +26,8 @@
 }
 
 .trigger:focus-visible {
-  outline: 1px solid var(--color-accent);
-  outline-offset: 0.125rem;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0.1875rem;
 }
 
 .trigger span {

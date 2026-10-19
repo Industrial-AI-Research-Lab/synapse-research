@@ -46,7 +46,7 @@
 }
 
 .root:focus-visible {
-  outline: 1px solid var(--color-accent);
+  outline: 2px solid var(--color-accent);
   outline-offset: -0.125rem;
   border-radius: var(--radius-sm);
 }
