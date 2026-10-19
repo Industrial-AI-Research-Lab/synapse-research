@@ -27,8 +27,18 @@
   line-height: 1.6;
 }
 
-.refreshButton {
+.root .refreshButton {
   flex-shrink: 0;
+  min-height: 2.25rem;
+  padding: 0.375rem 0.75rem;
+  @include typography.textXs;
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .root .refreshButton {
+    min-height: 2.75rem;
+  }
 }
 
 .refreshIcon {
