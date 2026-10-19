@@ -220,25 +220,45 @@
   gap: 0.5rem;
 }
 
-.sources .sourceDownload {
+.root .downloadButton {
+  gap: 0.375rem;
   flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
   min-height: 2rem;
-  padding: 0;
+  padding-block: 0.5rem;
+  padding-inline: 7px;
+  color: var(--color-action);
+  border: 0;
   border-radius: var(--radius-control);
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.root .downloadButton:hover:not(:disabled) {
+  text-decoration: none;
+}
+
+.root .downloadButton > span > span {
+  gap: 6px;
+}
+
+.root .downloadButton > span > [aria-hidden="true"] {
+  display: none;
 }
 
 @media (pointer: coarse) {
-  .sources .sourceDownload {
-    width: 2.75rem;
-    height: 2.75rem;
+  .root .downloadButton {
     min-height: 2.75rem;
   }
 }
 
-.sourceDownload span {
+.downloadIcon {
   display: flex;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.downloadIcon svg {
   width: 1rem;
   height: 1rem;
 }

@@ -230,26 +230,42 @@
 
 .documentOpenButton {
   align-self: center;
-  padding: 0.5rem 0.75rem;
   color: var(--color-action);
   white-space: nowrap;
 }
 
-.documentOpenButton,
-.sourceLink {
-  justify-content: flex-start;
-  width: 11rem;
-}
-
-.documentOpenButton > span,
-.sourceLink > span {
-  justify-items: start;
-}
-
-.documentOpenButton:hover:not(:disabled),
-.sourceLink:hover:not(:disabled) {
-  background: transparent;
+.root .documentOpenButton,
+.root .sourceLink {
+  gap: 6px;
+  width: max-content;
+  min-height: 2rem;
+  padding: 8px 7px;
+  border: 0;
+  border-radius: var(--radius-control);
+  line-height: 1.2;
   text-decoration: none;
+}
+
+.root .documentOpenButton > span > span,
+.root .sourceLink > span > span {
+  gap: 6px;
+}
+
+.root .documentOpenButton > span > [aria-hidden="true"],
+.root .sourceLink > span > [aria-hidden="true"] {
+  display: none;
+}
+
+.root .documentOpenButton:hover:not(:disabled),
+.root .sourceLink:hover:not(:disabled) {
+  text-decoration: none;
+}
+
+@media (pointer: coarse) {
+  .root .documentOpenButton,
+  .root .sourceLink {
+    min-height: 2.75rem;
+  }
 }
 
 .documentOpenButton svg {
@@ -801,20 +817,32 @@
 .selectionButton {
   @include mixin.control;
   @include mixin.controlText;
-  min-height: 2.75rem;
-  padding: 0.5rem;
+  @include typography.textS;
+  width: max-content;
+  min-height: 2rem;
+  padding: 8px 7px;
+  border: 0;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   background: transparent;
-  @include typography.textS;
+  line-height: 1.2;
+  text-decoration: none;
 }
 
 .selectionButton:hover:not(:disabled) {
   background: var(--color-control-hover);
+  text-decoration: none;
 }
 
 .selectionButton:disabled {
   background: transparent;
   border-color: transparent;
+}
+
+@media (pointer: coarse) {
+  .selectionButton {
+    min-height: 2.75rem;
+  }
 }
 
 .selectionError {

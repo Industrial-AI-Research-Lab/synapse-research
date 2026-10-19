@@ -6,3 +6,5 @@ Repository contains two independently runnable applications.
 - `backend/` is FastAPI with Clean Architecture. Apply `.agents/skills/pav-backend-clean-architecture` before changing API, use cases, infrastructure or domain rules.
 
 Do not restore server-rendered static UI in the backend. The only shared contract is the versionless REST API under `/api`.
+
+Toast notifications default to the top-right corner through the shared `ToastViewport`. Preserve safe-area offsets and responsive sizing; do not add page-specific placement overrides.

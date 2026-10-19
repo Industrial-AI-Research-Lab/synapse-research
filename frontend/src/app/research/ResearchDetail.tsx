@@ -405,10 +405,11 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                             {source.filename}
                           </span>
                           <Button
-                            className={scss.sourceDownload}
+                            className={scss.downloadButton}
                             type="button"
-                            variant="icon"
+                            variant="text"
                             isLoading={downloadingId === source.id}
+                            loadingLabel="Скачиваем…"
                             aria-label={
                               downloadingId === source.id
                                 ? `Скачиваем ${source.filename}`
@@ -424,9 +425,10 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                               )
                             }
                           >
-                            <span aria-hidden="true">
+                            <span className={scss.downloadIcon} aria-hidden="true">
                               <IconRenderer icon="download" />
                             </span>
+                            Скачать
                           </Button>
                         </div>
                       ) : (
@@ -584,12 +586,17 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                           </small>
                         </span>
                         <Button
-                          variant="secondary"
+                          className={scss.downloadButton}
+                          variant="text"
+                          aria-label={`Скачать ${file.filename}`}
                           disabled={Boolean(downloadingId)}
                           isLoading={downloadingId === file.id}
                           loadingLabel="Скачиваем…"
                           onClick={() => void handleDownload(file)}
                         >
+                          <span className={scss.downloadIcon} aria-hidden="true">
+                            <IconRenderer icon="download" />
+                          </span>
                           Скачать
                         </Button>
                       </li>
