@@ -18,6 +18,7 @@ import Toast from "../../components/ui/Toast/Toast";
 import ToastViewport from "../../components/ui/Toast/ToastViewport";
 import Textarea from "../../components/ui/Textarea/Textarea";
 import ResearchAccess from "./ResearchAccess";
+import ApprovalDetails from "./ApprovalDetails";
 import ResearchStatus from "./ResearchStatus";
 import ResearchError from "./ResearchError";
 import errorScss from "./researchError.module.scss";
@@ -374,6 +375,24 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                             ? `Проверено ${formatResearchDate(research.checkedAt)}`
                             : "Статус ещё не проверялся"}
                         </span>
+                      </div>
+                      <div className={scss.refreshGroup}>
+                        <Button
+                          className={scss.refreshButton}
+                          variant="text"
+                          aria-busy={isRefreshing}
+                          disabled={
+                            isRefreshing ||
+                            Boolean(resolvingId) ||
+                            !research.projectId
+                          }
+                          onClick={() => void handleRefresh()}
+                        >
+                          <span className={scss.refreshIcon} aria-hidden="true">
+                            <IconRenderer icon="reload" />
+                          </span>
+                          {isRefreshing ? "Проверяем…" : "Проверить статус"}
+                        </Button>
                         {research.projectId &&
                           !isResearchFinal(research.status) && (
                             <span className={scss.autoRefresh}>
@@ -381,22 +400,6 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                             </span>
                           )}
                       </div>
-                      <Button
-                        className={scss.refreshButton}
-                        variant="text"
-                        aria-busy={isRefreshing}
-                        disabled={
-                          isRefreshing ||
-                          Boolean(resolvingId) ||
-                          !research.projectId
-                        }
-                        onClick={() => void handleRefresh()}
-                      >
-                        <span className={scss.refreshIcon} aria-hidden="true">
-                          <IconRenderer icon="reload" />
-                        </span>
-                        {isRefreshing ? "Проверяем…" : "Проверить статус"}
-                      </Button>
                     </div>
                   </div>
                 </section>
@@ -526,13 +529,12 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                     <p className={scss.prose}>{approval.content}</p>
                   )}
                   {approval.details != null && (
-                    <details className={scss.details} open>
+                    <details
+                      className={`${scss.details} ${scss.approvalDetails}`}
+                      open
+                    >
                       <summary>Данные для решения</summary>
-                      <pre>
-                        {typeof approval.details === "string"
-                          ? approval.details
-                          : JSON.stringify(approval.details, null, 2)}
-                      </pre>
+                      <ApprovalDetails details={approval.details} />
                     </details>
                   )}
                   <Field

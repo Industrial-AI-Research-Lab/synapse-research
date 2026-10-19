@@ -1,0 +1,99 @@
+@use "../../styles/typography";
+@use "../../styles/mixin";
+
+.root {
+  overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.75rem 0.375rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  @include typography.textXs;
+}
+
+.copyGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.copyStatus {
+  color: var(--color-action);
+}
+
+.copyError {
+  color: var(--color-danger);
+  overflow-wrap: anywhere;
+}
+
+.copyButton {
+  @include mixin.control;
+  @include mixin.controlIcon;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem;
+  color: var(--color-action);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+}
+
+.copyButton:hover {
+  background: var(--color-control-hover);
+}
+
+.copyButton:active {
+  background: var(--color-control-pressed);
+}
+
+.copyButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.root .code {
+  max-height: 24rem;
+  margin: 0;
+  overflow: auto;
+  padding: 1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: "Cascadia Code", Consolas, monospace;
+  @include typography.textS;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  scrollbar-color: auto;
+}
+
+.key {
+  color: var(--color-text);
+}
+
+.value {
+  color: var(--color-action);
+}
+
+@media (pointer: coarse) {
+  .copyButton {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
