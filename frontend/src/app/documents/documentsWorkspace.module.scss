@@ -50,10 +50,8 @@
 }
 
 .content {
-  --document-item-min-height: 5.5rem;
-  --document-list-min-height: calc(
-    3 * var(--document-item-min-height) + 2 * 0.75rem
-  );
+  --document-item-min-height: 4.5rem;
+  --document-list-min-height: calc(3 * var(--document-item-min-height));
   min-height: 0;
 }
 
@@ -213,8 +211,8 @@
 
 .fileType {
   align-self: center;
-  width: 1.5rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   color: var(--color-action);
 }
 
@@ -228,13 +226,6 @@
   height: 100%;
 }
 
-.documentOpenButton {
-  align-self: center;
-  color: var(--color-action);
-  white-space: nowrap;
-}
-
-.root .documentOpenButton,
 .root .sourceLink {
   gap: 6px;
   width: max-content;
@@ -246,23 +237,19 @@
   text-decoration: none;
 }
 
-.root .documentOpenButton > span > span,
 .root .sourceLink > span > span {
   gap: 6px;
 }
 
-.root .documentOpenButton > span > [aria-hidden="true"],
 .root .sourceLink > span > [aria-hidden="true"] {
   display: none;
 }
 
-.root .documentOpenButton:hover:not(:disabled),
 .root .sourceLink:hover:not(:disabled) {
   text-decoration: none;
 }
 
 @media (pointer: coarse) {
-  .root .documentOpenButton,
   .root .sourceLink {
     min-height: 2.75rem;
   }
@@ -533,6 +520,20 @@
   opacity: 1;
 }
 
+.questionPanel .questionInput[aria-invalid="true"] {
+  border-color: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-danger);
+  }
+
+  &:focus-visible {
+    box-shadow: none;
+    outline: 2px solid var(--color-danger);
+    outline-offset: 2px;
+  }
+}
+
 .uploadActions {
   justify-content: flex-end;
   gap: 0.5rem;
@@ -663,12 +664,14 @@
   box-shadow: var(--shadow-panel);
 }
 
-.uploadDialog::backdrop {
+.uploadDialog::backdrop,
+.confirmationModal::backdrop {
   background: rgb(0 12 20 / 72%);
 }
 
 @supports (transition-behavior: allow-discrete) and (overlay: auto) {
-  .uploadDialog {
+  .uploadDialog,
+  .confirmationModal {
     --dialog-duration: 180ms;
 
     @include mixin.transition((opacity, transform, display, overlay));
@@ -679,38 +682,45 @@
     transition-behavior: allow-discrete;
   }
 
-  .uploadDialog[open] {
+  .uploadDialog[open],
+  .confirmationModal[open] {
     --dialog-duration: 240ms;
 
     opacity: 1;
     transform: none;
   }
 
-  .uploadDialog::backdrop {
+  .uploadDialog::backdrop,
+  .confirmationModal::backdrop {
     @include mixin.transition((opacity, display, overlay));
     opacity: 0;
     transition-duration: var(--dialog-duration);
     transition-behavior: allow-discrete;
   }
 
-  .uploadDialog[open]::backdrop {
+  .uploadDialog[open]::backdrop,
+  .confirmationModal[open]::backdrop {
     opacity: 1;
   }
 
   @starting-style {
-    .uploadDialog[open] {
+    .uploadDialog[open],
+    .confirmationModal[open] {
       opacity: 0;
       transform: translateY(0.75rem) scale(0.98);
     }
 
-    .uploadDialog[open]::backdrop {
+    .uploadDialog[open]::backdrop,
+    .confirmationModal[open]::backdrop {
       opacity: 0;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .uploadDialog,
-    .uploadDialog[open] {
+    .uploadDialog[open],
+    .confirmationModal,
+    .confirmationModal[open] {
       --dialog-duration: 100ms;
 
       transform: none;
@@ -875,11 +885,11 @@
 
 .documentItem {
   display: grid;
-  grid-template-columns: auto 1.5rem minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: auto 2rem minmax(0, 1fr);
+  gap: 0.5rem;
   min-height: var(--document-item-min-height);
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0.25rem 0;
+  border-bottom: 2px solid var(--color-border);
   background: transparent;
 }
 
@@ -888,21 +898,68 @@
 }
 
 .documentCheckbox {
+  appearance: none;
+  display: grid;
+  place-content: center;
   align-self: center;
   width: 1.25rem;
   height: 1.25rem;
   margin: 0;
-  accent-color: var(--color-accent);
+  border: 2px solid var(--color-text-muted);
+  border-radius: 4px;
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.documentCheckbox:checked {
+  border-color: var(--color-action);
+  background: var(--color-action);
+}
+
+.documentCheckbox::after {
+  content: "";
+  display: none;
+  width: 6px;
+  height: 10px;
+  margin-top: -4px;
+  border: solid var(--color-action-text);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.documentCheckbox:checked::after {
+  display: block;
+}
+
+.documentCheckbox:hover {
+  border-color: var(--color-action);
+}
+
+.documentCheckbox:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  .documentCheckbox {
+    appearance: auto;
+  }
+
+  .documentCheckbox::after {
+    display: none;
+  }
 }
 
 .documentContent {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 0.25rem;
+  grid-template-columns: minmax(0, 1fr) 2rem;
+  gap: 0 0.5rem;
   min-width: 0;
 }
 
 .documentLabel {
+  grid-column: 1;
+  grid-row: 1 / 3;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: center;
@@ -964,37 +1021,73 @@
   @include typography.textXs;
 }
 
-.documentDeleteButton {
+.documentFormat {
+  font-weight: 600;
+}
+
+.root .documentOpenButton,
+.root .documentDeleteButton {
   @include mixin.control;
   @include mixin.controlIcon;
   flex: 0 0 auto;
-  align-self: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0.625rem;
+  grid-column: 2;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 50%;
   color: var(--color-text);
   background: transparent;
 }
 
-.documentDeleteButton:hover:not(:disabled) {
+.root .documentOpenButton {
+  grid-row: 1;
+  color: var(--color-action);
+}
+
+.root .documentDeleteButton {
+  grid-row: 2;
+}
+
+.root .documentOpenButton svg,
+.root .documentDeleteButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (pointer: coarse) {
+  .documentContent {
+    grid-template-columns: minmax(0, 1fr) 2.75rem;
+  }
+
+  .root .documentOpenButton,
+  .root .documentDeleteButton {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+.root .documentDeleteButton:hover:not(:disabled) {
   color: var(--color-danger);
   background: color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
-.documentDeleteButton:focus-visible {
+.root .documentDeleteButton:focus-visible {
   outline: 2px solid var(--color-danger);
   outline-offset: 0.125rem;
 }
 
-.documentDeleteButton:active:not(:disabled) {
+.root .documentDeleteButton:active:not(:disabled) {
   color: var(--color-danger-pressed);
   background: color-mix(in srgb, var(--color-danger) 20%, var(--color-bg));
 }
 
 .documentDeleteButton span {
   display: block;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .emptyState {
@@ -1258,23 +1351,23 @@
   font-weight: 700;
 }
 
-.confirmationOverlay {
+.confirmationModal {
   position: fixed;
-  z-index: 10;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem;
-  background: rgb(0 12 20 / 72%);
-}
-
-.confirmationDialog {
-  width: min(100%, 32rem);
-  padding: 1.5rem;
+  width: min(32rem, calc(100% - 3rem));
+  max-height: calc(100dvh - 3rem);
+  margin: auto;
+  padding: 0;
+  color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-panel);
+}
+
+.confirmationDialog {
+  padding: 1.5rem;
+  overflow-wrap: anywhere;
 }
 
 .confirmationDialog h2 {
@@ -1320,10 +1413,6 @@
 }
 
 @include media.tablet {
-  .documentItem {
-    gap: 0.75rem;
-  }
-
   .documentTopLine strong,
   .questionPanel .questionInput {
     @include typography.textM;
@@ -1352,20 +1441,6 @@
   .status {
     grid-column: 1;
     grid-row: auto;
-  }
-}
-
-@container documentSources (max-width: 30rem) {
-  .documentContent {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .documentLabel {
-    grid-column: 1 / -1;
-  }
-
-  .documentOpenButton {
-    justify-self: start;
   }
 }
 

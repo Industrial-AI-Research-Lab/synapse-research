@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { useOutsideClick } from "../../assets/hooks/useOutsideClick";
 
 import {
   deleteDocument,
@@ -175,6 +176,8 @@ const copyText = async (value: string) => {
 const DocumentsWorkspace = () => {
   const workspaceRef = useRef<HTMLElement>(null);
   const uploadDialogRef = useRef<HTMLDialogElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const deleteDialogContentRef = useRef<HTMLElement>(null);
   const isUploadInFlightRef = useRef(false);
   const documentSelectionPanelRef = useRef<HTMLElement>(null);
   const documentListRef = useRef<HTMLUListElement>(null);
@@ -217,13 +220,19 @@ const DocumentsWorkspace = () => {
     description: string;
   }>();
   const [uploadSuccess, setUploadSuccess] = useState<string>();
-  const [questionError, setQuestionError] = useState<string>();
+  const [hasQuestionValidationAttempted, setHasQuestionValidationAttempted] =
+    useState(false);
+  const questionError =
+    hasQuestionValidationAttempted && question.trim().length < 3
+      ? "Сформулируйте вопрос минимум из трёх символов."
+      : undefined;
   const [selectionError, setSelectionError] = useState<string>();
   const [searchError, setSearchError] = useState<string>();
   const [researchError, setResearchError] = useState<string>();
   const [sourceError, setSourceError] = useState<string>();
   const [deletionNotification, setDeletionNotification] = useState<string>();
   const [documentToDelete, setDocumentToDelete] = useState<DocumentMetadata>();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDocumentsLoading, setIsDocumentsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -422,6 +431,26 @@ const DocumentsWorkspace = () => {
       }
     };
   }, [isUploadDialogOpen]);
+
+  useLayoutEffect(() => {
+    const dialog = deleteDialogRef.current;
+
+    if (!isDeleteDialogOpen || !dialog) return;
+
+    const trigger = document.activeElement;
+    dialog.showModal();
+
+    return () => {
+      dialog.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected) {
+        trigger.focus({ preventScroll: true });
+      } else {
+        document
+          .getElementById("add-documents")
+          ?.focus({ preventScroll: true });
+      }
+    };
+  }, [isDeleteDialogOpen]);
 
   useEffect(() => {
     if (!documentsError || documents) return;
@@ -692,17 +721,24 @@ const DocumentsWorkspace = () => {
     setDeletionNotification(undefined);
     setDocumentDeleteError(undefined);
     setDocumentToDelete(document);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleDocumentDeleteCancel = () => {
     if (isDeletingDocument) return;
 
     setDocumentDeleteError(undefined);
-    setDocumentToDelete(undefined);
+    setIsDeleteDialogOpen(false);
   };
 
+  useOutsideClick(
+    deleteDialogContentRef,
+    handleDocumentDeleteCancel,
+    isDeleteDialogOpen && !isDeletingDocument,
+  );
+
   const handleDocumentDelete = async () => {
-    if (!documentToDelete || isDeletingDocument) return;
+    if (!isDeleteDialogOpen || !documentToDelete || isDeletingDocument) return;
 
     setDocumentDeleteError(undefined);
     setIsDeletingDocument(true);
@@ -721,7 +757,7 @@ const DocumentsWorkspace = () => {
       setSearchResult(undefined);
       setQuestionEditorState("top");
       setDeletionNotification(`«${documentToDelete.filename}»`);
-      setDocumentToDelete(undefined);
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       setDocumentDeleteError(
         error instanceof Error ? error.message : "Не удалось удалить документ.",
@@ -734,11 +770,10 @@ const DocumentsWorkspace = () => {
   const handleLocalSearch = async () => {
     if (isSearching || isResearchStarting) return;
     const normalizedQuestion = question.trim();
-    setQuestionError(undefined);
+    setHasQuestionValidationAttempted(true);
     setSearchError(undefined);
 
     if (normalizedQuestion.length < 3) {
-      setQuestionError("Сформулируйте вопрос минимум из трёх символов.");
       questionInputRef.current?.focus();
       return;
     }
@@ -782,11 +817,10 @@ const DocumentsWorkspace = () => {
     event.preventDefault();
     if (isSearching || isResearchStarting || isResearchStartUncertain) return;
     const normalizedQuestion = question.trim();
-    setQuestionError(undefined);
+    setHasQuestionValidationAttempted(true);
     setResearchError(undefined);
 
     if (normalizedQuestion.length < 3) {
-      setQuestionError("Сформулируйте вопрос минимум из трёх символов.");
       questionInputRef.current?.focus();
       return;
     }
@@ -904,7 +938,7 @@ const DocumentsWorkspace = () => {
   };
 
   const handleQuestionEditorOpen = () => {
-    setQuestionError(undefined);
+    setHasQuestionValidationAttempted(false);
     setSearchError(undefined);
     setResearchError(undefined);
     shouldFocusQuestionEditorRef.current = true;
@@ -979,7 +1013,6 @@ const DocumentsWorkspace = () => {
           value={question}
           onChange={(event) => {
             setQuestion(event.target.value);
-            setQuestionError(undefined);
           }}
           placeholder="Сформулируйте вопрос для исследования по выбранным документам"
           rows={4}
@@ -1018,6 +1051,7 @@ const DocumentsWorkspace = () => {
             isSearching ||
             isResearchStarting ||
             isResearchStartUncertain ||
+            Boolean(questionError) ||
             !selectedDocumentIds.length
           }
         >
@@ -1034,7 +1068,10 @@ const DocumentsWorkspace = () => {
           loadingLabel="Ищем фрагменты…"
           onClick={() => void handleLocalSearch()}
           disabled={
-            isSearching || isResearchStarting || !selectedDocumentIds.length
+            isSearching ||
+            isResearchStarting ||
+            Boolean(questionError) ||
+            !selectedDocumentIds.length
           }
         >
           Найти фрагменты
@@ -1443,7 +1480,7 @@ const DocumentsWorkspace = () => {
                                 </strong>
                               </span>
                               <span className={scss.documentMeta}>
-                                <span>
+                                <span className={scss.documentFormat}>
                                   {getDocumentExtension(document.filename)
                                     .slice(1)
                                     .toUpperCase()}
@@ -1462,9 +1499,13 @@ const DocumentsWorkspace = () => {
                                 openingSourceUrl ===
                                 `/api/documents/${encodeURIComponent(document.id)}/file`
                               }
-                              loadingLabel={fileAction.loadingLabel}
-                              aria-label={`${fileAction.label}: ${document.filename}`}
-                              title={fileAction.description}
+                              aria-label={
+                                openingSourceUrl ===
+                                `/api/documents/${encodeURIComponent(document.id)}/file`
+                                  ? fileAction.loadingLabel
+                                  : `${fileAction.label}: ${document.filename}`
+                              }
+                              title={`${fileAction.label}. ${fileAction.description}`}
                               disabled={isOpeningSource}
                               onClick={() =>
                                 void handleOpenSource({
@@ -1474,27 +1515,20 @@ const DocumentsWorkspace = () => {
                               }
                             >
                               <IconRenderer icon={fileAction.icon} />
-                              {fileAction.label}
                             </Button>
-                            <Tooltip
-                              target={
-                                <button
-                                  className={scss.documentDeleteButton}
-                                  type="button"
-                                  onClick={() =>
-                                    handleDocumentDeleteRequest(document)
-                                  }
-                                  aria-label={`Удалить документ «${document.filename}»`}
-                                  title="Удалить документ"
-                                >
-                                  <span aria-hidden="true">
-                                    <IconRenderer icon="remove" />
-                                  </span>
-                                </button>
+                            <button
+                              className={scss.documentDeleteButton}
+                              type="button"
+                              onClick={() =>
+                                handleDocumentDeleteRequest(document)
                               }
+                              aria-label={`Удалить документ «${document.filename}»`}
+                              title="Удалить документ"
                             >
-                              Удалить документ
-                            </Tooltip>
+                              <span aria-hidden="true">
+                                <IconRenderer icon="remove" />
+                              </span>
+                            </button>
                           </div>
                         </li>
                       );
@@ -1918,55 +1952,53 @@ const DocumentsWorkspace = () => {
           </div>
         </dialog>
 
-        {documentToDelete && (
-          <div className={scss.confirmationOverlay}>
-            <section
-              className={scss.confirmationDialog}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="delete-document-title"
-              aria-describedby="delete-document-description"
-              onKeyDown={(event) => {
-                if (event.key !== "Escape") return;
-
-                event.preventDefault();
-                handleDocumentDeleteCancel();
-              }}
-            >
-              <h2 id="delete-document-title">Удалить документ?</h2>
-              <p id="delete-document-description">
-                Файл «{documentToDelete.filename}» и найденные в нём фрагменты
-                будут удалены без возможности восстановления.
+        <dialog
+          ref={deleteDialogRef}
+          className={scss.confirmationModal}
+          aria-labelledby="delete-document-title"
+          aria-describedby="delete-document-description"
+          onCancel={(event) => {
+            event.preventDefault();
+            handleDocumentDeleteCancel();
+          }}
+        >
+          <section
+            ref={deleteDialogContentRef}
+            className={scss.confirmationDialog}
+          >
+            <h2 id="delete-document-title">Удалить документ?</h2>
+            <p id="delete-document-description">
+              Файл «{documentToDelete?.filename}» и найденные в нём фрагменты
+              будут удалены без возможности восстановления.
+            </p>
+            {documentDeleteError && (
+              <p className={scss.selectionError} role="alert">
+                {documentDeleteError}
               </p>
-              {documentDeleteError && (
-                <p className={scss.selectionError} role="alert">
-                  {documentDeleteError}
-                </p>
-              )}
-              <div className={scss.confirmationActions}>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleDocumentDeleteCancel}
-                  disabled={isDeletingDocument}
-                  autoFocus
-                >
-                  Отмена
-                </Button>
-                <Button
-                  variant="danger"
-                  isLoading={isDeletingDocument}
-                  loadingLabel="Удаляем…"
-                  type="button"
-                  onClick={() => void handleDocumentDelete()}
-                  disabled={isDeletingDocument}
-                >
-                  Удалить
-                </Button>
-              </div>
-            </section>
-          </div>
-        )}
+            )}
+            <div className={scss.confirmationActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleDocumentDeleteCancel}
+                disabled={isDeletingDocument}
+                autoFocus
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="danger"
+                isLoading={isDeletingDocument}
+                loadingLabel="Удаляем…"
+                type="button"
+                onClick={() => void handleDocumentDelete()}
+                disabled={isDeletingDocument}
+              >
+                Удалить
+              </Button>
+            </div>
+          </section>
+        </dialog>
       </div>
     </main>
   );
