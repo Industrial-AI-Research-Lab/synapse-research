@@ -395,50 +395,61 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
               <section className={scss.section}>
                 <h2>Вопрос исследования</h2>
                 <p className={scss.question}>{research.question}</p>
-                <h3>Выбранные источники</h3>
-                <ul className={scss.sources}>
-                  {research.sources.map((source) => (
-                    <li key={source.id}>
-                      {research.kind === "documents" ? (
-                        <div className={scss.sourceFile}>
-                          <span className={scss.sourceFilename}>
-                            {source.filename}
-                          </span>
-                          <Button
-                            className={scss.downloadButton}
-                            type="button"
-                            variant="text"
-                            isLoading={downloadingId === source.id}
-                            loadingLabel="Скачиваем…"
-                            aria-label={
-                              downloadingId === source.id
-                                ? `Скачиваем ${source.filename}`
-                                : `Скачать ${source.filename}`
-                            }
-                            title={`Скачать ${source.filename}`}
-                            aria-busy={downloadingId === source.id}
-                            disabled={Boolean(downloadingId)}
-                            onClick={() =>
-                              void handleSourceDownload(
-                                source.id,
-                                source.filename,
-                              )
-                            }
-                          >
-                            <span className={scss.downloadIcon} aria-hidden="true">
-                              <IconRenderer icon="download" />
+                <h3 id="selected-sources-heading">Выбранные источники</h3>
+                <div
+                  className={scss.sourcesViewport}
+                  role="region"
+                  aria-labelledby="selected-sources-heading"
+                  tabIndex={0}
+                >
+                  <ul
+                    className={`${scss.sources} ${research.sources.length > 36 ? scss.sourcesLarge : ""}`}
+                  >
+                    {research.sources.map((source) => (
+                      <li key={source.id}>
+                        {research.kind === "documents" ? (
+                          <div className={scss.sourceFile}>
+                            <span
+                              className={scss.sourceFilename}
+                              title={source.filename}
+                            >
+                              {source.filename}
                             </span>
-                            Скачать
-                          </Button>
-                        </div>
-                      ) : (
-                        <a href={`/source/${encodeURIComponent(source.id)}`}>
-                          {source.id} · {source.filename}
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                            <Button
+                              className={scss.sourceDownloadButton}
+                              type="button"
+                              variant="text"
+                              isLoading={downloadingId === source.id}
+                              aria-label={
+                                downloadingId === source.id
+                                  ? `Скачиваем ${source.filename}`
+                                  : `Скачать ${source.filename}`
+                              }
+                              title={`Скачать ${source.filename}`}
+                              aria-busy={downloadingId === source.id}
+                              disabled={Boolean(downloadingId)}
+                              onClick={() =>
+                                void handleSourceDownload(
+                                  source.id,
+                                  source.filename,
+                                )
+                              }
+                            >
+                              <IconRenderer icon="download" aria-hidden="true" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <a
+                            href={`/source/${encodeURIComponent(source.id)}`}
+                            title={`${source.id} · ${source.filename}`}
+                          >
+                            {source.id} · {source.filename}
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </section>
               {research.approvals.map((approval) => (
                 <section

@@ -1,5 +1,6 @@
 @use "../../styles/typography";
 @use "../../styles/media";
+@use "../../styles/mixin";
 
 .root {
   width: min(var(--content-width), 100%);
@@ -203,21 +204,79 @@
   overflow-wrap: anywhere;
 }
 
+.sourcesViewport {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 0.25rem 0.25rem 1rem;
+  scrollbar-color: var(--color-action) var(--color-control-hover);
+}
+
 .sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(4, auto);
+  grid-auto-columns: minmax(min(100%, 18.5rem), 1fr);
+  column-gap: 1.5rem;
   list-style: none;
 }
 
+.sourcesLarge {
+  grid-template-rows: repeat(8, auto);
+}
+
 .sources li {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 3.25rem;
   max-width: 100%;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sources li > a {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.5rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sourceFile {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.root .sourceDownloadButton {
+  @include mixin.control;
+  @include mixin.controlIcon;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-action);
+  background: transparent;
+}
+
+.root .sourceDownloadButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (pointer: coarse) {
+  .root .sourceDownloadButton {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+  }
 }
 
 .root .downloadButton {
@@ -264,8 +323,11 @@
 }
 
 .sourceFilename {
+  flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actions {
