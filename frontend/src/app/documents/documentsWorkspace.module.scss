@@ -960,9 +960,39 @@
 
 .documentContent {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 2rem;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0 0.5rem;
   min-width: 0;
+}
+
+.documentFileActions {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.citationActions,
+.selectedFileActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.root .queuePreviewButton {
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0.5rem;
+  color: var(--color-action);
+}
+
+.queuePreviewButton svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .documentLabel {
@@ -1044,7 +1074,7 @@
   min-height: 2rem;
   padding: 0.5rem;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   background: transparent;
 }
@@ -1056,6 +1086,7 @@
 
 .root .documentDeleteButton {
   grid-row: 2;
+  justify-self: end;
 }
 
 .root .documentOpenButton svg,
@@ -1066,10 +1097,11 @@
 
 @media (pointer: coarse) {
   .documentContent {
-    grid-template-columns: minmax(0, 1fr) 2.75rem;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .root .documentOpenButton,
+  .root .queuePreviewButton,
   .root .documentDeleteButton {
     width: 2.75rem;
     height: 2.75rem;

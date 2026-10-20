@@ -29,6 +29,9 @@ import type {
   DocumentSearchResponse,
 } from "../../assets/types/documents";
 import Button from "../../components/ui/Button/Button";
+import DocumentPreview from "../../components/DocumentPreview/DocumentPreview";
+import { canPreviewFile } from "../../components/DocumentPreview/documentPreview";
+import type { DocumentPreviewSource } from "../../components/DocumentPreview/documentPreview";
 import Field from "../../components/ui/Field/Field";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Input from "../../components/ui/Input/Input";
@@ -175,6 +178,7 @@ const copyText = async (value: string) => {
 };
 
 const DocumentsWorkspace = () => {
+  const [previewSource, setPreviewSource] = useState<DocumentPreviewSource>();
   const workspaceRef = useRef<HTMLElement>(null);
   const uploadDialogRef = useRef<HTMLDialogElement>(null);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
@@ -1495,31 +1499,54 @@ const DocumentsWorkspace = () => {
                                 </span>
                               </span>
                             </label>
-                            <Button
-                              className={scss.documentOpenButton}
-                              type="button"
-                              variant="text"
-                              isLoading={
-                                openingSourceUrl ===
-                                `/api/documents/${encodeURIComponent(document.id)}/file`
-                              }
-                              aria-label={
-                                openingSourceUrl ===
-                                `/api/documents/${encodeURIComponent(document.id)}/file`
-                                  ? fileAction.loadingLabel
-                                  : `${fileAction.label}: ${document.filename}`
-                              }
-                              title={`${fileAction.label}. ${fileAction.description}`}
-                              disabled={isOpeningSource}
-                              onClick={() =>
-                                void handleOpenSource({
-                                  document: document.filename,
-                                  url: `/api/documents/${encodeURIComponent(document.id)}/file`,
-                                })
-                              }
-                            >
-                              <IconRenderer icon={fileAction.icon} />
-                            </Button>
+                            <div className={scss.documentFileActions}>
+                              {canPreviewFile(document.filename) && (
+                                <Button
+                                  className={scss.documentOpenButton}
+                                  type="button"
+                                  variant="icon"
+                                  aria-label={`Просмотреть ${document.filename}`}
+                                  title="Просмотреть файл"
+                                  onClick={() =>
+                                    setPreviewSource({
+                                      filename: document.filename,
+                                      load: () =>
+                                        getDocumentFile(
+                                          `/api/documents/${encodeURIComponent(document.id)}/file`,
+                                          accessToken,
+                                        ),
+                                    })
+                                  }
+                                >
+                                  <IconRenderer icon="view" />
+                                </Button>
+                              )}
+                              <Button
+                                className={scss.documentOpenButton}
+                                type="button"
+                                variant="text"
+                                isLoading={
+                                  openingSourceUrl ===
+                                  `/api/documents/${encodeURIComponent(document.id)}/file`
+                                }
+                                aria-label={
+                                  openingSourceUrl ===
+                                  `/api/documents/${encodeURIComponent(document.id)}/file`
+                                    ? fileAction.loadingLabel
+                                    : `${fileAction.label}: ${document.filename}`
+                                }
+                                title={`${fileAction.label}. ${fileAction.description}`}
+                                disabled={isOpeningSource}
+                                onClick={() =>
+                                  void handleOpenSource({
+                                    document: document.filename,
+                                    url: `/api/documents/${encodeURIComponent(document.id)}/file`,
+                                  })
+                                }
+                              >
+                                <IconRenderer icon={fileAction.icon} />
+                              </Button>
+                            </div>
                             <button
                               className={scss.documentDeleteButton}
                               type="button"
@@ -1738,25 +1765,55 @@ const DocumentsWorkspace = () => {
                               {item.citation.location}
                             </p>
                           </div>
-                          <Button
-                            type="button"
-                            variant="text"
-                            className={scss.sourceLink}
-                            isLoading={openingSourceUrl === item.citation.url}
-                            loadingLabel={fileAction.loadingLabel}
-                            aria-label={`${fileAction.label}: ${item.citation.document}, ${item.citation.location}`}
-                            title={fileAction.description}
-                            onClick={() => void handleOpenSource(item.citation)}
-                            disabled={isOpeningSource}
-                          >
-                            <span
-                              className={scss.sourceLinkIcon}
-                              aria-hidden="true"
+                          <div className={scss.citationActions}>
+                            {canPreviewFile(item.citation.document) && (
+                              <Button
+                                type="button"
+                                variant="text"
+                                className={scss.sourceLink}
+                                aria-label={`Просмотреть ${item.citation.document}, ${item.citation.location}`}
+                                onClick={() =>
+                                  setPreviewSource({
+                                    filename: item.citation.document,
+                                    load: () =>
+                                      getDocumentFile(
+                                        item.citation.url,
+                                        accessToken,
+                                      ),
+                                  })
+                                }
+                              >
+                                <span
+                                  className={scss.sourceLinkIcon}
+                                  aria-hidden="true"
+                                >
+                                  <IconRenderer icon="view" />
+                                </span>
+                                Просмотреть документ
+                              </Button>
+                            )}
+                            <Button
+                              type="button"
+                              variant="text"
+                              className={scss.sourceLink}
+                              isLoading={openingSourceUrl === item.citation.url}
+                              loadingLabel={fileAction.loadingLabel}
+                              aria-label={`${fileAction.label}: ${item.citation.document}, ${item.citation.location}`}
+                              title={fileAction.description}
+                              onClick={() =>
+                                void handleOpenSource(item.citation)
+                              }
+                              disabled={isOpeningSource}
                             >
-                              <IconRenderer icon={fileAction.icon} />
-                            </span>
-                            {fileAction.label}
-                          </Button>
+                              <span
+                                className={scss.sourceLinkIcon}
+                                aria-hidden="true"
+                              >
+                                <IconRenderer icon={fileAction.icon} />
+                              </span>
+                              {fileAction.label}
+                            </Button>
+                          </div>
                         </div>
                         <blockquote>{item.excerpt}</blockquote>
                         <p className={scss.relevance}>
@@ -1901,16 +1958,35 @@ const DocumentsWorkspace = () => {
                         <span className={scss.selectedFileSize}>
                           {formatFileSize(file.size)}
                         </span>
-                        <button
-                          className={scss.removeSelectedFileButton}
-                          type="button"
-                          onClick={() => handleSelectedFileRemove(index)}
-                          disabled={isUploading}
-                          aria-label={`Убрать файл «${file.name}» из очереди загрузки`}
-                          title="Убрать файл"
-                        >
-                          <IconRenderer icon="close" />
-                        </button>
+                        <div className={scss.selectedFileActions}>
+                          {canPreviewFile(file.name, file.type) && (
+                            <Button
+                              className={scss.queuePreviewButton}
+                              variant="icon"
+                              type="button"
+                              aria-label={`Просмотреть ${file.name}`}
+                              title="Просмотреть файл"
+                              onClick={() =>
+                                setPreviewSource({
+                                  filename: file.name,
+                                  load: async () => file,
+                                })
+                              }
+                            >
+                              <IconRenderer icon="view" />
+                            </Button>
+                          )}
+                          <button
+                            className={scss.removeSelectedFileButton}
+                            type="button"
+                            onClick={() => handleSelectedFileRemove(index)}
+                            disabled={isUploading}
+                            aria-label={`Убрать файл «${file.name}» из очереди загрузки`}
+                            title="Убрать файл"
+                          >
+                            <IconRenderer icon="close" />
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -2006,6 +2082,12 @@ const DocumentsWorkspace = () => {
             </div>
           </section>
         </dialog>
+        {previewSource && (
+          <DocumentPreview
+            source={previewSource}
+            onClose={() => setPreviewSource(undefined)}
+          />
+        )}
       </div>
     </main>
   );

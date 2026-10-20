@@ -11,6 +11,9 @@ import {
 import { getDocumentFile } from "../../api/documents";
 import type { Research, ResearchFile } from "../../assets/types/research";
 import Button from "../../components/ui/Button/Button";
+import DocumentPreview from "../../components/DocumentPreview/DocumentPreview";
+import { canPreviewFile } from "../../components/DocumentPreview/documentPreview";
+import type { DocumentPreviewSource } from "../../components/DocumentPreview/documentPreview";
 import Field from "../../components/ui/Field/Field";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
@@ -53,6 +56,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 };
 
 const ResearchDetail = ({ researchId }: { researchId: string }) => {
+  const [previewSource, setPreviewSource] = useState<DocumentPreviewSource>();
   const [research, setResearch] = useState<Research>();
   const [error, setError] = useState("");
   const [decisionError, setDecisionError] = useState("");
@@ -504,6 +508,26 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                             >
                               {source.filename}
                             </span>
+                            {canPreviewFile(source.filename) && (
+                              <Button
+                                className={scss.sourceDownloadButton}
+                                variant="icon"
+                                type="button"
+                                aria-label={`Просмотреть ${source.filename}`}
+                                title="Просмотреть файл"
+                                onClick={() =>
+                                  setPreviewSource({
+                                    filename: source.filename,
+                                    load: () =>
+                                      getDocumentFile(
+                                        `/api/documents/${encodeURIComponent(source.id)}/file`,
+                                      ),
+                                  })
+                                }
+                              >
+                                <IconRenderer icon="view" />
+                              </Button>
+                            )}
                             <Button
                               className={scss.sourceDownloadButton}
                               type="button"
@@ -711,23 +735,48 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                             КБ
                           </small>
                         </span>
-                        <Button
-                          className={scss.downloadButton}
-                          variant="text"
-                          aria-label={`Скачать ${file.filename}`}
-                          disabled={Boolean(downloadingId)}
-                          isLoading={downloadingId === file.id}
-                          loadingLabel="Скачиваем…"
-                          onClick={() => void handleDownload(file)}
-                        >
-                          <span
-                            className={scss.downloadIcon}
-                            aria-hidden="true"
+                        <div className={scss.fileActions}>
+                          {canPreviewFile(file.filename, file.contentType) && (
+                            <Button
+                              className={scss.downloadButton}
+                              variant="text"
+                              type="button"
+                              aria-label={`Просмотреть ${file.filename}`}
+                              onClick={() =>
+                                setPreviewSource({
+                                  filename: file.filename,
+                                  load: () =>
+                                    getResearchFile(researchId, file.id),
+                                })
+                              }
+                            >
+                              <span
+                                className={scss.downloadIcon}
+                                aria-hidden="true"
+                              >
+                                <IconRenderer icon="view" />
+                              </span>
+                              Просмотреть
+                            </Button>
+                          )}
+                          <Button
+                            className={scss.downloadButton}
+                            variant="text"
+                            aria-label={`Скачать ${file.filename}`}
+                            disabled={Boolean(downloadingId)}
+                            isLoading={downloadingId === file.id}
+                            loadingLabel="Скачиваем…"
+                            onClick={() => void handleDownload(file)}
                           >
-                            <IconRenderer icon="download" />
-                          </span>
-                          Скачать
-                        </Button>
+                            <span
+                              className={scss.downloadIcon}
+                              aria-hidden="true"
+                            >
+                              <IconRenderer icon="download" />
+                            </span>
+                            Скачать
+                          </Button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -769,6 +818,12 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
             </>
           )}
         </>
+      )}
+      {previewSource && (
+        <DocumentPreview
+          source={previewSource}
+          onClose={() => setPreviewSource(undefined)}
+        />
       )}
     </main>
   );

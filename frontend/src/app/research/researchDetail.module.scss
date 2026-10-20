@@ -276,7 +276,7 @@
   min-height: 2rem;
   padding: 0.5rem;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-control);
   color: var(--color-action);
   background: transparent;
 }
@@ -326,6 +326,13 @@
   flex-shrink: 0;
   width: 1rem;
   height: 1rem;
+}
+
+.fileActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .downloadIcon svg {
