@@ -11,7 +11,7 @@ services:
       DOCUMENT_ACCESS_TOKEN: ${DOCUMENT_ACCESS_TOKEN:?DOCUMENT_ACCESS_TOKEN is required}
       DOCUMENT_ACCESS_CODE_COPY_ENABLED: ${DOCUMENT_ACCESS_CODE_COPY_ENABLED:-false}
     env_file:
-      - ./backend.env
+      - ./.env
     expose:
       - "8091"
     healthcheck:
