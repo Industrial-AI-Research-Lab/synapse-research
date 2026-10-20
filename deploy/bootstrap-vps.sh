@@ -9,7 +9,7 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-GHCR_OWNER="${GHCR_OWNER:-v1ktorbro}"
+GHCR_OWNER="${GHCR_OWNER:-industrial-ai-research-lab}"
 APP_DIR="/opt/pav"
 
 apt-get update
@@ -35,14 +35,12 @@ install -d -m 0700 "$APP_DIR"
 if [ ! -f "$APP_DIR/.env" ]; then
   cat >"$APP_DIR/.env" <<EOF
 GHCR_OWNER=$GHCR_OWNER
-IMAGE_TAG=latest
+IMAGE_TAG=
 CADDY_SITE_ADDRESS=:80
+DOCUMENT_ACCESS_TOKEN=
+DOCUMENT_ACCESS_CODE_COPY_ENABLED=false
 EOF
   chmod 0600 "$APP_DIR/.env"
 fi
 
-if [ ! -f "$APP_DIR/backend.env" ]; then
-  install -m 0600 /dev/null "$APP_DIR/backend.env"
-fi
-
-echo "VPS is ready. Add the GitHub Actions deploy public key to /root/.ssh/authorized_keys, then configure GitHub repository secrets."
+echo "VPS is ready. Fill /opt/pav/.env, add the GitHub Actions deploy public key to /root/.ssh/authorized_keys, then configure GitHub repository secrets."

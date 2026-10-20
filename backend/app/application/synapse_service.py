@@ -102,7 +102,7 @@ class SynapseService:
             "project_id": project_id,
             "status": project.get("status") or "started",
             "phase": project.get("current_phase") or "",
-            "title": project.get("title") or "Исследование ПАВ",
+            "title": project.get("title") or "Исследование",
             "awaiting_approval": bool(pending),
             "result_preview": str(result)[:1200],
             "result_url": _project_result_url(project),

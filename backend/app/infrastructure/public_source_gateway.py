@@ -19,7 +19,7 @@ class HttpPublicSourceGateway:
         "ПАВ полимерное заводнение лабораторные керновые исследования",
     )
     _HEADERS = {
-        "User-Agent": "PAV-Evidence-Navigator/1.0 (public-source-catalog)",
+        "User-Agent": "Synapse-Research/1.0 (public-source-catalog)",
         "Accept": "application/json, text/html, application/pdf;q=0.9, */*;q=0.1",
     }
 

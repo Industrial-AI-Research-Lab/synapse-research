@@ -2,7 +2,7 @@ name: pav-evidence-navigator
 
 services:
   backend:
-    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER is required}/pav-evidence-navigator-backend:${IMAGE_TAG:?IMAGE_TAG is required}
+    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER is required}/synapse-research-backend:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
     environment:
       HOST: 0.0.0.0
@@ -30,7 +30,7 @@ services:
       - document_store:/service/var/documents
 
   frontend:
-    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER is required}/pav-evidence-navigator-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
+    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER is required}/synapse-research-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
     expose:
       - "80"

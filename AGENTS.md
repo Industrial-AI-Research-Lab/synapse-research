@@ -1,4 +1,4 @@
-# PAV Evidence Navigator
+# Synapse Research
 
 Repository contains two independently runnable applications.
 

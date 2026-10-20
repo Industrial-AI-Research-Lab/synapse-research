@@ -12,7 +12,6 @@ import DownloadIcon from "./icons/Download";
 import ErrorIcon from "./icons/Error";
 import ExternalLinkIcon from "./icons/ExternalLink";
 import InfoIcon from "./icons/Info";
-import PavLogoIcon from "./icons/PavLogo";
 import QuestionIcon from "./icons/Question";
 import ReloadIcon from "./icons/Reload";
 import RemoveIcon from "./icons/Remove";
@@ -34,7 +33,6 @@ export type IIconRendererTypes =
   | "error"
   | "externalLink"
   | "info"
-  | "pavLogo"
   | "question"
   | "reload"
   | "remove"
@@ -59,7 +57,6 @@ export const ICONS_ENUM: Record<
   error: ErrorIcon,
   externalLink: ExternalLinkIcon,
   info: InfoIcon,
-  pavLogo: PavLogoIcon,
   question: QuestionIcon,
   reload: ReloadIcon,
   remove: RemoveIcon,

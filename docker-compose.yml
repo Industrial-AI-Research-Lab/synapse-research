@@ -1,10 +1,10 @@
-name: pav-evidence-navigator
+name: synapse-research
 
 services:
   backend:
     build: .
-    image: pav-evidence-navigator:0.1
-    container_name: pav-evidence-navigator
+    image: synapse-research:dev
+    container_name: synapse-research
     ports:
       - "${PAV_PORT:-8091}:8091"
     environment:

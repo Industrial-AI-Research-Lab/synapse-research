@@ -9,13 +9,13 @@ const Header = () => (
   <header className={scss.root}>
     <a
       className={scss.logoLink}
-      href="/"
-      aria-label="PAV Evidence Navigator — к доказательной базе"
+      href="/documents"
+      aria-label="Synapse Research — к документам"
     >
-      <IconRenderer className={scss.logo} icon="pavLogo" />
+      <IconRenderer className={scss.logo} icon="synapseResearch" />
       <span className={scss.logoText}>
-        <strong>PAV</strong>
-        <span>Evidence Navigator</span>
+        <strong>Synapse</strong>
+        <span>Research</span>
       </span>
     </a>
 

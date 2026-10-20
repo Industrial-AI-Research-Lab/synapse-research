@@ -276,7 +276,7 @@ class SynapseClient:
             return {
                 "status": "awaiting_approval" if any(normalized) else str(project.get("status") or "started"),
                 "phase": str(project.get("current_phase") or ""),
-                "title": str(project.get("title") or "Исследование ПАВ"),
+                "title": str(project.get("title") or "Исследование"),
                 "approvals": [a for a in normalized if a], "files": files,
                 "result_text": full_text(project.get("final_output") or project.get("result") or project.get("summary")),
                 "result_url": public_url(result_url),
