@@ -1502,7 +1502,7 @@ const DocumentsWorkspace = () => {
                             <div className={scss.documentFileActions}>
                               {canPreviewFile(document.filename) && (
                                 <Button
-                                  className={scss.documentOpenButton}
+                                  className={`${scss.documentOpenButton} ${scss.documentPreviewButton}`}
                                   type="button"
                                   variant="icon"
                                   aria-label={`Просмотреть ${document.filename}`}
@@ -1546,20 +1546,20 @@ const DocumentsWorkspace = () => {
                               >
                                 <IconRenderer icon={fileAction.icon} />
                               </Button>
+                              <button
+                                className={scss.documentDeleteButton}
+                                type="button"
+                                onClick={() =>
+                                  handleDocumentDeleteRequest(document)
+                                }
+                                aria-label={`Удалить документ «${document.filename}»`}
+                                title="Удалить документ"
+                              >
+                                <span aria-hidden="true">
+                                  <IconRenderer icon="remove" />
+                                </span>
+                              </button>
                             </div>
-                            <button
-                              className={scss.documentDeleteButton}
-                              type="button"
-                              onClick={() =>
-                                handleDocumentDeleteRequest(document)
-                              }
-                              aria-label={`Удалить документ «${document.filename}»`}
-                              title="Удалить документ"
-                            >
-                              <span aria-hidden="true">
-                                <IconRenderer icon="remove" />
-                              </span>
-                            </button>
                           </div>
                         </li>
                       );
