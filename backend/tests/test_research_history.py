@@ -3,7 +3,9 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
+import json
 from pathlib import Path
+import sqlite3
 from threading import Event
 from types import SimpleNamespace
 from uuid import uuid4
@@ -59,8 +61,11 @@ def service(tmp_path, gateway=None):
     return ResearchService(SqliteResearchRepository(tmp_path / "researches.sqlite3"), gateway or Gateway())
 
 
-def launch(researches, gateway, request_id=None, kind="documents"):
-    return researches.start(kind, "Что подтверждают документы?", [{"id": "DOC-1", "filename": "источник.pdf"}], lambda: gateway.create_project("question"), request_id)
+def launch(researches, gateway, request_id=None, kind="documents", auto_mode=False):
+    return researches.start(
+        kind, "Что подтверждают документы?", [{"id": "DOC-1", "filename": "источник.pdf"}],
+        lambda: gateway.create_project("question"), request_id, auto_mode=auto_mode,
+    )
 
 
 def test_restart_retains_full_answer_and_all_materials_when_synapse_is_offline(tmp_path):
@@ -270,7 +275,7 @@ def test_api_requires_team_access_for_history_decisions_and_files(tmp_path, monk
     monkeypatch.setattr(api.document_config, "document_access_token", "test-team-code")
     monkeypatch.setattr(api, "research_service", lambda: researches)
     with TestClient(app) as client:
-        for method, path in [("GET", "/api/researches"), ("GET", f"/api/researches/{record['id']}"), ("POST", f"/api/researches/{record['id']}/refresh"), ("POST", f"/api/researches/{record['id']}/approvals/approval-1"), ("GET", f"/api/researches/{record['id']}/files/report")]:
+        for method, path in [("GET", "/api/researches"), ("GET", f"/api/researches/{record['id']}"), ("POST", f"/api/researches/{record['id']}/refresh"), ("POST", f"/api/researches/{record['id']}/auto-mode"), ("POST", f"/api/researches/{record['id']}/approvals/approval-1"), ("GET", f"/api/researches/{record['id']}/files/report")]:
             assert client.request(method, path).status_code == 401
         headers = {"Authorization": "Bearer test-team-code"}
         assert client.get("/api/researches", headers=headers).json()["items"][0]["id"] == record["id"]
@@ -300,3 +305,73 @@ def test_both_existing_launches_enter_the_same_history(tmp_path):
     assert first["research_id"] != second["research_id"]
     assert {item["kind"] for item in researches.list()} == {"documents", "evidence"}
     assert len(researches.get(first["research_id"])["sources"]) == 1
+
+
+def test_auto_mode_confirms_pending_approval_on_refresh(tmp_path):
+    gateway = Gateway()
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway, auto_mode=True)
+    record = researches.refresh(record["id"])
+    assert record["auto_mode"] is True
+    assert gateway.decisions == [("project-1", "approval-1", True, "")]
+    assert record["status"] == "completed"
+    assert record["approvals"] == []
+
+
+def test_human_mode_leaves_approval_for_the_operator(tmp_path):
+    gateway = Gateway()
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    record = researches.refresh(record["id"])
+    assert record.get("auto_mode") is False
+    assert gateway.decisions == []
+    assert record["status"] == "awaiting_approval"
+    assert record["approvals"][0]["id"] == "approval-1"
+
+
+def _drop_auto_mode(path: Path, research_id: str) -> None:
+    with sqlite3.connect(path) as connection:
+        row = connection.execute("SELECT data FROM researches WHERE id = ?", (research_id,)).fetchone()
+        data = json.loads(row[0])
+        data.pop("auto_mode", None)
+        connection.execute(
+            "UPDATE researches SET data = ? WHERE id = ?",
+            (json.dumps(data, ensure_ascii=False), research_id),
+        )
+        connection.commit()
+
+
+def test_legacy_record_without_auto_mode_waits_for_operator(tmp_path):
+    gateway = Gateway()
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    researches._repository.patch(record["id"], {"auto_mode": None})
+    record = researches.refresh(record["id"])
+    assert gateway.decisions == []
+    assert record["status"] == "awaiting_approval"
+
+
+def test_switching_auto_mode_writes_missing_field(tmp_path):
+    gateway = Gateway()
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    _drop_auto_mode(tmp_path / "researches.sqlite3", record["id"])
+    assert "auto_mode" not in researches._repository.get(record["id"])
+    disabled = researches.set_auto_mode(record["id"], False)
+    stored = researches._repository.get(record["id"])
+    assert disabled["auto_mode"] is False
+    assert stored["auto_mode"] is False
+    enabled = researches.set_auto_mode(record["id"], True)
+    assert enabled["auto_mode"] is True
+    assert researches._repository.get(record["id"])["auto_mode"] is True
+
+
+def test_enabling_auto_mode_confirms_current_approval(tmp_path):
+    gateway = Gateway()
+    researches = service(tmp_path, gateway)
+    record = launch(researches, gateway)
+    researches.refresh(record["id"])
+    record = researches.set_auto_mode(record["id"], True)
+    assert record["auto_mode"] is True
+    assert gateway.decisions == [("project-1", "approval-1", True, "")]
+    assert record["status"] == "completed"

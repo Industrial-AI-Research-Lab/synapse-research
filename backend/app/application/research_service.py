@@ -49,6 +49,7 @@ class ResearchService:
     def start(
         self, kind: str, question: str, sources: list[dict[str, Any]],
         launch: Callable[[], dict[str, Any]], request_id: str | None = None,
+        auto_mode: bool = False,
     ) -> dict[str, Any]:
         research_id = request_id or str(uuid4())
         record, created = self._repository.begin({
@@ -57,6 +58,7 @@ class ResearchService:
             "project_id": "", "title": question, "status": "starting",
             "phase": "", "synapse_url": "", "result_url": "",
             "result_text": "", "files": [], "approvals": [], "sync_error": "",
+            "auto_mode": bool(auto_mode),
         })
         if not created:
             return record
@@ -99,7 +101,7 @@ class ResearchService:
                 record = self._repository.patch(research_id, {"status": "start_unknown", "sync_error": "Ответ на запуск не был сохранён. Проверьте историю Synapse перед повторным запуском."})
             return record
 
-    def refresh(self, research_id: str) -> dict[str, Any]:
+    def refresh(self, research_id: str, _auto_depth: int = 0) -> dict[str, Any]:
         with self._repository.locked(research_id):
             record = self.get(research_id)
             if not record["project_id"]:
@@ -124,9 +126,15 @@ class ResearchService:
                             errors.append(f"{item['filename']}: {exc}")
                 if errors:
                     record = self._repository.patch(research_id, {"sync_error": "Не все материалы сохранены. " + " ".join(errors)})
-                return record
+                return self._continue_auto_mode(research_id, record, _auto_depth)
             except ResearchGatewayError as exc:
                 return self._repository.patch(research_id, {"sync_error": str(exc)})
+
+    def set_auto_mode(self, research_id: str, auto_mode: bool) -> dict[str, Any]:
+        with self._repository.locked(research_id):
+            self.get(research_id)
+            self._repository.patch(research_id, {"auto_mode": bool(auto_mode)})
+            return self.refresh(research_id)
 
     def resolve(self, research_id: str, approval_id: str, approved: bool, feedback: str, expected_data: dict[str, Any] | None = None) -> dict[str, Any]:
         with self._repository.locked(research_id):
@@ -149,6 +157,21 @@ class ResearchService:
             if item is None:
                 raise ResearchNotFoundError("Файл не найден в материалах исследования.")
             return item, self._cache_file(record, file_id)
+
+    def _continue_auto_mode(self, research_id: str, record: dict[str, Any], depth: int) -> dict[str, Any]:
+        if depth >= 10 or not record.get("auto_mode") or not record["approvals"] or record["sync_error"]:
+            return record
+        approval = record["approvals"][0]
+        if not approval.get("id"):
+            return record
+        try:
+            self._gateway.resolve_approval(record["project_id"], approval, True, "")
+        except ResearchConflictError:
+            return record
+        except ResearchGatewayError as exc:
+            return self._repository.patch(research_id, {"sync_error": str(exc)})
+        self._repository.patch(research_id, {"approvals": [], "status": "running", "checked_at": utc_now()})
+        return self.refresh(research_id, _auto_depth=depth + 1)
 
     def _cache_file(self, record: dict[str, Any], file_id: str) -> bytes:
         content = self._repository.get_file(record["id"], file_id)

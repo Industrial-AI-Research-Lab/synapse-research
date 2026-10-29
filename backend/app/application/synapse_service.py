@@ -41,17 +41,20 @@ class SynapseService:
         self._document_service = document_service
         self._researches = researches
 
-    def start_research(self, question: str, experiment_ids: list[str], request_id: str | None = None) -> dict[str, Any]:
+    def start_research(
+        self, question: str, experiment_ids: list[str], request_id: str | None = None, auto_mode: bool = False,
+    ) -> dict[str, Any]:
         rows = self._evidence_service.selected_rows(question, experiment_ids)
         if self._researches:
             return self._saved_project(self._researches.start(
                 "evidence", question, [{"id": row["id"], "filename": row.get("source", {}).get("document", row["id"]), "evidence": row} for row in rows],
                 lambda: self._client.create_project(brief_for_synapse(question, rows)), request_id,
+                auto_mode=auto_mode,
             ))
         return self._public_project(self._client.create_project(brief_for_synapse(question, rows)))
 
     def start_document_research(
-        self, question: str, document_ids: list[str], request_id: str | None = None
+        self, question: str, document_ids: list[str], request_id: str | None = None, auto_mode: bool = False,
     ) -> dict[str, Any]:
         attachments: list[SynapseAttachment] = []
         seen_document_ids: set[str] = set()
@@ -72,12 +75,11 @@ class SynapseService:
             return self._saved_project(self._researches.start(
                 "documents", question,
                 [{"id": document_id, "filename": attachment.filename} for document_id, attachment in zip(dict.fromkeys(document_ids), attachments)],
-                lambda: self._client.create_document_research(_document_research_brief(question, attachments), attachments), request_id,
+                lambda: self._client.create_document_research(question, attachments), request_id,
+                auto_mode=auto_mode,
             ))
         return self._public_project(
-            self._client.create_document_research(
-                _document_research_brief(question, attachments), attachments
-            )
+            self._client.create_document_research(question, attachments)
         )
 
     def get_project(self, project_id: str) -> dict[str, Any]:
@@ -108,19 +110,6 @@ class SynapseService:
             "result_url": _project_result_url(project),
             "synapse_url": self._client.project_url(project_id),
         }
-
-
-def _document_research_brief(
-    question: str, attachments: list[SynapseAttachment]
-) -> str:
-    filenames = ", ".join(attachment.filename for attachment in attachments)
-    return (
-        "Подготовь исследовательский ответ на вопрос пользователя. "
-        "Используй вложенные документы как первоисточники; отдели подтверждённые "
-        "выводы от ограничений и приводи ссылки на файл и доступную позицию в нём.\n\n"
-        f"Вопрос пользователя: {question}\n"
-        f"Вложенные документы: {filenames}"
-    )
 
 
 def _project_result_url(project: dict[str, Any]) -> str:

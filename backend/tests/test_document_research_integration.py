@@ -72,7 +72,7 @@ def test_document_research_forwards_unique_selected_pdf_files(tmp_path: Path) ->
     assert documents.opened == ["doc-1", "doc-2"]
     assert len(gateway.calls) == 1
     prompt, attachments = gateway.calls[0]
-    assert "Какие ПАВ сохраняют растворимость?" in prompt
+    assert prompt == "Какие ПАВ сохраняют растворимость?"
     assert [attachment.filename for attachment in attachments] == ["first.pdf", "second.pdf"]
     assert project == {
         "project_id": "project-42",
@@ -234,7 +234,9 @@ class _ApiSynapseService:
     def __init__(self) -> None:
         self.started: list[tuple[str, list[str]]] = []
 
-    def start_document_research(self, query: str, document_ids: list[str]) -> dict[str, object]:
+    def start_document_research(
+        self, query: str, document_ids: list[str], request_id: str | None = None, auto_mode: bool = False,
+    ) -> dict[str, object]:
         self.started.append((query, document_ids))
         return {
             "project_id": "project-42",

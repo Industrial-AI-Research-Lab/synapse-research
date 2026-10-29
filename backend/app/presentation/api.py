@@ -101,6 +101,7 @@ class AnalysisBody(BaseModel):
     question: str = Field(min_length=5, max_length=1200)
     experiment_ids: list[str] = Field(default_factory=list, max_length=30)
     request_id: UUID | None = None
+    auto_mode: bool = False
 
     @field_validator("question", mode="before")
     @classmethod
@@ -157,6 +158,7 @@ class DocumentResearchBody(BaseModel):
     query: str = Field(min_length=2, max_length=1200)
     document_ids: list[str] = Field(min_length=1, max_length=50)
     request_id: UUID | None = None
+    auto_mode: bool = False
 
     @field_validator("query", mode="before")
     @classmethod
@@ -278,8 +280,10 @@ def start_document_research(body: DocumentResearchBody) -> dict[str, Any]:
     try:
         service = synapse_service()
         if body.request_id:
-            return service.start_document_research(body.query, body.document_ids, str(body.request_id))
-        return service.start_document_research(body.query, body.document_ids)
+            return service.start_document_research(
+                body.query, body.document_ids, str(body.request_id), auto_mode=body.auto_mode,
+            )
+        return service.start_document_research(body.query, body.document_ids, auto_mode=body.auto_mode)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except SynapseError as exc:
@@ -361,8 +365,10 @@ def start_synapse_research(body: AnalysisBody) -> dict[str, Any]:
     try:
         service = synapse_service()
         if body.request_id:
-            return service.start_research(body.question, body.experiment_ids, str(body.request_id))
-        return service.start_research(body.question, body.experiment_ids)
+            return service.start_research(
+                body.question, body.experiment_ids, str(body.request_id), auto_mode=body.auto_mode,
+            )
+        return service.start_research(body.question, body.experiment_ids, auto_mode=body.auto_mode)
     except EvidenceSelectionNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Не найдены выбранные опыты.") from exc
     except SynapseError as exc:
@@ -375,6 +381,10 @@ class ResearchApprovalBody(BaseModel):
     approved: bool
     feedback: str = Field(default="", max_length=5000)
     expected_data: dict[str, Any] | None = None
+
+
+class ResearchAutoModeBody(BaseModel):
+    auto_mode: bool
 
 
 def research_action(action: Callable[[], Any]) -> Any:
@@ -411,6 +421,11 @@ def research_detail(research_id: str, response: Response) -> dict[str, Any]:
 @router.post("/researches/{research_id}/refresh", dependencies=[Depends(require_document_access_token)])
 def refresh_research(research_id: str) -> dict[str, Any]:
     return research_action(lambda: research_service().refresh(research_id))
+
+
+@router.post("/researches/{research_id}/auto-mode", dependencies=[Depends(require_document_access_token)])
+def set_research_auto_mode(research_id: str, body: ResearchAutoModeBody) -> dict[str, Any]:
+    return research_action(lambda: research_service().set_auto_mode(research_id, body.auto_mode))
 
 
 @router.post("/researches/{research_id}/approvals/{approval_id}", dependencies=[Depends(require_document_access_token)])
