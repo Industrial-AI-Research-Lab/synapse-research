@@ -3,7 +3,7 @@ import scss from "./researchError.module.scss";
 import { useRef, useState, type ReactNode } from "react";
 import Button from "../../components/ui/Button/Button";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
-import { parseSynapseError } from "./researchError";
+import { parseSynapseError } from "./parseSynapseError";
 
 interface IResearchError {
   error: string;

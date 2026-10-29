@@ -10,8 +10,8 @@ import {
   decodePreviewText,
   getJsonPreview,
   MAX_PREVIEW_BYTES,
-} from "./documentPreview";
-import type { DocumentPreviewSource } from "./documentPreview";
+} from "./documentPreviewContent";
+import type { DocumentPreviewSource } from "./documentPreviewContent";
 
 const shouldExpandNode = (level: number) => level === 0;
 

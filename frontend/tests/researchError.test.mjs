@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseSynapseError } from "../src/app/research/researchError.ts";
+import { parseSynapseError } from "../src/app/research/parseSynapseError.ts";
 
 test("separates the HTTP context from the original multiline response", () => {
   assert.deepEqual(

@@ -4,7 +4,7 @@ import {
   canPreviewFile,
   decodePreviewText,
   getJsonPreview,
-} from "../src/components/DocumentPreview/documentPreview.ts";
+} from "../src/components/DocumentPreview/documentPreviewContent.ts";
 
 test("offers preview for corpus text formats and text research materials, preserving PDF", () => {
   for (const extension of [
