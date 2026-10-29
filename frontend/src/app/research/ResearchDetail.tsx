@@ -7,19 +7,21 @@ import {
   refreshResearch,
   ResearchApiError,
   resolveResearchApproval,
+  setResearchAutoMode,
 } from "../../api/research";
 import { getDocumentFile } from "../../api/documents";
 import type { Research, ResearchFile } from "../../assets/types/research";
 import Button from "../../components/ui/Button/Button";
 import DocumentPreview from "../../components/DocumentPreview/DocumentPreview";
-import { canPreviewFile } from "../../components/DocumentPreview/documentPreview";
-import type { DocumentPreviewSource } from "../../components/DocumentPreview/documentPreview";
+import { canPreviewFile } from "../../components/DocumentPreview/documentPreviewContent";
+import type { DocumentPreviewSource } from "../../components/DocumentPreview/documentPreviewContent";
 import Field from "../../components/ui/Field/Field";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
 import Toast from "../../components/ui/Toast/Toast";
 import ToastViewport from "../../components/ui/Toast/ToastViewport";
 import Textarea from "../../components/ui/Textarea/Textarea";
+import ApprovalModeToggle from "./ApprovalModeToggle";
 import ResearchAccess from "./ResearchAccess";
 import ApprovalDetails from "./ApprovalDetails";
 import ApprovalSummary from "./ApprovalSummary";
@@ -27,12 +29,12 @@ import { getApprovalPresentation } from "./approvalPresentation";
 import ResearchStatus from "./ResearchStatus";
 import ResearchError from "./ResearchError";
 import errorScss from "./researchError.module.scss";
-import { parseSynapseError } from "./researchError";
+import { parseSynapseError } from "./parseSynapseError";
 import {
   formatResearchDate,
   formatResearchPhase,
-  formatResearchResultHint,
   isResearchFinal,
+  shouldAutoRefreshResearch,
 } from "./researchPresentation";
 
 const safeLink = (value: string) => {
@@ -62,6 +64,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
   const [decisionError, setDecisionError] = useState("");
   const [hasAccessError, setHasAccessError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUpdatingAutoMode, setIsUpdatingAutoMode] = useState(false);
   const [resolvingId, setResolvingId] = useState("");
   const [resolvingDecision, setResolvingDecision] = useState<boolean>();
   const [notification, setNotification] = useState<{
@@ -79,6 +82,7 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
   const [loadRevision, setLoadRevision] = useState(0);
   const isMountedRef = useRef(true);
   const isRefreshingRef = useRef(false);
+  const materialsRef = useRef<HTMLDetailsElement>(null);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshingRef.current) return;
@@ -144,10 +148,24 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
     !research?.projectId &&
     ["start_failed", "start_unknown"].includes(researchStatus ?? "");
   useEffect(() => {
-    if (!researchStatus || isResearchFinal(researchStatus)) return;
+    if (
+      !researchStatus ||
+      !shouldAutoRefreshResearch(researchStatus, research?.autoMode)
+    )
+      return;
     const interval = window.setInterval(() => void handleRefresh(), 10_000);
     return () => window.clearInterval(interval);
-  }, [researchStatus, handleRefresh]);
+  }, [researchStatus, research?.autoMode, handleRefresh]);
+
+  useEffect(() => {
+    const revealMaterials = () => {
+      if (window.location.hash !== "#research-materials") return;
+      if (materialsRef.current) materialsRef.current.open = true;
+    };
+    revealMaterials();
+    window.addEventListener("hashchange", revealMaterials);
+    return () => window.removeEventListener("hashchange", revealMaterials);
+  }, [research?.files.length]);
 
   const report = research?.files.find(
     (file) => file.isReport && file.contentType === "text/html",
@@ -175,6 +193,38 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
       isCancelled = true;
     };
   }, [researchId, reportId, reportRevision]);
+
+  const handleAutoModeChange = async (autoMode: boolean) => {
+    if (isUpdatingAutoMode || !research) return;
+    setIsUpdatingAutoMode(true);
+    setError("");
+    try {
+      const updated = await setResearchAutoMode(researchId, autoMode);
+      if (isMountedRef.current) {
+        setResearch(updated);
+        setNotification({
+          title: autoMode ? "Авторежим включён" : "Авторежим выключен",
+          description: autoMode
+            ? "Шаги согласования будут подтверждаться без ручного решения."
+            : "Для продолжения снова нужно нажать «Подтвердить и продолжить».",
+          variant: "success",
+        });
+      }
+    } catch (failure) {
+      if (isMountedRef.current) {
+        setHasAccessError(
+          failure instanceof ResearchApiError && failure.status === 401,
+        );
+        setError(
+          failure instanceof Error
+            ? failure.message
+            : "Не удалось изменить авторежим.",
+        );
+      }
+    } finally {
+      if (isMountedRef.current) setIsUpdatingAutoMode(false);
+    }
+  };
 
   const handleDecision = async (approvalId: string, approved: boolean) => {
     if (resolvingId) return;
@@ -349,8 +399,8 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
           )}
           {research && (
             <>
-              <header className={scss.header}>
-                <div>
+              <header className={scss.intro}>
+                <div className={scss.header}>
                   <h1>
                     {research.title === research.question
                       ? research.kind === "documents"
@@ -364,209 +414,298 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                       ? "По документам"
                       : "По опытам"}
                   </p>
+                  {safeLink(research.synapseUrl) && (
+                    <a
+                      className={scss.synapseLink}
+                      href={safeLink(research.synapseUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span
+                        className={scss.synapseLinkIcon}
+                        aria-hidden="true"
+                      >
+                        <IconRenderer icon="externalLink" />
+                      </span>
+                      Открыть в Synapse
+                    </a>
+                  )}
                 </div>
-              </header>
-              {!hasStartupError && (
-                <section
-                  className={scss.statePanel}
-                  data-status={research.status}
-                  aria-label="Состояние исследования"
-                >
-                  <div className={scss.stateSummary}>
-                    <ResearchStatus
-                      status={research.status}
-                      variant="summary"
-                    />
-                    <p className={scss.phase}>
-                      {isResearchFinal(research.status)
-                        ? "Последний этап: "
-                        : "Текущий этап: "}
-                      {formatResearchPhase(research.phase) ||
-                        "Подготовка запуска"}
-                    </p>
-                    <div className={scss.stateControls}>
-                      <div className={scss.freshness}>
-                        {research.checkedAt ? (
-                          <time
-                            dateTime={research.checkedAt}
-                            title={formatResearchDate(research.checkedAt)}
-                          >
-                            Проверено в{" "}
-                            {new Intl.DateTimeFormat("ru-RU", {
-                              timeStyle: "short",
-                            }).format(new Date(research.checkedAt))}
-                          </time>
-                        ) : (
-                          <span>Статус ещё не проверялся</span>
-                        )}
-                      </div>
-                      <div className={scss.refreshGroup}>
-                        {research.projectId &&
-                          !isResearchFinal(research.status) && (
-                            <span className={scss.autoRefresh}>
-                              Автопроверка каждые 10 секунд
-                            </span>
+                {!hasStartupError && (
+                  <div
+                    className={scss.statePanel}
+                    data-status={research.status}
+                    role="region"
+                    aria-label="Состояние исследования"
+                  >
+                    <div className={scss.stateSummary}>
+                      <ResearchStatus
+                        status={research.status}
+                        variant="summary"
+                      />
+                      <p className={scss.phase}>
+                        {isResearchFinal(research.status)
+                          ? "Последний этап: "
+                          : "Текущий этап: "}
+                        {formatResearchPhase(research.phase) ||
+                          "Подготовка запуска"}
+                      </p>
+                      <div className={scss.stateControls}>
+                        <div className={scss.freshness}>
+                          {research.checkedAt ? (
+                            <time
+                              dateTime={research.checkedAt}
+                              title={formatResearchDate(research.checkedAt)}
+                            >
+                              Проверено в{" "}
+                              {new Intl.DateTimeFormat("ru-RU", {
+                                timeStyle: "short",
+                              }).format(new Date(research.checkedAt))}
+                            </time>
+                          ) : (
+                            <span>Статус ещё не проверялся</span>
                           )}
-                        <Button
-                          className={scss.refreshButton}
-                          variant="icon"
-                          aria-label={
-                            isRefreshing
-                              ? "Проверяем статус"
-                              : "Проверить статус вручную"
-                          }
-                          title="Проверить статус вручную"
-                          aria-busy={isRefreshing}
-                          disabled={
-                            isRefreshing ||
-                            Boolean(resolvingId) ||
-                            !research.projectId
-                          }
-                          onClick={() => void handleRefresh()}
-                        >
-                          <span className={scss.refreshIcon} aria-hidden="true">
-                            <IconRenderer icon="reload" />
-                          </span>
-                        </Button>
+                        </div>
+                        <div className={scss.refreshGroup}>
+                          {research.projectId &&
+                            shouldAutoRefreshResearch(
+                              research.status,
+                              research.autoMode,
+                            ) && (
+                              <span className={scss.autoRefresh}>
+                                Автопроверка каждые 10 секунд
+                              </span>
+                            )}
+                          <Button
+                            className={scss.refreshButton}
+                            variant="icon"
+                            aria-label={
+                              isRefreshing
+                                ? "Проверяем статус"
+                                : "Проверить статус вручную"
+                            }
+                            title="Проверить статус вручную"
+                            aria-busy={isRefreshing}
+                            disabled={
+                              isRefreshing ||
+                              Boolean(resolvingId) ||
+                              !research.projectId
+                            }
+                            onClick={() => void handleRefresh()}
+                          >
+                            <span
+                              className={scss.refreshIcon}
+                              aria-hidden="true"
+                            >
+                              <IconRenderer icon="reload" />
+                            </span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </section>
-              )}
-              {(hasStartupError ||
-                research.syncError ||
-                research.failureReason) && (
-                <div
-                  className={scss.stateErrors}
-                  data-startup={hasStartupError}
-                >
-                  {(hasStartupError || research.syncError) && (
-                    <ResearchError
-                      key={`sync:${research.syncError}`}
-                      error={research.syncError}
-                      title={
-                        research.status === "start_unknown"
-                          ? "Не удалось подтвердить запуск"
-                          : hasStartupError
-                            ? parseSynapseError(research.syncError).httpStatus
-                              ? "Synapse отклонил запуск"
-                              : "Не удалось запустить исследование"
-                            : "Не удалось обновить состояние"
-                      }
-                      description={
-                        research.status === "start_unknown"
-                          ? "Synapse мог создать проект. Проверьте его историю перед новым запуском."
-                          : hasStartupError
-                            ? "Проект не создан. Исследование не запущено."
-                            : undefined
-                      }
-                      researchId={research.id}
-                      projectId={research.projectId}
-                    >
-                      <a
-                        className={errorScss.documentsLink}
-                        href="#selected-sources-heading"
-                      >
-                        {research.kind === "documents"
-                          ? "Документы исследования"
-                          : "Источники исследования"}
-                      </a>
-                    </ResearchError>
-                  )}
-                  {research.failureReason && (
-                    <ResearchError
-                      key={`failure:${research.failureReason}`}
-                      error={research.failureReason}
-                      title="Исследование завершилось с ошибкой"
-                      researchId={research.id}
-                      projectId={research.projectId}
-                      isSynapseError
-                    />
-                  )}
-                </div>
-              )}
-              <section className={`${scss.section} ${scss.sourcesSection}`}>
-                <h2>Вопрос исследования</h2>
-                <p className={scss.question}>{research.question}</p>
-                <h3 id="selected-sources-heading">Выбранные источники</h3>
-                <div
-                  className={scss.sourcesViewport}
-                  role="region"
-                  aria-labelledby="selected-sources-heading"
-                  tabIndex={0}
-                >
-                  <ul
-                    className={`${scss.sources} ${research.sources.length > 36 ? scss.sourcesLarge : ""}`}
+                )}
+              </header>
+              <section
+                className={`${scss.section} ${scss.sourcesSection}`}
+                id="selected-sources-heading"
+                aria-labelledby="research-brief-heading"
+              >
+                <h2 id="research-brief-heading">Вопрос и источники</h2>
+                <div className={scss.briefBody}>
+                  <p className={scss.question}>{research.question}</p>
+                  <div
+                    className={scss.sourcesViewport}
+                    role="region"
+                    aria-label="Выбранные источники"
+                    tabIndex={0}
                   >
-                    {research.sources.map((source) => (
-                      <li key={source.id}>
-                        {research.kind === "documents" ? (
-                          <div className={scss.sourceFile}>
-                            <span
-                              className={scss.sourceFilename}
-                              title={source.filename}
-                            >
-                              {source.filename}
-                            </span>
-                            {canPreviewFile(source.filename) && (
+                    <ul
+                      className={`${scss.sources} ${research.sources.length > 36 ? scss.sourcesLarge : ""}`}
+                    >
+                      {research.sources.map((source) => (
+                        <li key={source.id}>
+                          {research.kind === "documents" ? (
+                            <div className={scss.sourceFile}>
+                              <span
+                                className={scss.sourceFilename}
+                                title={source.filename}
+                              >
+                                {source.filename}
+                              </span>
+                              {canPreviewFile(source.filename) && (
+                                <Button
+                                  className={scss.sourceDownloadButton}
+                                  variant="icon"
+                                  type="button"
+                                  aria-label={`Просмотреть ${source.filename}`}
+                                  title="Просмотреть файл"
+                                  onClick={() =>
+                                    setPreviewSource({
+                                      filename: source.filename,
+                                      load: () =>
+                                        getDocumentFile(
+                                          `/api/documents/${encodeURIComponent(source.id)}/file`,
+                                        ),
+                                    })
+                                  }
+                                >
+                                  <IconRenderer icon="view" />
+                                </Button>
+                              )}
                               <Button
                                 className={scss.sourceDownloadButton}
-                                variant="icon"
                                 type="button"
-                                aria-label={`Просмотреть ${source.filename}`}
-                                title="Просмотреть файл"
+                                variant="text"
+                                isLoading={downloadingId === source.id}
+                                aria-label={
+                                  downloadingId === source.id
+                                    ? `Скачиваем ${source.filename}`
+                                    : `Скачать ${source.filename}`
+                                }
+                                title={`Скачать ${source.filename}`}
+                                aria-busy={downloadingId === source.id}
+                                disabled={Boolean(downloadingId)}
                                 onClick={() =>
-                                  setPreviewSource({
-                                    filename: source.filename,
-                                    load: () =>
-                                      getDocumentFile(
-                                        `/api/documents/${encodeURIComponent(source.id)}/file`,
-                                      ),
-                                  })
+                                  void handleSourceDownload(
+                                    source.id,
+                                    source.filename,
+                                  )
                                 }
                               >
-                                <IconRenderer icon="view" />
+                                <IconRenderer
+                                  icon="download"
+                                  aria-hidden="true"
+                                />
                               </Button>
-                            )}
-                            <Button
-                              className={scss.sourceDownloadButton}
-                              type="button"
-                              variant="text"
-                              isLoading={downloadingId === source.id}
-                              aria-label={
-                                downloadingId === source.id
-                                  ? `Скачиваем ${source.filename}`
-                                  : `Скачать ${source.filename}`
-                              }
-                              title={`Скачать ${source.filename}`}
-                              aria-busy={downloadingId === source.id}
-                              disabled={Boolean(downloadingId)}
-                              onClick={() =>
-                                void handleSourceDownload(
-                                  source.id,
-                                  source.filename,
-                                )
-                              }
+                            </div>
+                          ) : (
+                            <a
+                              href={`/source/${encodeURIComponent(source.id)}`}
+                              title={`${source.id} · ${source.filename}`}
                             >
-                              <IconRenderer
-                                icon="download"
-                                aria-hidden="true"
-                              />
-                            </Button>
-                          </div>
-                        ) : (
-                          <a
-                            href={`/source/${encodeURIComponent(source.id)}`}
-                            title={`${source.id} · ${source.filename}`}
-                          >
-                            {source.id} · {source.filename}
-                          </a>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                              {source.id} · {source.filename}
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </section>
+              <section
+                className={scss.section}
+                aria-labelledby="research-settings-heading"
+              >
+                <h2 id="research-settings-heading">Исследование</h2>
+                <ApprovalModeToggle
+                  id="research-auto-mode"
+                  checked={research.autoMode}
+                  disabled={
+                    isUpdatingAutoMode ||
+                    isRefreshing ||
+                    Boolean(resolvingId)
+                  }
+                  onChange={(checked) => void handleAutoModeChange(checked)}
+                />
+              </section>
+              {(hasStartupError ||
+                research.syncError ||
+                research.failureReason ||
+                reportError ||
+                reportId ||
+                research.resultText) && (
+              <section className={scss.section} id="research-result">
+                <h2>Результат исследования</h2>
+                {(hasStartupError ||
+                  research.syncError ||
+                  research.failureReason) && (
+                  <div className={scss.stateErrors}>
+                    {(hasStartupError || research.syncError) && (
+                      <ResearchError
+                        key={`sync:${research.syncError}`}
+                        error={research.syncError}
+                        title={
+                          research.status === "start_unknown"
+                            ? "Не удалось подтвердить запуск"
+                            : hasStartupError
+                              ? parseSynapseError(research.syncError).httpStatus
+                                ? "Synapse отклонил запуск"
+                                : "Не удалось запустить исследование"
+                              : "Не удалось обновить состояние"
+                        }
+                        description={
+                          research.status === "start_unknown"
+                            ? "Synapse мог создать проект. Проверьте его историю перед новым запуском."
+                            : hasStartupError
+                              ? "Проект не создан. Исследование не запущено."
+                              : undefined
+                        }
+                        researchId={research.id}
+                        projectId={research.projectId}
+                      >
+                        <a
+                          className={errorScss.documentsLink}
+                          href="#selected-sources-heading"
+                        >
+                          {research.kind === "documents"
+                            ? "Документы исследования"
+                            : "Источники исследования"}
+                        </a>
+                      </ResearchError>
+                    )}
+                    {research.failureReason && (
+                      <ResearchError
+                        key={`failure:${research.failureReason}`}
+                        error={research.failureReason}
+                        title="Исследование завершилось с ошибкой"
+                        researchId={research.id}
+                        projectId={research.projectId}
+                        isSynapseError
+                      />
+                    )}
+                  </div>
+                )}
+                {reportError && (
+                  <div>
+                    <ResearchError
+                      key={`report:${reportError}`}
+                      error={reportError}
+                      title="Не удалось открыть отчёт"
+                      researchId={researchId}
+                      projectId={research.projectId}
+                    />
+                    <Button
+                      variant="secondary"
+                      onClick={() => setReportRevision((value) => value + 1)}
+                    >
+                      Повторить загрузку отчёта
+                    </Button>
+                  </div>
+                )}
+                {reportId && !reportHtml && !reportError && (
+                  <Loader variant="inline" label="Открываем полный отчёт…" />
+                )}
+                {reportHtml && (
+                  <iframe
+                    className={scss.report}
+                    title="Полный отчёт исследования"
+                    sandbox=""
+                    referrerPolicy="no-referrer"
+                    srcDoc={`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; form-action 'none'; base-uri 'none'">${reportHtml}`}
+                  />
+                )}
+                {research.resultText &&
+                  (reportHtml ? (
+                    <details className={scss.details}>
+                      <summary>Текстовая версия ответа</summary>
+                      <div className={scss.prose}>{research.resultText}</div>
+                    </details>
+                  ) : (
+                    <div className={scss.prose}>{research.resultText}</div>
+                  ))}
+              </section>
+              )}
               {research.approvals.map((approval) => {
                 const view = getApprovalPresentation(approval);
                 const details = approval.details ?? approval.expectedData;
@@ -586,12 +725,16 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                     {details != null && (
                       <details
                         className={`${scss.details} ${scss.approvalDetails}`}
-                        open
                       >
                         <summary>Данные для решения</summary>
                         <ApprovalDetails details={details} />
                       </details>
                     )}
+                    {research.autoMode ? (
+                      <p className={scss.autoModeNote}>
+                        Авторежим подтвердит этот шаг без ручного решения.
+                      </p>
+                    ) : (
                     <div className={scss.approvalDecision}>
                       <Field
                         label="Комментарий к решению"
@@ -655,76 +798,21 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                         </Button>
                       </div>
                     </div>
+                    )}
                   </section>
                 );
               })}
-              <section className={scss.section} id="research-result">
-                <h2>Результат исследования</h2>
-                {reportError && (
-                  <div>
-                    <ResearchError
-                      key={`report:${reportError}`}
-                      error={reportError}
-                      title="Не удалось открыть отчёт"
-                      researchId={researchId}
-                      projectId={research.projectId}
-                    />
-                    <Button
-                      variant="secondary"
-                      onClick={() => setReportRevision((value) => value + 1)}
-                    >
-                      Повторить загрузку отчёта
-                    </Button>
-                  </div>
-                )}
-                {reportId && !reportHtml && !reportError && (
-                  <Loader variant="inline" label="Открываем полный отчёт…" />
-                )}
-                {reportHtml && (
-                  <iframe
-                    className={scss.report}
-                    title="Полный отчёт исследования"
-                    sandbox=""
-                    referrerPolicy="no-referrer"
-                    srcDoc={`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; form-action 'none'; base-uri 'none'">${reportHtml}`}
-                  />
-                )}
-                {research.resultText &&
-                  (reportHtml ? (
-                    <details className={scss.details}>
-                      <summary>Текстовая версия ответа</summary>
-                      <div className={scss.prose}>{research.resultText}</div>
-                    </details>
-                  ) : (
-                    <div className={scss.prose}>{research.resultText}</div>
-                  ))}
-                {!research.resultText && !reportId && (
-                  <div>
-                    <p className={scss.muted}>
-                      {formatResearchResultHint(research.status)}
-                    </p>
-                    {isResearchFinal(research.status) &&
-                      !["completed", "done", "start_unknown"].includes(
-                        research.status,
-                      ) && (
-                        <a
-                          href={
-                            research.kind === "documents"
-                              ? "/documents"
-                              : "/completeness"
-                          }
-                        >
-                          Подготовить новое исследование
-                        </a>
-                      )}
-                  </div>
-                )}
-              </section>
               {research.files.length > 0 && (
                 <section className={scss.section} id="research-materials">
-                  <h2>Созданные материалы</h2>
-                  <ul className={scss.files}>
-                    {research.files.map((file) => (
+                  <details className={scss.materials} ref={materialsRef}>
+                    <summary>
+                      <span className={scss.materialsToggle} aria-hidden="true">
+                        <IconRenderer icon="chevronRight" />
+                      </span>
+                      <h2>Созданные материалы</h2>
+                    </summary>
+                    <ul className={scss.files}>
+                      {research.files.map((file) => (
                       <li key={file.id}>
                         <span>
                           {file.filename}
@@ -779,7 +867,8 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                         </div>
                       </li>
                     ))}
-                  </ul>
+                    </ul>
+                  </details>
                 </section>
               )}
               {fileError && (
@@ -791,21 +880,8 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                   projectId={research.projectId}
                 />
               )}
-              <footer className={scss.actions}>
-                {safeLink(research.synapseUrl) && (
-                  <a
-                    className={scss.synapseLink}
-                    href={safeLink(research.synapseUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className={scss.synapseLinkIcon} aria-hidden="true">
-                      <IconRenderer icon="externalLink" />
-                    </span>
-                    Открыть в Synapse
-                  </a>
-                )}
-                {safeLink(research.resultUrl) && (
+              {safeLink(research.resultUrl) && (
+                <footer className={scss.actions}>
                   <a
                     href={safeLink(research.resultUrl)}
                     target="_blank"
@@ -813,8 +889,8 @@ const ResearchDetail = ({ researchId }: { researchId: string }) => {
                   >
                     Открыть опубликованный отчёт
                   </a>
-                )}
-              </footer>
+                </footer>
+              )}
             </>
           )}
         </>

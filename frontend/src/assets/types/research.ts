@@ -39,6 +39,7 @@ export interface ResearchSummary {
   syncError: string;
   fileCount: number;
   approvalCount: number;
+  autoMode: boolean;
 }
 
 export interface Research extends ResearchSummary {

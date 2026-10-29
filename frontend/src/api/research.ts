@@ -20,6 +20,7 @@ interface ApiResearch {
   sync_error: string;
   file_count?: number;
   approval_count?: number;
+  auto_mode?: boolean;
   result_text?: string;
   failure_reason?: string;
   files?: Array<{
@@ -87,6 +88,7 @@ const mapResearch = (item: ApiResearch): Research => ({
   failureReason: item.failure_reason ?? "",
   fileCount: item.file_count ?? item.files?.length ?? 0,
   approvalCount: item.approval_count ?? item.approvals?.length ?? 0,
+  autoMode: Boolean(item.auto_mode),
   files: (item.files ?? []).map((file) => ({
     id: file.id,
     filename: file.filename,
@@ -120,6 +122,17 @@ export const refreshResearch = async (id: string) =>
     await (
       await request(`/api/researches/${encodeURIComponent(id)}/refresh`, {
         method: "POST",
+      })
+    ).json(),
+  );
+
+export const setResearchAutoMode = async (id: string, autoMode: boolean) =>
+  mapResearch(
+    await (
+      await request(`/api/researches/${encodeURIComponent(id)}/auto-mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auto_mode: autoMode }),
       })
     ).json(),
   );

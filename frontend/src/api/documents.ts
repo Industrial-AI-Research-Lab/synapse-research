@@ -281,6 +281,7 @@ export const startDocumentResearch = async (
         query: params.query,
         document_ids: params.documentIds,
         request_id: createResearchRequestId(),
+        auto_mode: Boolean(params.autoMode),
       }),
     },
     accessToken,

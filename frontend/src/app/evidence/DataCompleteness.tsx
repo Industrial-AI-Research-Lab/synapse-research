@@ -16,6 +16,7 @@ import Button from "../../components/ui/Button/Button";
 import IconRenderer from "../../components/ui/IconRenderer/IconRenderer";
 import Loader from "../../components/ui/Loader/Loader";
 import { getAnalysisFlow } from "./analysisFlow";
+import ApprovalModeToggle from "../research/ApprovalModeToggle";
 import { ResearchApiError } from "../../api/research";
 import { getTeamAccessToken, setTeamAccessToken } from "../../api/teamAccess";
 import Field from "../../components/ui/Field/Field";
@@ -96,6 +97,7 @@ const DataCompleteness = () => {
   const [evidence, setEvidence] = useState<EvidenceResponse>();
   const [result, setResult] = useState<Result>();
   const [isLoading, setIsLoading] = useState(true);
+  const [isAutoMode, setIsAutoMode] = useState(false);
 
   useEffect(() => {
     if (!flow) {
@@ -170,6 +172,7 @@ const DataCompleteness = () => {
       const project = await createSynapseProject(
         flow.question,
         flow.selectedIds,
+        isAutoMode,
       );
       if (project.research_id) {
         window.location.assign(
@@ -279,6 +282,14 @@ const DataCompleteness = () => {
       </section>
 
       <section className={scss.actions} aria-label="Следующие действия">
+        <div className={scss.autoMode}>
+          <ApprovalModeToggle
+            id="evidence-research-auto-mode"
+            checked={isAutoMode}
+            disabled={isLoading}
+            onChange={setIsAutoMode}
+          />
+        </div>
         <Button
           className={scss.collectEvidenceButton}
           variant="secondary"

@@ -106,6 +106,7 @@ export const createAnalysis = (question: string, experimentIds: string[]) =>
 export const createSynapseProject = (
   question: string,
   experimentIds: string[],
+  autoMode = false,
 ) =>
   request<SynapseProject>("/api/synapse/projects", {
     method: "POST",
@@ -114,5 +115,6 @@ export const createSynapseProject = (
       question,
       experiment_ids: experimentIds,
       request_id: createResearchRequestId(),
+      auto_mode: autoMode,
     }),
   });

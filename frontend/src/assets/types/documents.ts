@@ -43,6 +43,7 @@ export interface DocumentSearchResponse {
 export interface DocumentResearchParams {
   query: string;
   documentIds: string[];
+  autoMode?: boolean;
 }
 
 export interface DocumentResearchProject {

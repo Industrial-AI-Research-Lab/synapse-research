@@ -53,6 +53,11 @@ export const isResearchFinal = (status: string) =>
     "start_unknown",
   ].includes(status);
 
+export const shouldAutoRefreshResearch = (
+  status: string,
+  isAutoMode = false,
+) => !isResearchFinal(status) && (isAutoMode || status !== "awaiting_approval");
+
 export const formatResearchDate = (date: string | null) =>
   date
     ? new Intl.DateTimeFormat("ru-RU", {

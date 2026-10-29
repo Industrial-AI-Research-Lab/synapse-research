@@ -95,6 +95,10 @@
   margin-top: 1.5rem;
 }
 
+.autoMode {
+  grid-column: 1 / -1;
+}
+
 .collectEvidenceButton {
   display: inline-flex;
   justify-content: center;

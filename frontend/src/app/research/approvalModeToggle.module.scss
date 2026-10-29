@@ -1,0 +1,126 @@
+@use "../../styles/mixin";
+@use "../../styles/typography";
+
+.root {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.label {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  @include typography.textM;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.hintButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.hintButton svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+.hintButton:hover {
+  color: var(--color-action);
+}
+
+.hintButton:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 0.1875rem;
+}
+
+.hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.switch {
+  @include mixin.transition((background-color, border-color));
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  width: 2rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.125rem;
+  overflow: hidden;
+  border: 1px solid var(--color-control-border);
+  border-radius: 999px;
+  background: var(--color-control);
+  cursor: pointer;
+}
+
+.switch:hover:not(:disabled) {
+  background: var(--color-control-hover);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 0.1875rem;
+}
+
+.switch[aria-checked="true"] {
+  background: var(--color-action);
+  border-color: var(--color-action);
+}
+
+.switch[aria-checked="true"]:hover:not(:disabled) {
+  background: var(--color-action-hover);
+  border-color: var(--color-action-hover);
+}
+
+.switch:disabled {
+  cursor: not-allowed;
+  background: var(--color-control-disabled-bg);
+  border-color: var(--color-border);
+}
+
+.thumb {
+  @include mixin.transition((transform, background-color));
+  display: block;
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--color-action);
+}
+
+.switch[aria-checked="true"] .thumb {
+  transform: translateX(0.75rem);
+  background: var(--color-action-text);
+}
+
+.switch:disabled .thumb {
+  background: var(--color-control-disabled);
+}
+
+@media (pointer: coarse) {
+  .hintButton {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
