@@ -58,7 +58,6 @@
 }
 
 .description {
-  max-width: 65ch;
   margin-top: 0.5rem;
   color: var(--color-text-muted);
   @include typography.textS;
@@ -75,7 +74,6 @@
 }
 
 .message {
-  max-width: 75ch;
   margin-top: 0.5rem;
   color: var(--color-text);
   @include typography.textM;
@@ -136,7 +134,6 @@
 }
 
 .copyStatus {
-  max-width: 65ch;
   margin-top: 0.5rem;
   color: var(--color-text-muted);
   @include typography.textXs;

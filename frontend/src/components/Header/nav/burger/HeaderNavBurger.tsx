@@ -43,7 +43,9 @@ const HeaderNavBurger = ({ items }: IHeaderNavBurger) => {
                   isActive={
                     window.location.pathname === item.href ||
                     (item.href === "/researches" &&
-                      window.location.pathname.startsWith("/researches/"))
+                      window.location.pathname.startsWith("/researches/")) ||
+                    (item.href === "/sources" &&
+                      window.location.pathname.startsWith("/sources/"))
                   }
                   onClick={handleClose}
                 />

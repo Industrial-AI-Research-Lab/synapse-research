@@ -9,7 +9,8 @@ import HeaderNavBurger from "./burger/HeaderNavBurger";
 const getIsActive = (href: string) =>
   window.location.pathname === href ||
   (href === "/researches" &&
-    window.location.pathname.startsWith("/researches/"));
+    window.location.pathname.startsWith("/researches/")) ||
+  (href === "/sources" && window.location.pathname.startsWith("/sources/"));
 
 const HeaderNav = () => (
   <>

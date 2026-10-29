@@ -10,11 +10,11 @@ const Header = () => (
     <a
       className={scss.logoLink}
       href="/documents"
-      aria-label="Synapse Research — к документам"
+      aria-label="Doc Research — к запросу"
     >
       <IconRenderer className={scss.logo} icon="synapseResearch" />
       <span className={scss.logoText}>
-        <strong>Synapse</strong>
+        <strong>Doc</strong>
         <span>Research</span>
       </span>
     </a>

@@ -14,7 +14,6 @@
 }
 
 .root p {
-  max-width: 75ch;
   margin-bottom: 0.75rem;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -120,10 +119,6 @@
 
 .note p:last-child {
   margin-bottom: 0;
-}
-
-.noteContent {
-  max-width: 75ch;
 }
 
 .original {

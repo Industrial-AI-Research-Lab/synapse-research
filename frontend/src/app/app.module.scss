@@ -20,11 +20,36 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  view-transition-name: workspace;
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .screen {
+    animation: workspaceEnter 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
   .screen:has([id="selected-sources-heading"]) {
     scroll-behavior: smooth;
+  }
+}
+
+:global(html:active-view-transition) .screen {
+  animation: none;
+}
+
+@keyframes workspaceEnter {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateX(1.25rem);
+    clip-path: inset(0 0 0 18%);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateX(0);
+    clip-path: inset(0);
   }
 }
 
@@ -56,5 +81,9 @@
 @media (prefers-reduced-motion: reduce) {
   .root {
     transition: none;
+  }
+
+  .screen {
+    view-transition-name: none;
   }
 }
