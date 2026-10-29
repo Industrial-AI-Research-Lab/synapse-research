@@ -8,6 +8,7 @@ import type { SynapseConfig } from "../assets/types/evidence";
 import Sidebar from "../components/Sidebar/Sidebar";
 import SynapseStatus from "../components/SynapseStatus/SynapseStatus";
 import DisabledPage from "./disabled/DisabledPage";
+import DocumentLibrary from "./documents/DocumentLibrary";
 import DocumentsWorkspace from "./documents/DocumentsWorkspace";
 import ResearchHistory from "./research/ResearchHistory";
 import ResearchDetail from "./research/ResearchDetail";
@@ -53,6 +54,8 @@ const App = () => {
     screen = <ResearchHistory />;
   } else if (["/documents", "/"].includes(window.location.pathname)) {
     screen = <DocumentsWorkspace />;
+  } else if (window.location.pathname === "/library") {
+    screen = <DocumentLibrary />;
   } else {
     screen = <DisabledPage />;
   }

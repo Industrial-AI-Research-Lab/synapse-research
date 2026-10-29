@@ -5,15 +5,9 @@ import SidebarIcon from "./SidebarIcon";
 import type { SidebarIconName } from "./SidebarIcon";
 
 const ACTIVE_ITEMS: { href: string; label: string; icon: SidebarIconName }[] = [
-  { href: "/documents", label: "Документы", icon: "document" },
+  { href: "/documents", label: "Запрос", icon: "document" },
   { href: "/researches", label: "Исследования", icon: "research" },
-];
-
-const DISABLED_ITEMS: { label: string; icon: SidebarIconName }[] = [
-  { label: "Доказательная база", icon: "database" },
-  { label: "Каталог источников", icon: "catalog" },
-  { label: "Проверка опытов", icon: "flask" },
-  { label: "Контроль ТЗ", icon: "clipboard" },
+  { href: "/library", label: "Источники", icon: "catalog" },
 ];
 
 interface ISidebar {
@@ -28,19 +22,19 @@ const Sidebar = ({ isExpanded, onToggle }: ISidebar) => {
   return (
     <aside
       className={`${scss.root} ${isExpanded ? scss.expanded : ""}`}
-      aria-label="Меню Synapse Research"
+      aria-label="Меню Doc Research"
     >
       <a
         className={scss.brand}
         href="/documents"
-        aria-label="Synapse Research — документы"
+        aria-label="Doc Research — запрос"
       >
         <span className={scss.monogram} aria-hidden="true">
-          S.R
+          D.R
         </span>
         <span className={scss.brandText} aria-hidden="true">
           <strong className={scss.brandTitle}>
-            <span className={scss.brandName}>Synapse</span>
+            <span className={scss.brandName}>Doc</span>
             <span className={scss.brandDot}>.</span>
           </strong>
           <span className={scss.brandResearch}>Research</span>
@@ -110,23 +104,6 @@ const Sidebar = ({ isExpanded, onToggle }: ISidebar) => {
             );
           })}
         </ul>
-        <div className={scss.unavailable}>
-          <p>Временно недоступно</p>
-          <ul className={scss.list}>
-            {DISABLED_ITEMS.map((item) => (
-              <li key={item.label}>
-                <span
-                  className={scss.disabled}
-                  role="link"
-                  aria-disabled="true"
-                >
-                  <SidebarIcon name={item.icon} />
-                  <span>{item.label}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
       </nav>
     </aside>
   );

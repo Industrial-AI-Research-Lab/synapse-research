@@ -12,6 +12,10 @@ interface ResearchPaginationProps {
   end: number;
   total: number;
   onPageChange: (page: number) => void;
+  itemLabel?: string;
+  navLabel?: string;
+  showRange?: boolean;
+  className?: string;
 }
 
 const ResearchPagination = ({
@@ -22,14 +26,20 @@ const ResearchPagination = ({
   end,
   total,
   onPageChange,
+  itemLabel = "исследования",
+  navLabel = "Страницы исследований",
+  showRange = true,
+  className,
 }: ResearchPaginationProps) => (
-  <footer className={scss.root}>
-    <p className={scss.range} role="status" aria-atomic="true">
-      <span className={scss.srOnly}>Показаны исследования </span>
-      {start}–{end} из {total}
-    </p>
+  <footer className={[scss.root, className].filter(Boolean).join(" ")}>
+    {showRange && (
+      <p className={scss.range} role="status" aria-atomic="true">
+        <span className={scss.srOnly}>Показаны {itemLabel} </span>
+        {start}–{end} из {total}
+      </p>
+    )}
     {pageCount > 1 && (
-      <nav className={scss.navigation} aria-label="Страницы исследований">
+      <nav className={scss.navigation} aria-label={navLabel}>
         <Button
           type="button"
           variant="icon"

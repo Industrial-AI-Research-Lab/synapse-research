@@ -30,7 +30,10 @@
   height: 2.5rem;
   min-height: 2.5rem;
   padding: 0;
-  border-radius: var(--radius-control);
+}
+
+.navigation .arrow {
+  border-radius: 50%;
 }
 
 .navigation .page {

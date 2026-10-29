@@ -12,6 +12,7 @@
   overflow-y: auto;
   border-right: 1px solid var(--color-border);
   background: var(--color-sidebar);
+  view-transition-name: nav;
 }
 
 .brand {
@@ -50,7 +51,7 @@
 
 .brandResearch {
   display: block;
-  margin-left: 2.625rem;
+  margin-left: 1.25rem;
   font-family: var(--font-display);
   font-size: 1.4375rem;
   font-style: italic;
@@ -69,7 +70,7 @@
   padding: 0.25rem;
   color: var(--color-text-muted);
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  border-radius: 50%;
   background: transparent;
 
   &:hover {
@@ -123,7 +124,7 @@
   margin-inline: auto;
   padding: 0.5rem;
   color: var(--color-text);
-  border-radius: var(--radius-control);
+  border-radius: 50%;
   text-decoration: none;
 }
 
@@ -233,6 +234,7 @@
   width: auto;
   margin-inline: 0;
   padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
 }
 
 @include media.tablet {
@@ -302,6 +304,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .root {
+    view-transition-name: none;
+  }
+
   .expanded .brandName,
   .expanded .brandDot,
   .expanded .brandResearch {
